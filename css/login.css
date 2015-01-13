@@ -1,0 +1,39 @@
+body {
+  color: #333;  
+  background:  url(images/img4.jpg) no-repeat center top;   
+  padding-top: 40px;
+  padding-bottom: 40px;
+  background-color: #eee;
+  font-family:Georgia, serif;
+}
+
+header{ background: url(images/logohome1.png) no-repeat left top; }
+
+header h1{
+  margin:0px;
+  padding:7px;
+  font-size:32px;
+  color:#000;
+  text-shadow:1px 1px 1px rgba(255,255,255,0.9);
+  text-align:center;
+  font-weight:400;
+}
+
+header span{
+  display:block;
+  font-size:14px;
+  color:#666;
+  font-style:italic;
+  font-family:Georgia, serif;
+  padding-top:3px;  
+}
+
+.botonInicio {
+  margin-top: 3%;
+}
+
+/*---- Esconder el boton cerrar de la ventana emergente del login ----*/
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}

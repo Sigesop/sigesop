@@ -1,0 +1,520 @@
+drop database if exists laventa_cfe;
+create database laventa_cfe;
+use laventa_cfe;
+
+
+
+# SECCION DE ADMINISTRACION DE USUARIOS -------------------------------------------------------------------------------------
+create table `roles`(
+	clave_rol					varchar(10) primary key,
+	sentencia_sql				text not null,
+	descripcion_areaTrabajo		text not null
+)ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+create table `area_trabajo`(
+	clave_areaTrabajo			varchar(2) primary key,
+	descripcion_areaTrabajo		varchar(50) not null
+)ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+create table `personal`(
+	RDE_trabajador 			varchar(5) primary key,
+	nombre_usuario			varchar(30) not null unique,
+	nombre_trabajador		varchar(50) not null,
+	apellidos_trabajador	varchar(50) not null,
+	password_trabajador		varchar(20) not null,
+
+	clave_areaTrabajo		varchar(2) not null,
+	clave_rol				varchar(10) not null,
+
+	foreign key(clave_areaTrabajo) references area_trabajo(clave_areaTrabajo)
+	on delete restrict
+	on update cascade,	
+
+	foreign key(clave_rol) references roles(clave_rol)
+	on delete restrict
+	on update cascade
+)ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+-- create table sesionActiva(
+
+-- 	nombre_usuario 		varchar(30) primary key,
+-- 	estado				boolean not null DEFAULT false
+
+-- )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+# SECCION DE ORDEN DE TRABAJO (TABLAS DE ELEMENTOS UNICOS)-------------------------------------------------------------------
+-- Aqui unicamente creamos las tablas para almacenar los aeros, sistemas, equipos y componentes
+-- estas tablas nos serviran por si el usuario quiera dar de alta un valor nuevo de los anteriormente
+-- enlistado. Estas tablas serviran de referencia cuando en la interfaz web solicitemos los valores
+-- en los combobox
+
+create table `central`(
+	clave_20					varchar(5) primary key not null,  -- Clave unica de la central
+	clave_sap					varchar(4) not null,
+	centro_costo				varchar(6) not null,
+	nombre_central				varchar(100) not null,
+	direccion					varchar(100) not null,
+	telefono					varchar(10) not null,
+	cp							varchar(5) not null,
+	superintendente				varchar(5) not null,
+	capacidad_instalada			int (7) unsigned ,
+	capacidad_efectiva_central	int(7) unsigned , -- La capacidad efectiva en central es la suma de la capacidad de las unidades
+
+	foreign key(superintendente) references personal(RDE_trabajador)
+	on delete restrict
+	on update cascade
+)ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `unidad_aero`(
+	clave_20					varchar(5) not null, -- Clave unica de la central
+	numero_unidad				varchar(4) primary key not null,
+	capacidad_instalada			int (7) unsigned,
+	capacidad_efectiva_unidad	int(7) unsigned, -- La capacidad efectiva en la unidad es la suma de la capacidad de los aeros
+
+	foreign key(clave_20) references central(clave_20)
+	on delete restrict
+	on update cascade
+
+	-- foreign key(capacidad_efectiva_unidad) references CENTRAL(capacidad_efectiva_central)
+	-- on delete restrict
+	-- on update cascade
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tabla_estados` (
+	estado_licencia varchar(20) primary key not null
+);
+
+insert into tabla_estados values('disponible');
+insert into tabla_estados values('mtto');
+insert into tabla_estados values('c.a.');
+insert into tabla_estados values('falla');
+
+CREATE TABLE `aeros` (
+	-- clave_20					varchar(5) not null, -- Clave unica de la central
+	numero_unidad				varchar(4) not null,
+	numero_aero					varchar(4) primary key not null,
+	capacidad_efectiva_aero		int(7) unsigned not null, -- La capacidad efectiva de cada aerogenerador
+	fecha_operacion				date, -- Fecha en la que el aerogenerador entra en mantenimiento
+	estado_licencia 			varchar(20) not null,
+
+	foreign key(estado_licencia) references tabla_estados(estado_licencia)
+	on update cascade
+	on delete restrict,
+
+	foreign key(numero_unidad) references unidad_aero(numero_unidad)
+	on delete restrict 
+	on update cascade
+
+	-- foreign key(capacidad_efectiva_aero) references unidad_aero(capacidad_efectiva_unidad)
+	-- on delete restrict
+	-- on update cascade
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `sistema_aero`(
+	id_sistema_aero 		varchar(2) primary key not null,
+	nombre_sistema_aero		varchar(50) not null
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `equipo_aero`(
+	id_equipo_aero			varchar(4) primary key,
+	nombre_equipo_aero		varchar(50) not null,
+
+	id_sistema_aero 		varchar(2) not null,
+
+	foreign key(id_sistema_aero) references sistema_aero(id_sistema_aero) 
+	on delete restrict 
+	on update cascade
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE tipo_mantenimiento(
+	id_mantenimiento		varchar(2) primary key,
+	nombre_mantenimiento	varchar(30) not null
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+insert into tipo_mantenimiento values('01', 'Mayor');
+insert into tipo_mantenimiento values('02', 'Menor');
+insert into tipo_mantenimiento values('03', 'Semestral');
+insert into tipo_mantenimiento values('04', 'Rutinario');
+insert into tipo_mantenimiento values('05', 'Productivo');
+insert into tipo_mantenimiento values('06', 'Correctivo');
+
+
+# SECCION DE ORDEN DE TRABAJO (TABLAS DE ELEMENTOS INSERTADOS)-----------------------------------------------------------
+-- En esta seccion creamos tablas para almacenar el orden jerarquico de los componentes
+
+CREATE TABLE `equipo_seguridad`(
+	tipo_equipo 				varchar(30) primary key,		
+	numero_equipos_categ		smallint unsigned not null
+);
+
+-- CREATE TABLE `catalogo_materiales`(
+
+-- 	id_material					int unsigned primary key auto_increment,	
+-- 	cantidad_disponible			int unsigned not null,
+-- 	descripcion_materiales		varchar(50) not null,
+-- 	observaciones_materiales	text
+
+-- )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `lista_verificacion`(
+	id_actividad_verificar 			int unsigned primary key,
+	actividad_verificar 			text,
+	descripcion_lista_verificacion 	varchar(50) not null,
+	-- tipo_dato_actividad 			enum('Bifurcacion', 'Datos', 'Rango'),
+	tipo_dato_actividad 			varchar(10),
+	id_lista_verificacion 			varchar(4) not null,
+
+	foreign key(id_lista_verificacion) references equipo_aero(id_equipo_aero)
+	on delete restrict
+	on update restrict
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `orden_trabajo`(
+	-- campos capturados por el que asigna la orden
+	numero_orden			int unsigned primary key auto_increment,
+	id_aero 				varchar(4) not null,
+	trabajo_solicitado		text not null,
+
+	personal_mantto			varchar(5) not null,
+	personal_autoriza		varchar(5) not null,
+	supervisor				varchar(5) not null,
+	estado_orden_trabajo	boolean DEFAULT false,
+
+	-- campos capturados por el sistema
+	horas_operacion			int not null,
+	fecha_entrada			date not null,
+	fecha_salida			date not null,
+	hora_entrada			time not null,
+	hora_salida				time not null,
+	horas_indispo			int,
+	porcen_indispo			tinyint unsigned,
+
+	-- campos capturados por el operador
+	temp_ambiente			smallint not null,
+	temp_caja_eng			smallint not null,
+	temp_aceite_hid			smallint not null,
+	temp_gen_elec			smallint not null,	
+	equipo_seguridad		varchar(30),
+	trabajos_efectuados		text not null,
+	id_material				int unsigned,
+
+	foreign key(id_aero) references aeros(numero_aero)
+	on delete restrict
+	on update cascade,
+	foreign key(equipo_seguridad) references equipo_seguridad(tipo_equipo)
+	on delete restrict
+	on update cascade,
+
+	foreign key(personal_mantto) references personal(RDE_trabajador)
+	on delete restrict
+	on update cascade,
+	foreign key(personal_autoriza) references personal(RDE_trabajador),
+	foreign key(supervisor) references personal(RDE_trabajador)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `unidad_medida`(
+	unidad_medida_actividad 		varchar(50) not null,
+
+	id_actividad_verificar 			int unsigned,
+
+	foreign key(id_actividad_verificar) references lista_verificacion(id_actividad_verificar)
+	on delete restrict
+	on update cascade
+);
+
+CREATE TABLE `datos_mantenimiento`(
+	datos 						varchar(50) not null,
+
+	id_lista_verificacion 		varchar(4) not null,
+	id_actividad_verificar 		int unsigned,
+	numero_orden				int unsigned,
+
+	foreign key(id_lista_verificacion) references lista_verificacion(id_lista_verificacion)
+	on delete restrict
+	on update cascade,
+
+	foreign key(id_actividad_verificar) references lista_verificacion(id_actividad_verificar)
+	on delete restrict
+	on update cascade,
+
+	foreign key(numero_orden) references orden_trabajo(numero_orden)
+	on delete restrict
+	on update cascade	
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `materiales_orden`(
+	numero_orden				int unsigned,	
+	cantidad_materiales			int unsigned not null,
+	descripcion_materiales		varchar(50) not null,
+	observaciones_materiales	text,
+
+	foreign key(numero_orden) references orden_trabajo(numero_orden)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+# SECCION DE INSERCION DE DATOS -------------------------------------------------------------------------------------
+
+-- drop user sesionActiva@'localhost';
+-- create user sesionActiva@'localhost' identified by 'E*k9qMJjjU4^D5q';
+-- grant select, insert, update on laventa_cfe.sesionActiva to sesionActiva@'localhost';
+
+insert into roles values('Admin', 'grant select ,insert on ', "TEST");
+insert into roles values('Operador', 'grant select on ', "TEST");
+
+insert into area_trabajo values("AA", "Area de trabajo 1");
+insert into area_trabajo values("AB", "Area de trabajo 2");
+insert into area_trabajo values("AC", "Area de trabajo 3");
+insert into area_trabajo values("AD", "Area de trabajo 4");
+insert into area_trabajo values("AE", "Area de trabajo 5");
+insert into area_trabajo values("AF", "Area de trabajo 6");
+
+drop user user@'localhost';
+insert into personal values('ABCDE', 'user', 'Abimael', 'Hernandez Hernandez', 'pass', 'AA', 'Admin');
+-- insert into sesionActiva values('user', false);
+create user user@'localhost' identified by 'pass';
+grant insert, select on laventa_cfe.* to user@'localhost';
+
+drop user admin@'localhost';
+insert into personal values('ABCD1', 'admin', 'Juan de Jesus', 'Lopez Ortiz', 'pass', 'AA', 'Admin');
+-- insert into sesionActiva values('admin', false);
+create user admin@'localhost' identified by 'pass';
+grant insert, select on laventa_cfe.* to admin@'localhost';
+
+
+-- ------------------------------------------------------------------------------------------------
+-- Definicion de trigger para la suma total de las capacidades efectivas e instaladas despues de una insercion
+-- ------------------------------------------------------------------------------------------------
+
+DELIMITER ;;
+CREATE TRIGGER `PROMEDIO_CAP_INSERT` AFTER INSERT ON `aeros` FOR EACH ROW 
+BEGIN
+	-- Consulta para cambiar el valor de la capacidad efectiva de las unidades cuando se ingrese un nuevo aero generador
+	-- para que realice la consulta el aerogenerador debe estar activo
+	update unidad_aero set capacidad_efectiva_unidad =  (SELECT SUM(capacidad_efectiva_aero) from aeros where numero_unidad = new.numero_unidad AND estado_licencia = 'disponible')  where numero_unidad = new.numero_unidad;
+
+	-- Consulta para cambiar el valor de la capacidad instalada de las unidades cuando se ingrese un nuevo aero generador
+	-- para que realice la consulta el aerogenerador debe estar activo
+	update unidad_aero set capacidad_instalada =  (SELECT SUM(capacidad_efectiva_aero) from aeros where numero_unidad = new.numero_unidad)  where numero_unidad = new.numero_unidad;
+
+	-- Consulta para cambiar la capacidad instalada de la central cuando se agre
+	update central set capacidad_instalada = (SELECT SUM(capacidad_efectiva_aero) FROM aeros );
+
+	-- Consulta para cambiar el valor de la capacidad de las central cuando el valor de las unidades varie
+	update central set capacidad_efectiva_central = (SELECT SUM(capacidad_efectiva_unidad) FROM unidad_aero);
+END
+;;
+DELIMITER ;
+
+-- update unidad_aero set capacidad_efectiva_unidad = (SELECT SUM(capacidad_efectiva_aero) from aeros where numero_unidad = "2") where numero_unidad = "2";
+
+-- ------------------------------------------------------------------------------------------------
+
+
+-- ------------------------------------------------------------------------------------------------
+-- Definicion de trigger para la suma total de las capacidades efectivas e instaladas despues de un update
+-- ------------------------------------------------------------------------------------------------
+
+DELIMITER ;;
+CREATE TRIGGER `PROMEDIO_CAP_UPDATE` AFTER UPDATE ON `aeros` FOR EACH ROW
+BEGIN
+	update unidad_aero set capacidad_efectiva_unidad = (SELECT SUM(capacidad_efectiva_aero) from aeros where numero_unidad = new.numero_unidad AND estado_licencia = 'disponible')  where numero_unidad = new.numero_unidad;
+	update unidad_aero set capacidad_instalada =  (SELECT SUM(capacidad_efectiva_aero) from aeros where numero_unidad = new.numero_unidad)  where numero_unidad = new.numero_unidad;	
+	update central set capacidad_instalada = (SELECT SUM(capacidad_efectiva_aero) FROM aeros );
+	update central set capacidad_efectiva_central = (SELECT SUM(capacidad_efectiva_unidad) FROM unidad_aero);	
+END
+;;
+DELIMITER ;
+
+-- ------------------------------------------------------------------------------------------------
+-- Definicion de trigger para la suma total de las capacidades efectivas e instaladas despues de una eliminacion
+-- ------------------------------------------------------------------------------------------------
+
+DELIMITER ;;
+CREATE TRIGGER `PROMEDIO_CAP_DELETE` AFTER DELETE ON `aeros` FOR EACH ROW
+BEGIN
+	update unidad_aero set capacidad_efectiva_unidad = (SELECT SUM(capacidad_efectiva_aero) from aeros where numero_unidad = old.numero_unidad AND estado_licencia = 'disponible')  where numero_unidad = old.numero_unidad;
+	update unidad_aero set capacidad_instalada =  (SELECT SUM(capacidad_efectiva_aero) from aeros where numero_unidad = old.numero_unidad)  where numero_unidad = old.numero_unidad;	
+	update central set capacidad_instalada = (SELECT SUM(capacidad_efectiva_aero) FROM aeros );
+	update central set capacidad_efectiva_central = (SELECT SUM(capacidad_efectiva_unidad) FROM unidad_aero);	
+END
+;;
+DELIMITER ;
+
+-- UPDATE aeros SET estado_operacion = false WHERE numero_unidad = "2";
+
+-- ------------------------------------------------------------------------------------------------
+insert into central(clave_20, clave_sap, centro_costo, nombre_central, direccion, telefono, cp, superintendente) values("AAAAA", "SAP1", "COS01", "LA ANGOSTURA", "CARRETERA VENUSTIANO CARRANZA", "9612280912", "29160", "ABCD1");
+
+insert into sistema_aero values("00", "TURBINA (ROTOR DEL AEROGENERADOR)");
+insert into sistema_aero values("01", "CAJA DE ENGRANES");
+insert into sistema_aero values("02", "GENERADOR ELECTRICO");
+insert into sistema_aero values("03", "ORIENTACION");
+insert into sistema_aero values("04", "CONTROL, PROTECCION Y COMUNICACION");
+insert into sistema_aero values("05", "ESTRUCTURA (SOPORTE Y NACELLE)");
+insert into sistema_aero values("06", "ELECTRICO");
+insert into sistema_aero values("07", "EDIFICIO, ACCESO E INSTALACIONES");
+
+insert into equipo_aero values("00", "ROTOR PRINCIPAL", "00");
+insert into equipo_aero values("01", "FLECHA PRINCIPAL", "00");
+insert into equipo_aero values("02", "SISTEMA DE INCLINACION", "00");
+insert into equipo_aero values("03", "UNIDAD HIDRAULICA", "00");
+
+insert into equipo_aero values("04", "TREN DE BAJA VELOCIDAD", "01");
+insert into equipo_aero values("05", "TREN DE VELOCIDAD INTERMEDIA", "01");
+insert into equipo_aero values("06", "TREN DE ALTA VELOCIDAD", "01");
+insert into equipo_aero values("07", "SISTEMA DE AMORTIGUAMIENTO", "01");
+insert into equipo_aero values("08", "ENFRIAMIENTO ACEITE", "01");
+
+insert into equipo_aero values("09", "GENERADOR PRINCIPAL", "02");
+insert into equipo_aero values("10", "TRANSMISION", "02");
+insert into equipo_aero values("11", "FRENO DE DISCO", "02");
+
+insert into equipo_aero values("12", "MOTOREDUCTORES", "03");
+insert into equipo_aero values("13", "PISTA DEL YAW", "03");
+insert into equipo_aero values("14", "FRENO HIDRAULICO", "03");
+insert into equipo_aero values("15", "SISTEMA DE RODAMIENTOS DEL YAW", "03");
+insert into equipo_aero values("16", "ENGRANE PLANETARIO", "03");
+
+insert into equipo_aero values("17", "ARMARIO SUPERIOR (TOP CONTROL)", "04");
+insert into equipo_aero values("18", "ARMARIO INFERIOR (GROUND CONTROL)", "04");
+insert into equipo_aero values("19", "SECCION DE EMBARRADO Y PROTECCIONES", "04");
+insert into equipo_aero values("20", "SISTEMA DE COMUNICACIONES", "04");
+insert into equipo_aero values("21", "SISTEMA CONTRAINCENDIO", "04");
+
+insert into equipo_aero values("22", "CHASIS", "05");
+insert into equipo_aero values("23", "TORRE TRONCOCONICA", "05");
+insert into equipo_aero values("24", "BARQUILLA (NACELLE)", "05");
+
+insert into equipo_aero values("25", "BAJA TENSION", "06");
+insert into equipo_aero values("26", "ALTA TENSION (+ DE 690 V Y HASTA 34.5 KV)", "06");
+insert into equipo_aero values("27", "TRANSFORMADORES", "06");
+insert into equipo_aero values("28", "CELDAS DE POTENCIA", "06");
+insert into equipo_aero values("29", "TABLERO DE METAL CLAD 34.5 KV", "06");
+insert into equipo_aero values("30", "MEDIANA TENSION (+ DE 480 V Y HASTA 13.8 KV)", "06");
+insert into equipo_aero values("31", "RED DE TIERRAS", "06");
+
+insert into equipo_aero values("32", "CUARTO DE CONTROL", "07");
+insert into equipo_aero values("33", "OFICINAS", "07");
+insert into equipo_aero values("34", "ACCESOS Y CUNETAS", "07");
+insert into equipo_aero values("35", "SUBESTACION 13.8 KV", "07");
+insert into equipo_aero values("36", "CASETA DE VIGILANCIA", "07");
+insert into equipo_aero values("37", "ALMACEN DE RESIDUOS", "07");
+
+insert into unidad_aero values("AAAAA", "1", 0, 0);
+insert into unidad_aero values("AAAAA", "2", 0, 0);
+insert into unidad_aero values("AAAAA", "3", 0, 0);
+insert into unidad_aero values("AAAAA", "4", 0, 0);
+insert into unidad_aero values("AAAAA", "5", 0, 0);
+insert into unidad_aero values("AAAAA", "6", 0, 0);
+
+insert into aeros values("1", "GC01", 850, "2013-02-13", 'falla');
+insert into aeros values("1", "GC02", 850, "2013-02-14", 'mtto');
+insert into aeros values("1", "GC03", 850, "2013-02-15", 'c.a.');
+
+-- insert into aeros values("AAAAA", "2", "GC04", 850, "2013-02-15", 'falla');
+-- insert into aeros values("AAAAA", "2", "GC01", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC02", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC03", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC04", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC05", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC06", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC07", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC08", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GC09", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD01", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD02", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD03", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD04", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD05", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD06", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD07", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD08", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD09", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "2", "GD10", 850, "2013-02-13", true);
+
+-- insert into aeros values("AAAAA", "3", "GA01", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA02", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA03", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA04", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA05", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA06", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA07", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA08", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA09", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA10", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA11", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GA12", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB01", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB02", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB03", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB04", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB05", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB06", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB07", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "3", "GB08", 850, "2013-02-13", true);
+
+-- insert into aeros values("AAAAA", "4", "GC23", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GC24", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GC25", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GC26", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GC27", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD11", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD12", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD13", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD14", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD15", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD16", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD17", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD18", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD19", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD20", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD21", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD22", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD23", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD24", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "4", "GD25", 850, "2013-02-13", true);
+
+-- insert into aeros values("AAAAA", "5", "GB09", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GB10", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GB11", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GB12", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GB13", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GB14", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GB15", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC10", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC11", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC12", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC13", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC14", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC15", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC16", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC17", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC18", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC19", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC20", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC21", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "5", "GC22", 850, "2013-02-13", true);
+
+-- insert into aeros values("AAAAA", "6", "GA13", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA14", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA15", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA16", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA17", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA18", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA19", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA20", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA21", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA22", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GA23", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB16", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB17", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB18", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB19", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB20", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB21", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB22", 850, "2013-02-13", true);
+-- insert into aeros values("AAAAA", "6", "GB23", 850, "2013-02-13", true);

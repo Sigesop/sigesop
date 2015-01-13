@@ -1,0 +1,155 @@
+.selectable .ui-selecting {
+    background: #ccc;
+}
+
+.selectable .ui-selected {
+    background: #5CB85C;
+}
+
+.selectable li:hover {
+    background: #44B5E3;
+}
+
+
+.selectable .ui-widget-content{
+	padding-bottom: 5px;
+	padding-top: 5px;
+
+	border-bottom-right-radius: 4px;
+	border-bottom-left-radius: 4px;
+	border-top-right-radius: 4px;
+	border-top-left-radius: 4px;
+
+	border: 1px solid rgb(150, 150, 150);
+}
+
+.selectable li{
+  margin-bottom: 5px;
+}
+
+/*** srive para darle color al submenu seleccionada del menu ***/
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+  color: #262626;
+  text-decoration: none;
+  background-color: #5CB85C;
+}
+
+.texto-rojo {
+  color: red;
+}
+
+
+/**************ESTILO DE LA BARRA DE NAVEGACION**************/
+
+@font-face { 
+  font-family: 'Iceland'; 
+  src:url('../fonts/iceland/Iceland.ttf.woff') format('woff'),
+    url('../fonts/iceland/Iceland.ttf.svg#Iceland') format('svg'),
+    url('../fonts/iceland/Iceland.ttf.eot'),
+    url('../fonts/iceland/Iceland.ttf.eot?#iefix') format('embedded-opentype'); 
+  font-weight: normal; font-style: normal; 
+}
+
+.navbar-cfe {
+  font-family: 'Iceland';
+  /*background-color: #5CB85C;*/
+  background-color: #009300;
+  border-color: #e7e7e7;
+}
+.navbar-cfe .navbar-brand {
+  color: #777;
+}
+.navbar-cfe .navbar-brand:hover,
+.navbar-cfe .navbar-brand:focus {
+  color: #5e5e5e;
+  background-color: transparent;
+}
+.navbar-cfe .navbar-text {
+  color: #777;
+}
+.navbar-cfe .navbar-nav > li > a {
+  /*color: #777;*/
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+}
+.navbar-cfe .navbar-nav > li > a:hover,
+.navbar-cfe .navbar-nav > li > a:focus {
+  /*color: #333;*/
+  color: #000;
+  background-color: transparent;
+}
+.navbar-cfe .navbar-nav > .active > a,
+.navbar-cfe .navbar-nav > .active > a:hover,
+.navbar-cfe .navbar-nav > .active > a:focus {
+  color: #555;
+  background-color: #e7e7e7;
+}
+.navbar-cfe .navbar-nav > .disabled > a,
+.navbar-cfe .navbar-nav > .disabled > a:hover,
+.navbar-cfe .navbar-nav > .disabled > a:focus {
+  color: #ccc;
+  background-color: transparent;
+}
+.navbar-cfe .navbar-toggle {
+  border-color: #ddd;
+}
+.navbar-cfe .navbar-toggle:hover,
+.navbar-cfe .navbar-toggle:focus {
+  background-color: #ddd;
+}
+.navbar-cfe .navbar-toggle .icon-bar {
+  background-color: #888;
+}
+.navbar-cfe .navbar-collapse,
+.navbar-cfe .navbar-form {
+  border-color: #e7e7e7;
+}
+.navbar-cfe .navbar-nav > .open > a,
+.navbar-cfe .navbar-nav > .open > a:hover,
+.navbar-cfe .navbar-nav > .open > a:focus {
+  color: #555;
+
+  /*color de fondo al presionar el boton de la barra de navegacion*/
+  background-color: #5CB85C;
+  /****************************************************************/
+}
+@media (max-width: 767px) {
+  .navbar-cfe .navbar-nav .open .dropdown-menu > li > a {
+    /*color: #777;*/
+    color: #fff;
+  }
+  .navbar-cfe .navbar-nav .open .dropdown-menu > li > a:hover,
+  .navbar-cfe .navbar-nav .open .dropdown-menu > li > a:focus {
+    color: #333;
+    background-color: transparent;
+  }
+  .navbar-cfe .navbar-nav .open .dropdown-menu > .active > a,
+  .navbar-cfe .navbar-nav .open .dropdown-menu > .active > a:hover,
+  .navbar-cfe .navbar-nav .open .dropdown-menu > .active > a:focus {
+    color: #555;
+    background-color: #e7e7e7;
+  }
+  .navbar-cfe .navbar-nav .open .dropdown-menu > .disabled > a,
+  .navbar-cfe .navbar-nav .open .dropdown-menu > .disabled > a:hover,
+  .navbar-cfe .navbar-nav .open .dropdown-menu > .disabled > a:focus {
+    color: #ccc;
+    background-color: transparent;
+  }
+}
+.navbar-cfe .navbar-link {
+  color: #777;
+}
+.navbar-cfe .navbar-link:hover {
+  color: #333;
+}
+
+/*#test .row{
+  display: block;
+}*/
+
+.graficaPastel {
+  width: 25%;
+  display: inline-block;
+}
