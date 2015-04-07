@@ -1,393 +1,438 @@
-$.sigesop.roles = {
-	/**
-	 * crea la estructura HTML y javascript correspondiente para la edicion de 
-	 * los roles de usuario.
-	 * @param {Object} objetoRol - objeto con datos de los roles existentes
-	 * @param {Object} matrizAreaAcceso - objeto con datos de las areas de acceso existentes
-	 * @param {Object} matrizPermisoAcceso - objeto con datos de los permisos de acceso existentes
-	 * @param {String} sufijoIDhtml - sufijo que se agrega al id de los elementos para no repetir ID's
-	 * @returns {Object[html, javascript, envioDatos]} retorna codigo html, codigo javascript para la
-	 * 		nueva structura html y la estructura de datos del formulario
-	 */
-	documentoCatalagoRoles: function ( objetoRol, matrizAreaAcceso, matrizPermisoAcceso, sufijoIDhtml ) 
+sigesop.roles = {
+	document: function ( opt ) 
 	{
-		// ---------- objetoRol por defecto objeto vacio
-		
-		if ( $.isEmptyObject( objetoRol ) ) 
-		{
-			var objetoRol = {
+		/* obj
+		 * suf
+		 * arr_areaAcceso
+		 * arr_permisoAcceso
+		 * success
+		 * error
+		 */ 
+
+		var 
+		suf = opt.suf || '',
+		obj = opt.obj || {
 				clave_rol: '',
 				descripcion_areaTrabajo: '',
 				areaAcceso: [],
 				permisoAcceso: []
-			}
-		}			
+			};
 
-		// ---------- sufijoIDhtml por defecto una cadena vacia
-		
-		$.isEmptyObject( sufijoIDhtml ) ? sufijoIDhtml = '' : null; 			
+		var 
+			html =
+				'<form id="formCatalogoRoles' + suf + '" class="form-horizontal" role="form">' +
+					'<div class="form-group">' +
+						'<label class="col-sm-2 col-md-2 control-label">Nombre del Rol:</label>' +
+						'<div class="col-sm-9 col-md-9">' +
+							'<input name="nombreRol" id="nombreRol' + suf + '" class="form-control input-md eventoCambioMayuscula ' +
+							'placeholder="Ingrese tipo de usuario por ejemplo (admin, operador, etc.)" value="' + 
+							obj.clave_rol + '">' +
+						'</div>' +
+					'</div>' +
 
-		// ---------- ID's de los form para la validacion
+					'<div class="form-group">' +
+						'<label class="col-sm-2 col-md-2 control-label">Áreas de Acceso:</label>' +
+						'<div class="col-sm-9 col-md-9" id="areasAcceso' + suf + '"></div>' +
+					'</div>' +
 
-		var formNombreRol = 'formNombreRol' + sufijoIDhtml,
-			formDescripcionRol = 'formDescripcionRol' + sufijoIDhtml;
+					'<div class="form-group">' +
+						'<label class="col-sm-2 col-md-2 control-label">Permisos:</label>' +
+						'<div class="col-sm-9 col-md-9" id="permisoAcceso' + suf + '"></div>' +
+					'</div>' +
 
-		// ---------- ID's de los elementos
+					'<div class="form-group">' +
+						'<label class="col-sm-2 col-md-2 control-label">Descripción Rol:</label>' +
+						'<div class="col-sm-9 col-md-9">' +
+							'<textarea name="descripcionRol" id="descripcionRol' + suf + '" class="form-control eventoCambioMayuscula' +
+							'" rows="3" placeholder="Descripción área de trabajo" >' + obj.descripcion_areaTrabajo + '</textarea>' +
+						'</div>' +
+					'</div>' +
 
-		var nombreRol = 'nombreRol' + sufijoIDhtml,
-			areasAcceso = 'areasAcceso' + sufijoIDhtml,
-			permisoAcceso = 'permisoAcceso' + sufijoIDhtml,
-			descripcionRol = 'descripcionRol' + sufijoIDhtml;
+					'<div class="form-group">' +
+						'<div class="col-sm-2 col-md-2 control-label"></div>' +
+						'<p class="col-sm-9 col-md-9">' +
+							'<button id="btnNuevoPermiso' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
+							'<button id="botonLimpiar' + suf + '" type="reset" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
+						'</p>' +
+					'</div>' +
+				'</form>',
 
-		// ---------- ID de los botones
+			struct_areaAcceso = function ( arr_areaAcceso ) {
+				if ( jQuery.isEmptyObject( arr_areaAcceso ) ) {
+					console.log( '[arr_areaAcceso] es nula' );
+					this.IDS.mtz_areaAcceso.length = 0
+					return '';
+				};
 
-		var btnNuevoPermiso = 'btnNuevoPermiso' + sufijoIDhtml,
-			botonLimpiar = 'btnLimpiar' + sufijoIDhtml,
-			eventoCambioMayuscula = 'eventoCambioMayuscula' + sufijoIDhtml;
-
-		// ---------- generamos el html de las areas de acceso y los permisos de acceso
-
-		var htmlAreasAcceso = this.documentoAreaAcceso( matrizAreaAcceso, sufijoIDhtml ),
-			htmlPermisoAcceso = this.documentoPermisoAcceso( matrizPermisoAcceso, sufijoIDhtml );
-
-		// ---------- unimos todo el html en uno mismo
-
-		var html = '' +						
-			'<form class="form-horizontal" role="form">' +
-			'	<div id="' + formNombreRol + '" class="form-group">' +
-			'		<label class="col-sm-2 col-md-2 control-label">Nombre del Rol:</label>' +
-			'		<div class="col-sm-9 col-md-9">' +
-			'			<input id="' + nombreRol + '" class="form-control input-md ' + eventoCambioMayuscula + '" placeholder="Ingrese tipo de usuario por ejemplo (admin, operador, etc.)" value="' + objetoRol.clave_rol + '">' +
-			'		</div>' +
-			'	</div>' +
-
-			'	<div class="form-group">' +
-			'		<label class="col-sm-2 col-md-2 control-label">Áreas de Acceso:</label>' +
-			'		<div class="col-sm-9 col-md-9" id="' + areasAcceso + '">' + htmlAreasAcceso.html + '</div>' +
-			'	</div>' +
-
-			'	<div class="form-group">' +
-			'		<label class="col-sm-2 col-md-2 control-label">Permisos:</label>' +
-			'		<div class="col-sm-9 col-md-9" id="' + permisoAcceso + '">' + htmlPermisoAcceso.html + '</div>' +
-			'	</div>' +			
-
-			'	<div id="' + formDescripcionRol + '" class="form-group">' +
-			'		<label class="col-sm-2 col-md-2 control-label">Descripción Rol:</label>' +
-			'		<div class="col-sm-9 col-md-9">' +
-			'			<textarea id="' + descripcionRol +'" class="form-control ' + eventoCambioMayuscula + '" rows="3" placeholder="Descripción área de trabajo" >' + objetoRol.descripcion_areaTrabajo + '</textarea>' +
-			'		</div>' +
-			'	</div>' +
-
-			'	<div class="form-group">' +
-			'		<div class="col-sm-2 col-md-2 control-label"></div>' +
-			'		<p class="col-sm-9 col-md-9">' +
-			'			<button id="' + btnNuevoPermiso + '" type="submit" class="btn btn-success" data-loading-text="Enviando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button>' +
-			'			<button id="' + botonLimpiar + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>'
-			'		</p>' +
-			'	</div>' +
-			'</form>';
-
-		var objetoRetorno = {
-			html: html,
-			javascript: function () 
-			{
-				$.sigesop.eventoCambioMayuscula( '.' + eventoCambioMayuscula );
+				var 
+					i = 0,
+					lon = arr_areaAcceso.length,
+					mtz = [],
+					html = '<div class="form-group">';
 				
-				// ----------------- rellenamos los check de areas de acceso y permisos de acuedo al rol
-
-				if ( !jQuery.isEmptyObject( htmlAreasAcceso.html ) )
+				for( i ; i < lon; i++ )
 				{
-					jQuery.each( htmlAreasAcceso.matrizID, function( index, id ) 
-					{						
-						var valor = $( id ).val();
-
-						!jQuery.isEmptyObject( objetoRol.areaAcceso ) && objetoRol.areaAcceso.indexOf( valor ) != -1 ? 
-							$( id ).prop('checked', true) : null;
+					var id = arr_areaAcceso[ i ].idAcceso + suf;
+					mtz.push({
+						idHTML: '#' + id,
+						valor: arr_areaAcceso[ i ].paginaAcceso
 					});
+
+					html += 
+						'<div class="col-sm-6 col-md-6">'+
+						    '<div class="input-group checkbox-inline">'+
+						      '<span class="input-group-addon">'+
+						        '<input name="areaAcceso[]" id="' + id + '" value="' + 
+						        arr_areaAcceso[ i ].paginaAcceso + '" type="checkbox">' + 
+						        arr_areaAcceso[ i ].nombrePagina +
+						      '</span>'+
+						    '</div>'+
+					  	'</div>';
 				}
 
-				if ( !jQuery.isEmptyObject( htmlPermisoAcceso.html ) )
-				{
-					jQuery.each( htmlPermisoAcceso.matrizID, function( index, id ) 
-					{
-						var valor = $( id ).val();
+				this.IDS.mtz_areaAcceso = mtz; // enlazar vista publica
+				return html + '</div>';
+			},
 
-						!jQuery.isEmptyObject( objetoRol.permisoAcceso ) && objetoRol.permisoAcceso.indexOf( valor ) != -1 ?
-							$( id ).prop('checked', true) : null;
+			update_areaAcceso = function ( arr_areaAcceso ) {
+				document.getElementById( this.IDS.divAreaAcceso.flushChar( '#' ) )
+				.innerHTML = struct_areaAcceso.call( this, arr_areaAcceso );
+
+				/* ejecutamos evento de validacion para los checks
+				 */ 
+				if ( this.IDS.$form != null )
+				$( this.IDS.form ).data( 'formValidation' ).addField( 'areaAcceso[]' );
+			},
+
+			struct_permisoAcceso = function ( arr_permisoAcceso ) {
+				var 
+					i = 0,
+					lon = arr_permisoAcceso.length,
+					mtz = [],
+					html = '<div class="form-group">';
+
+				for ( i ; i < lon ; i++ ) 
+				{
+					var claseEvento = '',
+						id = arr_permisoAcceso[ i ].idPermiso.split(' ').join('_') + suf;
+
+					mtz.push({
+						idHTML: '#' + id,
+						valor: arr_permisoAcceso[ i ].idPermiso
 					});
 
-				// -----------------
+					claseEvento = arr_permisoAcceso[ i ].idPermiso != 'all' ? 
+						'checkNormal' : 'checkSuperUsuario';
 
-					htmlPermisoAcceso.javascript();						
+					html += 
+					'<div class="col-sm-6 col-md-6">' +
+						'<div class="input-group checkbox-inline">' +
+							'<span class="input-group-addon">' +
+								'<input name="permisoAcceso[]" id="' + id + '" value="' + 
+								arr_permisoAcceso[ i ].idPermiso + 
+								'" type="checkbox" class="' + claseEvento + 
+								'">' + arr_permisoAcceso[ i ].descripcion +
+							'</span>' +
+						'</div>' +
+					'</div>';
+				}
+
+				this.IDS.mtz_permisoAcceso = mtz; // enlazar vista publica
+				return html + '</div>';
+			},
+
+			evento_check = function () {
+				var 
+				$checkNormal = $( '.checkNormal' ),
+				$checkSuperUsuario = $( '.checkSuperUsuario' );
+
+				$checkNormal.change( function ( event )
+				{
+					$( this ).prop( 'checked' ) ?
+						$checkSuperUsuario.prop( 'checked', false ) : null;						
+				});
+
+				$checkSuperUsuario.change( function ( event )
+				{
+					$( this ).prop( 'checked' ) ?
+						$checkNormal.prop( 'checked', false ) : null;
+				});	
+			},
+
+			update_permisoAcceso = function ( arr_permisoAcceso ) {
+				/* la verificacion de matriz nula se hace antes para
+				 * evitar que se ejecuten varias veces la funcion evento_check
+				 * y evitar dupicidad de eventos
+				 */ 
+				if ( jQuery.isEmptyObject( arr_permisoAcceso ) ) {
+					console.log( '[arr_permisoAcceso] es nula' );
+					this.IDS.mtz_permisoAcceso.length = 0
+					return -1;
+				} 
+				else {
+					document.getElementById( this.IDS.divPermisoAcceso.flushChar( '#' ) ).
+					innerHTML = struct_permisoAcceso.call( this, arr_permisoAcceso );
+					evento_check(); // creamos eventos check para seleccionar superusuario
+					
+					/* ejecutamos evento de validacion para los checks
+					 */ 
+					if ( this.IDS.$form != null )
+					$( this.IDS.form ).data( 'formValidation' ).addField( 'permisoAcceso[]' );
 				}
 			},
 
-			datos: 
-			{
-				nombreRol: 
+			fill_check_rol = function ( areaAcceso, permisoAcceso ) {
+				/* Rellena los datos de las areas de acceso, asi como los
+				 * permisos de acceso, del objeto rol pasado como parámetro
+				 */ 
+				if ( !jQuery.isEmptyObject( areaAcceso ) &&
+					 !jQuery.isEmptyObject( this.IDS.mtz_areaAcceso ) )
 				{
-					valor: null,
-					idValidacion: '#' + formNombreRol,
-					idHTML: '#' + nombreRol,
-					regexp:  /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\s]{1,25}$/i,
-					popover: {
-						content: 'Ingrese Nombre del Rol de Usuario ( 1-25 caracteres [A-Z] [0-9] sin caracteres especiales, ni acentos)',
-						placement: 'top'
+					var 
+						i = 0,						
+						mtz_areaAcceso = this.IDS.mtz_areaAcceso,
+						lon = mtz_areaAcceso.length;
+
+					for ( i ; i < lon ; i++ ) 
+					{ 
+						var index = sigesop.indexOfObjeto( mtz_areaAcceso, 'valor', areaAcceso[ i ] );
+						if ( index != -1 )
+							$( mtz_areaAcceso[ index ].idHTML ).prop( 'checked', true );
 					}
+				}
+
+				/* Rellenando los permisos				 
+				 */ 
+				if ( !jQuery.isEmptyObject( permisoAcceso ) &&
+					 !jQuery.isEmptyObject( this.IDS.mtz_permisoAcceso ) )
+				{
+					var 
+						i = 0,						
+						mtz_permisoAcceso = this.IDS.mtz_permisoAcceso,
+						lon = mtz_permisoAcceso.length;
+
+					for ( i ; i < lon ; i++ ) 
+					{ 
+						var index = sigesop.indexOfObjeto( mtz_permisoAcceso, 'valor', permisoAcceso[ i ] );
+						if ( index != -1 )
+							$( mtz_permisoAcceso[ index ].idHTML ).prop( 'checked', true );
+					}
+				}
+			},
+
+			limpiarCampos = function ()
+			{
+				$( doc.datos.nombreRol.idHTML ).val( '' );
+				$( doc.datos.descripcionRol.idHTML ).val( '' );
+
+				vaciarDatos();
+			},
+
+			vaciarDatos = function ()
+			{
+				doc.datos.nombreRol.valor = null;
+				doc.datos.nombreRolUpdate.valor = null;
+				doc.datos.descripcionRol.valor = null;
+				doc.datos.matrizAreaAcceso.length = 0;
+				doc.datos.matrizPermisoAcceso.length = 0;
+	
+				doc.IDS.$form.formValidation( 'resetForm' );		
+			},
+
+			javascript = function () {
+				$( '.eventoCambioMayuscula' ).eventoCambioMayuscula();
+				this.update_areaAcceso( opt.arr_areaAcceso );
+				this.update_permisoAcceso( opt.arr_permisoAcceso );				
+				fill_check_rol.call( this, obj.areaAcceso, obj.permisoAcceso ); // rellenamos los check de areas de acceso y permisos de acuedo al rol				
+			
+				var
+				form = this.IDS.form,
+				$form = $( form ).formValidation({
+			        icon: {
+			            valid: 'glyphicon glyphicon-ok',
+			            invalid: 'glyphicon glyphicon-remove',
+			            validating: 'glyphicon glyphicon-refresh'
+			        },
+
+			        onSuccess: function ( e ) {
+			        	e.preventDefault();			        	
+			        	typeof opt.success == 'function' ?
+			        		opt.success( doc.datos, doc.IDS, limpiarCampos ) :
+			        		console.log( 'success is null' );
+			        },
+
+			        onError: function ( e ) {
+			        	e.preventDefault();			        	
+			        	typeof opt.error == 'function' ?
+			        		opt.error() : console.log( 'error is null' );			        	
+			        },
+
+			        fields: {			            
+			            nombreRol: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Ingrese Nombre del Rol de Usuario'
+			                    },
+			                    stringLength: {
+			                    	min: 1,
+			                    	max: 25,
+			                    	message: 'Número de caracteres inválido'
+			                    },
+			                    regexp: {
+			                    	regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\s]*$/i,
+			                    	message: '[A-Z] [0-9] sin caracteres especiales, ni acentos'
+			                    }
+			                }
+			            },
+			            'areaAcceso[]': {
+			            	validators: {
+			            		notEmpty: {
+			            			message: 'No se han seleccionado areas de acceso'
+			            		}
+			            	}
+			            },
+			            'permisoAcceso[]': {
+			            	validators: {
+			            		notEmpty: {
+			            			message: 'No se han seleccionado permisos de usuario'
+			            		}
+			            	}
+			            },
+			            descripcionRol: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Es necesaria la descripción del rol'
+			                    },
+			                    regexp: {
+			                        regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]*$/i,
+			                        message: 'Caracteres inválidos'
+			                    }
+			                }
+			            },				            
+			        }
+				})
+				.on( 'success.field.fv', function( e, data ) {
+					data.fv.disableSubmitButtons( false );
+				});
+				
+				this.IDS.$form = $form;
+
+				$( this.IDS.botonLimpiar ).on( 'click', function ( event ) { vaciarDatos(); });
+			},
+
+			datos = {
+				nombreRol: {
+					valor: null,
+					idHTML: '#nombreRol' + suf				
 				},
 				nombreRolUpdate: { valor: null },
 				descripcionRol: 
 				{ 
 					valor: null,
-					idValidacion: '#' + formDescripcionRol,
-					idHTML: '#' + descripcionRol,
-					regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]{1,5000}$/i,
-					popover: {
-						content: 'Ingrese Descipción del Rol de Usuario ( 1-5000 caracteres )',
-						placement: 'bottom'
-					}
+					idHTML: '#descripcionRol' + suf
 				},					
 				matrizAreaAcceso: [],
 				matrizPermisoAcceso: []
 			},
 
-			IDS:
-			{
-				botonGuardar: '#' + btnNuevoPermiso,
-				botonLimpiar: '#' + botonLimpiar,
-				divAreaAcceso: '#' + areasAcceso, // no es necesario para los datos hacia el servidor
-				divPermisoAcceso: '#' + permisoAcceso, // no es necesario para los datos hacia el servidor
-				matrizIDareaAcceso: htmlAreasAcceso.matrizID,
-				matrizIDpermisoAcceso: htmlPermisoAcceso.matrizID					
+			IDS = {
+				botonGuardar: '#btnNuevoPermiso' + suf,
+				botonLimpiar: '#botonLimpiar' + suf,
+				divAreaAcceso: '#areasAcceso' + suf, // no es necesario para los datos hacia el servidor
+				divPermisoAcceso: '#permisoAcceso' + suf, // no es necesario para los datos hacia el servidor
+				form: '#formCatalogoRoles' + suf,
+				$form: null,
+				mtz_areaAcceso: [],
+				mtz_permisoAcceso: []
 			},
-		}
 
-		return objetoRetorno; 
-	},
+			doc = {
+				html: html,
+				javascript: javascript,
+				datos: datos,
+				IDS: IDS,
+				update_areaAcceso: update_areaAcceso,
+				update_permisoAcceso: update_permisoAcceso
+			};
 
-	// documentoCatalagoRolesRegistro: function ( sufijo )
-	// {
-	// 	// ----------------------------- asignamos los ID's de los elementos
-		
-	// 	var statusNombreRol = 'statusNombreRol' + sufijo,
-	// 		statusDescripcionRol = 'statusDescripcionRol' + sufijo;
-
-	// 	// ----------------------------- asignamos los ID's de los botones
-		
-	// 	var botonEditar = 'botonEditar' + sufijo,
-	// 		botonEliminar = 'botonEliminar' + sufijo,
-	// 		panelLista = 'panelLista' + sufijo,
-	// 		listaRoles = 'listaRoles' + sufijo;
-
-	// 	// ----------------------------- creamos la estructura HTML
-
-	// 	var html = '' +
-	// 		'<form  class="form-horizontal ' + panelLista + '" role="form" method="post" >	'+
-	// 		'	<div class="form-group">'+
-	// 		'		<div class="col-sm-1 col-lg-1"></div>'+
-	// 		'		<div class="col-sm-7 col-lg-8">'+
-	// 		'			<div class=" well well-sm">' +
-	// 		'				<p id="' + statusNombreRol + '"></p>'+
-	// 		'				<p id="' + statusDescripcionRol + '"></p>'+
-	// 		'			</div>' +
-	// 		'		</div>'+
-	// 		'		 <div class="col-sm-3 col-lg-2">'+
-	// 		'			<p class="pull-right">'+
- //        	'        		<button id="' + botonEditar + '" type="submit" class="btn btn-success" ><span class="glyphicon glyphicon-list"></span> Editar</button>'+
- //        	'				<button id="' + botonEliminar + '" class="btn btn-danger"> <span class="glyphicon glyphicon-trash"></span> Eliminar</button>'+
- //        	'			</p>'+
- //        	'		 </div>'+
-	// 		'		<div class="col-sm-1"></div>'+
-	// 		'	</div>'+				
-
-	// 		'	<div class="form-group">'+
-	// 		'		<div class="col-sm-1"></div>'+
-	// 		'			<ol id="' + listaRoles + '" class="col-sm-10 selectable"></ol>'+
-	// 		'		<div class="col-sm-1"></div>'+
-	// 		'	</div>'+
-	// 		'</form>';
+		return doc; 
+	},	
 	
-	// 	var obj = {
-	// 		html: html,
-	// 		javascript: function ()
-	// 		{
-	// 			$( obj.IDS.listaRegistro ).selectable({
-	// 				stop: function() 
-	// 				{
-	// 					var nombreRol = $( '#' + statusNombreRol ).empty(),
-	// 						descripcionRol = $( '#' + statusDescripcionRol ).empty();
-
-	// 					window.sesion.indexTipoRol = null;
-
-	// 					$( ".ui-selected", this ).each(function() 
-	// 					{
-	// 						window.sesion.indexTipoRol = $( '#' + listaRoles + ' li' ).index( this );
-	// 						nombreRol.text( " Nombre del rol: " + window.sesion.matrizTipoRol[ window.sesion.indexTipoRol ]['clave_rol']);								
-	// 						descripcionRol.text( "Descripción del rol: " + window.sesion.matrizTipoRol[ window.sesion.indexTipoRol ]['descripcion_areaTrabajo']);	
-	// 					});
-	// 				}
-	// 			});
-
-	// 		    $( obj.IDS.listaRegistro ).contextMenu({
-	// 		        selector: 'li', 
-	// 		        items: {
-	// 		            editar: 
-	// 		            {
-	// 		            	name: 'Editar', 
-	// 		            	icon: 'edit',
-	// 		        		callback: function ( key, option )
-	// 		        		{
-	// 		        			var index = $( this ).index();
-	// 		        			typeof obj.callback.menuEditar === 'function' ? 
-	// 		        				obj.callback.menuEditar( index, key, option ) : null;			        			
-	// 		        		}
-	// 		            },
-	// 		            eliminar: 
-	// 		            {
-	// 		            	name: 'Eliminar', 
-	// 		            	icon: 'delete',
-	// 		        		callback: function ( key, option )
-	// 		        		{
-	// 		        			var index = $( this ).index();
-	// 		        			typeof obj.callback.menuEliminar === 'function' ? 
-	// 		        				obj.callback.menuEliminar( index, key, option ) : null;			        			
-	// 		        		}
-	// 		            }
-	// 		        }
-	// 		    });
-	// 		},
-	// 		IDS: {
-	// 			botonEditar: '#' + botonEditar,
-	// 			botonEliminar: '#' + botonEliminar,
-	// 			panelLista: '.' + panelLista,
-	// 			listaRegistro: '#' + listaRoles,
-	// 			status: [
-	// 				'#' + statusNombreRol,
-	// 				'#' + statusDescripcionRol,
-	// 			]
-	// 		},
-	// 		callback:
-	// 		{
-	// 			menuPDF: null,
-	// 			menuEditar: null,
-	// 			menuEliminar: null
-	// 		}
-	// 	}
-	// 	return obj;
-	// },
-
-	/**
-	 * crea la estructura HTML y javascript correspondiente de las areas de acceso en forma de check list
-	 * @param {object} matrizAreaAcceso - objeto con datos de las areas de acceso existentes
-	 * @param {String} sufijoIDhtml - sufijo que se agrega al id de los check para no repetir ID's
-	 */ 		
-	documentoAreaAcceso: function ( matrizAreaAcceso, sufijoIDhtml ) 
+	documentoRegistro: function ( opt )
 	{
-		// sufijoIDhtml por defecto una cadena vacia
-		$.isEmptyObject( sufijoIDhtml ) ? sufijoIDhtml = '' : null;
+		var suf = opt.suf || '';
 
-		if( !jQuery.isEmptyObject( matrizAreaAcceso ) )
-		{				
-			var arregloIDs = [],
-				htmlAreasAcceso = '<div class="form-group">';
-			
-			$.each( matrizAreaAcceso, function ( index, val ) 
-			{
-				var idAreaAcceso = val.idAcceso + sufijoIDhtml;
-				arregloIDs.push( '#' + idAreaAcceso );
-
-				htmlAreasAcceso += 
-				'<div class="col-sm-6 col-md-6">'+
-				    '<div class="input-group checkbox-inline">'+
-				      '<span class="input-group-addon">'+
-				        '<input id="' + idAreaAcceso + '" value="' + val.paginaAcceso + '" type="checkbox">'+ val.nombrePagina +
-				      '</span>'+
-				    '</div>'+
-			  	'</div>';
-			});
-
-			htmlAreasAcceso += '</div>';
-
-			var objetoRetorno = {
-				html: htmlAreasAcceso,
-				matrizID: arregloIDs
-			}
-
-			return objetoRetorno;
-		} 
-		else
-		{
-			var objetoRetorno = {
-				html: '',
-				javascript: function() {}
-			}
-
-			return  objetoRetorno;
-		}
-	},
-	/**
-	 * crea la estructura HTML y javascript correspondiente de los permisos de acceso en forma de check list
-	 * @param {object} matrizPermisoAcceso - objeto con datos de los permisos de acceso existentes
-	 * @param {String} sufijoIDhtml - sufijo que se agrega al id de los check para no repetir ID's
-	 */ 		
-	documentoPermisoAcceso: function ( matrizPermisoAcceso, sufijoIDhtml ) 
-	{
-		// sufijoIDhtml por defecto una cadena vacia
-		$.isEmptyObject( sufijoIDhtml ) ? sufijoIDhtml = '': null;
-
-		if( !jQuery.isEmptyObject( matrizPermisoAcceso ) )
-		{				
-			var arregloIDs = [],
-				htmlPermisoAcceso = '<div class="form-group">';
-
-			$.each( matrizPermisoAcceso, function ( index, val ) 
-			{
-				var claseEvento = '',
-					idPermisoAcceso = val.idPermiso.split(' ').join('_') + sufijoIDhtml;
-
-				arregloIDs.push( '#' + idPermisoAcceso );
-				val.idPermiso != 'all' ? claseEvento = 'checkNormal' : claseEvento = 'checkSuperUsuario';
-
-				 htmlPermisoAcceso += 
-				 '<div class="col-sm-6 col-md-6">' +
-					'<div class="input-group checkbox-inline">' +
-						'<span class="input-group-addon">' +
-							'<input id="' + idPermisoAcceso + '" value="' + val.idPermiso + '" type="checkbox" class="' + claseEvento + '">' + val.descripcion +
-						'</span>' +
+		var 
+			html =
+				'<form id="formRegistroRoles' + suf + '">' +
+					'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
+						'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
+							'<span aria-hidden="true">×</span>' +
+						'</button>' +
+						'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 					'</div>' +
-				'</div>';
-			});
 
-			htmlPermisoAcceso += '</div>';
+					'<div class="form-group">' +					
+						'<div class="col-sm-12 col-md-12" id="tabla_registro_roles' + suf + '"></div>' +
+					'</div>' +
+				'</form>',
 
-			var objetoRetorno = {
-				html: htmlPermisoAcceso,
-				javascript: function () 
-				{
-					$( '.checkNormal' ).change( function ( event )
-					{
-						$( this ).prop( 'checked' ) ?
-							$( '.checkSuperUsuario' ).prop( 'checked', false ) : null;						
-					});
+			javascript = function () {
+				var
+				tabla_roles = sigesop.tablaRegistro({
+					head: 'CLAVE ROL, DESCRICION ROL',
+					campo: 'clave_rol, descripcion_areaTrabajo'
+				});
+				
+				this.table.update_table = tabla_roles.update_table; // enlazamos a vista publica
+				this.table.body = tabla_roles.IDS.body;
+				document.getElementById( this.IDS.idTabla.flushChar('#') )
+				.innerHTML = '<br>' + tabla_roles.html
 
-					$( '.checkSuperUsuario' ).change( function ( event )
-					{
-						$( this ).prop( 'checked' ) ?
-							$( '.checkNormal' ).prop( 'checked', false ) : null;
-					});						
-				},
-				matrizID: arregloIDs
-			}
-			return objetoRetorno;
-		}
-		else
-		{
-			var objetoRetorno = {
-				html: '',
-				javascript: function() {}
-			}
+				$( tabla_roles.IDS.body ).contextMenu({
+					selector: 'tr',
+					items: {
+			            editar: 
+			            {
+			            	name: 'Editar', 
+			            	icon: 'edit',
+			        		callback: function ( key, _opt ) {
+			        			var index = $( this ).index();
+			        			typeof opt.table.actions.editar == 'function' ?
+			        				opt.table.actions.editar( index ):
+			        				console.log( 'function editar is null' );
+			        		}
+			            },
+			            eliminar: 
+			            {
+			            	name: 'Eliminar', 
+			            	icon: 'delete',
+			        		callback: function ( key, _opt ) {
+			        			var index = $( this ).index();
+			        			typeof opt.table.actions.eliminar == 'function' ?
+			        				opt.table.actions.eliminar( index ):
+			        				console.log( 'function eliminar is null' );
+			        		}
+			            }
+					}
+				});
+			},
 
-			return  objetoRetorno;
-		}
-	}
+			IDS = {
+				idTabla: '#tabla_registro_roles' + suf,
+				form: '#formRegistroRoles' + suf
+			},
+
+			doc = {
+				html: html,
+				javascript: javascript,
+				IDS: IDS,
+				table: {
+					body: null,
+					update_table: null
+				}
+			};
+
+		return doc;
+	},
 }

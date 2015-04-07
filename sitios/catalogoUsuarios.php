@@ -1,4 +1,19 @@
-<?php include("conexion/conexionUsuarios.php");?>
+<?php
+require ( '../ajax/sistema/sigesop.class.php' );
+require ( '../ajax/sistema/session.class.php' );
+$session = new session();
+$user = $_SESSION['user'];
+$pass = $_SESSION['pass'];
+$host = $_SESSION['host']; 
+
+$obj = new sigesop( $user, $pass );
+
+if ( !$obj->accesoPagina( 'catalogoUsuarios.php' ) ) {
+    session_destroy();
+    header('Location: ../error.php');
+}
+?>
+
 <!doctype html>
 <html lang="es">
 	<head>
@@ -6,10 +21,13 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
 		<link rel="stylesheet" href="../css/bootstrap.css">
 		<link rel="stylesheet" href="../css/cfe/jquery.ui.all.css">
 		<link rel="stylesheet" href="../css/style.css">
-		<link rel="stylesheet" href="../js/contextMenu/jquery.contextMenu.css">		
+		<link rel="stylesheet" href="../js/pnotify/pnotify.custom.min.css">
+		<link rel="stylesheet" href="../js/formValidation/formValidation.min.css">
+		<link rel="stylesheet" href="../js/contextMenu/jquery.contextMenu.css">	
 	</head>
 
 	<body>
@@ -25,23 +43,20 @@
 
 			<div class="tab-content">
 				<div class="tab-pane fade in active" id="main"></div>
-				<div class="tab-pane fade" id="main2"><br>
-					<div class="alert alert-danger alert-dismissible fade in" role="alert">
-						<button class="close" aria-label="Close" data-dismiss="alert" type="button">
-							<span aria-hidden="true">×</span>
-						</button>
-						<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>				
-					</div>
-
-					<div id="usuariosRegistrados"></div>
-				</div>
+				<div class="tab-pane fade" id="main2"></div>
 			</div>		        
 		</div>
 
 		<script type="text/javascript" src="../js/jquery.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="../js/pnotify/pnotify.custom.min.js"></script>
+
+		<script type="text/javascript" src="../js/formValidation/formValidation.min.js"></script>
+		<script type="text/javascript" src="../js/formValidation/bootstrap.min.js"></script>
+
 		<script type="text/javascript" src="../js/contextMenu/jquery.contextMenu.js"></script>
 		<script type="text/javascript" src="../js/jquery.blockUI.js"></script>
+		
 		<script type="text/javascript" src="../js/coreSigesop/core.sigesop.cfe.js"></script>		
 		<script type="text/javascript" src="../js/coreSigesop/core.usuarios.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/main.usuarios.js"></script>

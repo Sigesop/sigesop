@@ -1,4 +1,18 @@
-<?php include("conexion/conexionTipoMantenimiento.php");?>
+<?php
+require ( '../ajax/sistema/sigesop.class.php' );
+require ( '../ajax/sistema/session.class.php' );
+$session = new session();
+$user = $_SESSION['user'];
+$pass = $_SESSION['pass'];
+$host = $_SESSION['host']; 
+
+$obj = new sigesop( $user, $pass );
+
+if ( !$obj->accesoPagina( 'catalogoTipoMantenimiento.php' ) ) {
+    session_destroy();
+    header('Location: ../error.php');
+}
+?>
 <!doctype html>
 <html lang="es">
 	<head>

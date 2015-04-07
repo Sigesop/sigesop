@@ -9,7 +9,10 @@
 			document.write('<link rel="stylesheet" href="css/login.css">');
 		</script>		
 		<link rel="stylesheet" href="css/cfe/jquery.ui.all.css">
-		<link rel="stylesheet" href="css/bootstrap.css">		
+		<link rel="stylesheet" href="css/bootstrap.css">
+		
+		<link rel="stylesheet" href="js/pnotify/pnotify.custom.min.css">		
+		<link rel="stylesheet" href="js/formValidation/formValidation.min.css">
 	</head>
 
 	<body>
@@ -19,17 +22,14 @@
 		</noscript>
 
 		<script type="text/javascript" src="js/jquery.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>		
-		<script type="text/javascript" src="js/ui/jquery.ui.core.min.js"></script>
-		<script type="text/javascript" src="js/ui/jquery.ui.widget.min.js"></script>
-		<script type="text/javascript" src="js/ui/jquery.ui.mouse.min.js"></script>
-		<!-- <script type="text/javascript" src="js/ui/jquery.ui.button.min.js"></script> -->
-		<script type="text/javascript" src="js/ui/jquery.ui.draggable.min.js"></script>
-		<script type="text/javascript" src="js/ui/jquery.ui.position.min.js"></script>
-		<script type="text/javascript" src="js/ui/jquery.ui.resizable.min.js"></script>
-		<script type="text/javascript" src="js/ui/jquery.ui.dialog.min.js"></script>
-		<script type="text/javascript" src="js/ui/jquery.ui.effect.min.js"></script>
-		<script type="text/javascript" src="../js/jquery.blockUI.js"></script>
+		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/ui/jquery-ui.custom.min.js"></script>
+		<script type="text/javascript" src="js/pnotify/pnotify.custom.min.js"></script>
+
+		<script type="text/javascript" src="js/formValidation/formValidation.min.js"></script>
+		<script type="text/javascript" src="js/formValidation/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/jquery.blockUI.js"></script>
+	
 		<script src="js/coreSigesop/core.sigesop.cfe.js"></script>
 		<script src="js/coreSigesop/core.login.js"></script>
 		<script src="js/coreSigesop/main.login.js"></script>

@@ -2,88 +2,69 @@ $( document ).on( 'ready', main );
 
 function main()
 {
-	doc = $.sigesop.login.documentoLogin( '' );	
-	// $( 'body' ).html( doc.html );
-	document.getElementsByTagName( 'body' )[0].innerHTML = doc.html;
-	doc.javascript();
-
-	$( doc.IDS.botonAcceso ).on( 'click', function ( event ) 
-	{
-		event.preventDefault();
-		$( doc.IDS.formularioLogin ).dialog( "open" );
+	doc = sigesop.login.document({
+		success: login,
+		error: error
 	});
 
-	$( doc.IDS.botonLogin ).on( 'click', function ( event ) 
-	{
-		event.preventDefault();
-		var boton = $( this );
-		doc.datos.usuario.valor = $( doc.datos.usuario.idHTML ).val().trim();
+	document.getElementsByTagName( 'body' )[0].innerHTML = doc.html;
+	doc.javascript();
+}
 
-		var clave = $( doc.datos.clave.idHTML ).val();
-		!jQuery.isEmptyObject( clave ) ? doc.datos.clave.valor = $.sigesop.SHA1( clave ) : null;
-		// alert(envioDatos.clave.valor);
+function error () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); };
 
-		var array = [
-			doc.datos.usuario,
-			doc.datos.clave
-		]
+function login ( datos )
+{
+	datos.usuario.valor = $( datos.usuario.idHTML ).val().trim();
+	datos.clave.valor = $( datos.clave.idHTML ).val().SHA1();
+	// console.log(datos.clave.valor);
 
-		var flag = true;
-		flag = $.sigesop.validacion( array, { tipoValidacion: 'error' } );
-
-		if ( flag ) 
+	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+	sigesop.query({
+		data: datos,
+		type: 'POST',
+		class: 'sistema',
+		query: 'solicitudInicioSesion',
+		queryType: 'sendGetData',
+		success: function ( data ) 
 		{
-			boton.button('loading');
-			$.sigesop.msgBlockUI( '', 'loading', 'block', '#formularioLogin' );
-			$.sigesop.insertarDatosRespuestaSistema({
-				Datos: doc.datos,
-				type: 'POST',
-				clase: 'ajaxSistema',
-				solicitud: 'solicitudInicioSesion',
-				respuesta: function ( data ) 
+			if ( jQuery.isEmptyObject( data ) )
+			{
+				console.log('Valor retornado del servidor es null');
+				$.unblockUI();
+				return -1;		
+			} 
+	
+			if ( data.estado ) 
+			{
+				sigesop.msg( '<br><center>Acceso Autorizado</center>', '', 'success' );
+
+				$.unblockUI();
+				localStorage.rpe = data.rpe;
+				localStorage.usuario = datos.usuario.valor;
+				localStorage.indexUsuario = "sitios/" + data.indexUsuario;
+				// $( datos.usuario.idValidacion ).removeClass( "has-error" )
+				// $( datos.clave.idValidacion ).removeClass( "has-error" )								
+				// $( datos.usuario.idValidacion ).addClass( "has-success" )
+				// $( datos.clave.idValidacion ).addClass( "has-success" )						
+				document.location.href = "sitios/" + data.indexUsuario;						
+			} 
+			else 
+			{
+				$.unblockUI();
+				// sigesop.msg( '<br><center>Credenciales no válidas</center>', '', 'error' );
+				sigesop.msg( '<br><center>' + data.status.msj + '</center>', '', 'error' );
+				doc.IDS.$form.data( 'formValidation' ).updateStatus( 'usuario', 'INVALID' );
+				doc.IDS.$form.data( 'formValidation' ).updateStatus( 'clave', 'INVALID' );
+
+				setTimeout( function() 
 				{
-					boton.button( 'reset' );
-					if ( data !== null ) 
-					{
-						if (data.estado) 
-						{
-							$( '#formularioLogin' ).unblock();
-							$.sigesop.msgBlockUI( 'Acceso Autorizado', 'success' );
-
-							window.localStorage.usuario = doc.datos.usuario.valor;
-							$( doc.datos.usuario.idValidacion ).removeClass( "has-error" )
-							$( doc.datos.clave.idValidacion ).removeClass( "has-error" )								
-							$( doc.datos.usuario.idValidacion ).addClass( "has-success" )
-							$( doc.datos.clave.idValidacion ).addClass( "has-success" )						
-							document.location.href = "sitios/" + data.indexUsuario;						
-						} 
-						else 
-						{
-							$( '#formularioLogin' ).unblock();
-							$.sigesop.msgBlockUI( 'Credenciales no válidas', 'error' );
-
-							$( "#tips" ).text( "Usuario o Contraseña Incorrecta" );
-							$( "#formH6" ).addClass( "has-error" )
-
-							$( doc.datos.usuario.idValidacion ).addClass( "has-error" )
-							$( doc.datos.clave.idValidacion ).addClass( "has-error" )
-							
-							setTimeout( function() 
-							{
-								$( "#tips" ).removeClass( "ui-state-error", 1500 );
-								$( doc.datos.usuario.idValidacion ).removeClass( "has-error" );
-								$( doc.datos.clave.idValidacion ).removeClass( "has-error" );
-							}, 5000 );	
-						}
-					} else console.log('Valor retornado del servidor es null');
-				},
-
-				errorRespuesta: function() 
-				{ 
-					boton.button( 'reset' );
-					$( '#formularioLogin' ).unblock();					
-				}
-			});
-		}
+					// doc.IDS.$form.data( 'formValidation' ).resetField( 'usuario' );
+					// doc.IDS.$form.data( 'formValidation' ).resetField( 'clave' );
+					doc.IDS.$form.formValidation( 'resetForm' );
+				}, 5000 );	
+			}
+		},
+		error: function() {	$.unblockUI(); }
 	});
 }

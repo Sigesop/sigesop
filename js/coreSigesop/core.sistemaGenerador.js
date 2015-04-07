@@ -1,4 +1,4 @@
-$.sigesop.sistemaGenerador = {
+sigesop.sistemaGenerador = {
 	documentoSistemaGenerador: function ( obj, suf ) 
 	{
 		suf = suf || '';
@@ -10,29 +10,29 @@ $.sigesop.sistemaGenerador = {
 		var 			
 			html = 
 				'<form class="form-horizontal" role="form" method="post">' +
-				'	<div id="formNombreSistema_' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">Nombre Sistema:</label>' +
-				'		<div class="col-sm-7">' +
-				'			<input id="nombreSistema_' + suf + '" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="Ingrese nombre del sistema" value="'+obj.nombre_sistema_aero+'">' +
-				'		</div>' +
-				'	</div>' +
+					'<div id="formNombreSistema_' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">Nombre Sistema:</label>' +
+						'<div class="col-sm-7">' +
+							'<input id="nombreSistema_' + suf + '" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="Ingrese nombre del sistema" value="'+obj.nombre_sistema_aero+'">' +
+						'</div>' +
+					'</div>' +
 
-				'	<div id="formIdSistema_' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">ID del Sistema:</label>' +
-				'		<div class="col-sm-7">' +
-				'			<input id="idSistema_' + suf + '" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="Ingrese ID del sistema (2 digitos)" value="'+obj.id_sistema_aero+'">' +
-				'		</div>' +
-				'	</div>' +
+					'<div id="formIdSistema_' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">ID del Sistema:</label>' +
+						'<div class="col-sm-7">' +
+							'<input id="idSistema_' + suf + '" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="Ingrese ID del sistema (2 digitos)" value="'+obj.id_sistema_aero+'">' +
+						'</div>' +
+					'</div>' +
 
-				'	<div class="form-group">' +
-				'		<div class="col-md-3"></div>' +
-				'		<div class="col-md-7">' +
-				'			<p>' +
-				'				<button id="btnNuevoSistema_' + suf + '" class="btn btn-success" data-loading-text="Enviando..." ><span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button>' +
-				'				<button id="btnlimpiarSistema_' + suf + '" class="btn btn-success"><span class=" glyphicon glyphicon-repeat"></span> Limpiar</button>' +
-				'			</p>' +
-				'		</div>' +
-				'	</div>' +
+					'<div class="form-group">' +
+						'<div class="col-md-3"></div>' +
+						'<div class="col-md-7">' +
+							'<p>' +
+								'<button id="btnNuevoSistema_' + suf + '" class="btn btn-success" ><span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
+								'<button id="btnlimpiarSistema_' + suf + '" class="btn btn-success"><span class=" glyphicon glyphicon-repeat"></span> Limpiar</button>' +
+							'</p>' +
+						'</div>' +
+					'</div>' +
 				'</form>',
 
 			doc =
@@ -41,7 +41,7 @@ $.sigesop.sistemaGenerador = {
 
 				javascript: function ()
 				{
-					$.sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' )
+					sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' )
 				},
 
 				datos:

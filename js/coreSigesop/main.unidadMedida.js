@@ -2,13 +2,13 @@ $( document ).on( 'ready', main );
 
 function main () 
 {
-	doc = $.sigesop.unidadMedida.documentoCatalogoUnidadMedida();
+	doc = sigesop.unidadMedida.documentoCatalogoUnidadMedida();
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
 	// -----------------------------------------------------------------
 
-	docR = $.sigesop.tablaRegistro({
+	docR = sigesop.tablaRegistro({
 		head: 'UNIDAD DE MEDIDA, DESCRIPCIÓN',
 		campo: 'unidad_medida, descripcion_unidad_medida'
 	});
@@ -35,8 +35,7 @@ function main ()
 
 	// -----------------------------------------------------------------
 
-	$.sigesop.barraHerramientas( 'header' );
-	
+	$( 'header' ).barraHerramientas();
 	getData();	
 
 	// -----------------------------------------------------------------
@@ -67,18 +66,15 @@ function main ()
 
 function getData()
 {
-	$.sigesop.solicitarDatosSistema({
-		clase: 'ajaxListaVerificacion',
-		solicitud: 'obtenerUnidadMedida',
-		respuesta: function ( data ) 
+	sigesop.query({
+		class: 'listaVerificacion',
+		query: 'obtenerUnidadMedida',
+		success: function ( data ) 
 		{
 			window.sesion.matrizUnidadMedida = data;
-
 			docR.update_table( data );
-			
-			data != null ?
-				document.getElementById( 'badge_unidadMedida' ).innerHTML = data.length:
-				document.getElementById( 'badge_unidadMedida' ).innerHTML = '0';
+			document.getElementById( 'badge_unidadMedida' ).innerHTML =
+				!$.isEmptyObject( data ) ? data.length : '0';					
 		}
 	});
 }
@@ -93,40 +89,34 @@ function procesoElemento( doc, btn, callback )
 		doc.datos.descripcion_unidad_medida
 	];
 
-	if ( $.sigesop.validacion( arr, {tipoValidacion: 'error'} ) ) callback( doc, btn );
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' );
+	if ( sigesop.validacion( arr, {tipoValidacion: 'error'} ) ) callback( doc, btn );
+	else sigesop.msgBlockUI( 'Complete los campos', 'error' );
 }
 
 function nuevoElemento( doc, btn )
 {
-	var boton = $( btn );
-	boton.button( 'loading' );
-	$.sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
-
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxListaVerificacion',
-		solicitud: 'nuevaUnidadMedida',
+	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+	sigesop.query({
+		data: doc.datos,
+		class: 'listaVerificacion',
+		query: 'nuevaUnidadMedida',
+		queryType: 'sendData',
 		type: 'POST',
 		OK: function()
 		{
 			limpiarCampos( doc );
 			getData();
-			$.sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
-			boton.button('reset');
+			sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
 		},
 		NA: function () 
 		{
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
-			boton.button('reset');
+			sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
 		},
 
 		DEFAULT: function (data) 
 		{
-			$.sigesop.msgBlockUI( data, 'error' );
-			boton.button( 'reset' );
-		},
-		errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ); boton.button( 'reset' ) }
+			sigesop.msgBlockUI( data, 'error' );
+		}
 	});
 }
 
@@ -147,35 +137,37 @@ function eliminarElemento ( key, opt )
 
 	if( elemento )
 	{
-		var win = $.sigesop.ventanaEmergente({										
+		var 
+		win = sigesop.ventanaEmergente({										
 			idDiv: 'confirmar_eliminacion',
 			titulo: 'Autorización requerida',
 			clickAceptar: function( event ) 
 			{
 				event.preventDefault();
 				$( win.idDiv ).modal( 'hide' );
-				$.sigesop.insertarDatosSistema({
-					Datos: { unidad_medida: elemento.unidad_medida },
-					clase: 'ajaxListaVerificacion',
-					solicitud: 'eliminarUnidadMedida',
+				sigesop.query({
+					data: { unidad_medida: elemento.unidad_medida },
+					class: 'listaVerificacion',
+					query: 'eliminarUnidadMedida',
+					queryType: 'sendData',
 					OK: function ()
 					{
 						getData();
-						$.sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );
+						sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );
 					},
-					NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
-					DEFAULT: function ( data ) { $.sigesop.msgBlockUI( data, 'error' ) },
-					errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ) }
+					NA: function () { sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
+					DEFAULT: function ( data ) { sigesop.msgBlockUI( data, 'error' ) }					
 				});					
 			},
 			showBsModal: function () 
 			{
-				$( '#' + this.idBody ).html( '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>' );
+				document.getElementById( this.idBody )
+				.innerHTML = '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
 			}
 		});		
 	}
 	 
-	else $.sigesop.msgBlockUI( 'Seleccione un elemento para continuar'	, 'error' );
+	else sigesop.msgBlockUI( 'Seleccione un elemento para continuar'	, 'error' );
 }
 
 function editarElemento( key, opt )
@@ -188,7 +180,7 @@ function editarElemento( key, opt )
 	{	
 		// ---------- creamos la estructura para la edicion de el usuario en la ventana
 
-		var _doc = $.sigesop.unidadMedida.documentoCatalogoUnidadMedida ( elemento, '_update' );
+		var _doc = sigesop.unidadMedida.documentoCatalogoUnidadMedida ( elemento, '_update' );
 
 		// ---------- guardamos la llave primaria para la actualizacion de datos
 
@@ -196,7 +188,7 @@ function editarElemento( key, opt )
 
 		// ---------- 
 		
-		var win = $.sigesop.ventanaEmergente({
+		var win = sigesop.ventanaEmergente({
 			idDiv: 'divEdicion_unidadMedida',
 			titulo: 'Edicion de equipo',
 			clickAceptar: function ( event )
@@ -227,29 +219,26 @@ function editarElemento( key, opt )
 			}
 		});
 	} 
-	else $.sigesop.msgBlockUI( 'Seleccione un elemento para continuar', 'error' );
+	else sigesop.msgBlockUI( 'Seleccione un elemento para continuar', 'error' );
 }
 
 function actualizarElemento( doc, btn )
 {
-	var boton = $( btn );
-	boton.button( 'loading' );
-	$.sigesop.msgBlockUI('Enviando...', 'loading', 'block', '#divEdicion_unidadMedida_modal' );
-
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxListaVerificacion',
-		solicitud: 'actualizarUnidadMedida',
+	sigesop.msgBlockUI('Enviando...', 'loading', 'block', '#divEdicion_unidadMedida_modal' );
+	sigesop.query({
+		data: doc.datos,
+		class: 'listaVerificacion',
+		query: 'actualizarUnidadMedida',
+		queryType: 'sendData',
 		type: 'POST',
 		OK: function () 
 		{
 			getData();
 			$( '#divEdicion_unidadMedida' ).modal( 'hide' );
-			$.sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );			
+			sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );			
 		},
 
-		NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#divEdicion_unidadMedida_modal' ); boton.button('reset'); },
-		DEFAULT: function (data) { $.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#divEdicion_unidadMedida_modal' ); boton.button( 'reset' ); },
-		errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error', 'msgBlock', '#divEdicion_unidadMedida_modal' ); boton.button( 'reset' ) }
+		NA: function () { sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#divEdicion_unidadMedida_modal' ); },
+		DEFAULT: function (data) { sigesop.msgBlockUI( data, 'error', 'msgBlock', '#divEdicion_unidadMedida_modal' ); }		
 	}) ;
 }

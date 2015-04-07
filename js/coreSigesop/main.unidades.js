@@ -1,262 +1,185 @@
 $( document ).on( 'ready', main );
 
-function main ()
-{
-	doc = $.sigesop.unidades.documentoUnidad();
+function main () {
+	doc = sigesop.unidades.document({
+		error: sigesop.completeCampos,
+		success: nuevoElemento
+	});
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
-	// -------------------------------------------------------
-
-	docR = $.sigesop.tablaRegistro({
-			head: 'NUMERO DE UNIDAD, CAPACIDAD INSTALADA, CAPACIDAD EFECTIVA',
-			campo: 'numero_unidad, capacidad_instalada, capacidad_efectiva_unidad'
-		});
-
-	document.getElementById( 'unidadesRegistradas' ).innerHTML = '<br>' + docR.html;
-
-	$( docR.IDS.body ).contextMenu({
-		selector: 'tr',
-		items: {
-            editar: 
-            {
-            	name: 'Editar', 
-            	icon: 'edit',
-        		callback: editarElemento
-            },
-            eliminar: 
-            {
-            	name: 'Eliminar', 
-            	icon: 'delete',
-        		callback: eliminarElemento
-            }
-		}
-	});
-
-	// -------------------------------------------------------
-
-	$.sigesop.barraHerramientas( 'header' );
-	
-	$.sigesop.solicitarDatosSistema({
-		clase: 'ajaxGestionCentral',
-		solicitud: 'obtenerDatosCentral',
-		respuesta: function( data )
-		{
-			window.sesion.matrizCentral = data;
-
-			if ( data !== null ) 
-			{
-				doc.datos.clave_20.valor = data[ 0 ][ 'clave_20' ];
-				$( doc.datos.clave_20.idHTML ).val( data[ 0 ][ 'clave_20' ] );
+	docR = sigesop.unidades.registro({
+		suf: 'tabla',
+		table: {
+			actions: {
+				editar: editarElemento,
+				eliminar: eliminarElemento
 			}
 		}
 	});
+	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
+	docR.javascript();
 
+	/* Descarga de datos
+	 */ 
+	$( 'header' ).barraHerramientas();
 	getData();
-
-	// -------------------------------------------------------
-
-	$( doc.IDS.botonGuardar ).on('click', function ( event )
-	{
-		event.preventDefault();		
-		procesoElemento( doc, doc.IDS.botonGuardar, nuevoElemento );
-	});
-
-	$( doc.IDS.botonLimpiar ).click( function ( event )
-	{
-		event.preventDefault();
-		limpiarCampos( doc );
-	});
 }
 
-function getData()
-{
-	$.sigesop.solicitarDatosSistema({
-		clase: 'ajaxUnidades',
-		solicitud: 'obtenerUnidades',
-		respuesta: function ( data )
-		{
-			if (data !== null) 
+function getData() {
+	sigesop.query({
+		class: 'unidades',
+		query: 'obtenerUnidades',
+		success: function ( data ) {
+			if ( !$.isEmptyObject( data ) ) 
 			{
 				window.sesion.matrizUnidades = data;
 				
-				docR.update_table( data );	
-				data != null ?
-					document.getElementById( 'badge_unidad' ).innerHTML = data.length:
-					document.getElementById( 'badge_unidad' ).innerHTML = '0';			
+				docR.table.update_table( data );	
+				document.getElementById( 'badge_unidad' ).innerHTML = data != null ?
+					data.length : '0';		
 			}
 		}
 	});	
 }
 
-function limpiarCampos( doc )
-{	
-	doc.datos.numero_unidad.valor = null;
-	$( doc.datos.numero_unidad.idHTML ).val( '' );
-}
+function nuevoElemento( datos, IDS, limpiarCampos ) {
+	datos.numero_unidad.valor = $( datos.numero_unidad.idHTML ).val().trim();
 
-function procesoElemento( doc, btn, callback )
-{	
-	//------------------------- guardamos los datos seleccionados a la estructura de datos
-	
-	doc.datos.numero_unidad.valor = $( doc.datos.numero_unidad.idHTML ).val().trim();
-
-	// ------------------------ validamos los datos capturados y marcamos los datos nulos
-	
-	var arr = [
-		doc.datos.clave_20,
-		doc.datos.numero_unidad
-	];
-
-	if ( $.sigesop.validacion( arr, { tipoValidacion: 'error' } ) ) callback( doc, btn );
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' )
-}
-
-function nuevoElemento( doc, btn )
-{
-	var boton = $( btn );
-	boton.button( 'loading' );
-	$.sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
-
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxUnidades',
-		solicitud: 'nuevaUnidad',
+	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+	sigesop.query({
+		data: datos,
+		class: 'unidades',
+		query: 'nuevaUnidad',
+		queryType: 'sendData',
 		type: 'POST',
-		OK: function()
+		OK: function( msj, eventos )
 		{
-			limpiarCampos( doc );
+			$.unblockUI();
+			limpiarCampos();
 			getData();
-			$.sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
-			boton.button('reset');
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'success' );
 		},
-		NA: function () 
-		{
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
-			boton.button('reset');
+		NA: function ( msj, eventos ) {
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
 		},
-
-		DEFAULT: function (data) 
-		{
-			$.sigesop.msgBlockUI( data, 'error' );
-			boton.button( 'reset' );
-		},
-		errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ); boton.button( 'reset' ) }
+		DEFAULT: function ( msj, eventos ) {
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+		}
 	});
 }
 
-function eliminarElemento ( key, opt )
-{
-	var 
-		index = $( this ).index(),
-		elemento = window.sesion.matrizUnidades[ index ];
+function eliminarElemento ( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function eliminarElemento: index fuera de rango' );
 
-	if( elemento )
-	{
-		var win = $.sigesop.ventanaEmergente({										
-			idDiv: 'confirmar_eliminacion',
-			titulo: 'Autorización requerida',
-			clickAceptar: function( event ) 
-			{
-				event.preventDefault();
-				$( win.idDiv ).modal( 'hide' );
-				$.sigesop.insertarDatosSistema({
-					Datos: { numero_unidad: elemento.numero_unidad },
-					clase: 'ajaxUnidades',
-					solicitud: 'eliminarUnidad',
-					OK: function ()
-					{
-						getData();
-						$.sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );
-					},
-					NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
-					DEFAULT: function ( data ) { $.sigesop.msgBlockUI( data, 'error' ) },
-					errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ) }
-				});					
-			},
-			showBsModal: function () 
-			{
-				$( '#' + this.idBody ).html( '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>' );
-			}
-		});		
+	var elemento = window.sesion.matrizUnidades[ index ];
+	if( !elemento ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elemento para continuar', 'warning' );
+		throw new Error('function eliminarElemento: elemento es indefinido');
 	}
-	 
-	else $.sigesop.msgBlockUI( 'Seleccione un elemento para continuar'	, 'error' );
-}
 
-function editarElemento( key, opt )
-{
 	var 
-		index = $( this ).index(),
-		elemento = window.sesion.matrizUnidades[ index ];
 
-	if( elemento )
-	{	
-		// ---------- creamos la estructura para la edicion de el usuario en la ventana
-
-		var _doc = $.sigesop.unidades.documentoUnidad ( elemento,  '_update' );
-
-		// ---------- guardamos la llave primaria para la actualizacion de datos
-
-		_doc.datos.numero_unidad_update.valor = elemento.numero_unidad;
-		_doc.datos.clave_20.valor = window.sesion.matrizCentral[ 0 ].clave_20;
-
-		// ---------- insertamos los datos del equipo seleccionado en la ventana emergente de edicion
-		
-		var win = $.sigesop.ventanaEmergente({
-			idDiv: 'divEdicion_unidades',
-			titulo: 'Edicion de Unidad',
-			clickAceptar: function ( event )
-			{
-				event.preventDefault();
-				$( win.idDiv ).modal( 'hide' );
+	clickAceptar = function( event ) {
+		event.preventDefault();
+		$( win.idDiv ).modal( 'hide' );
+		sigesop.query({
+			data: { numero_unidad: elemento.numero_unidad },
+			class: 'unidades',
+			query: 'eliminarUnidad',
+			queryType: 'sendData',
+			OK: function ( msj, eventos ) {
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 			},
-			showBsModal: function () 
-			{
-				// ---------- ejecutamos el HTML y el Javascript del formulario
-
-				document.getElementById( this.idBody ).innerHTML = _doc.html;
-				_doc.javascript();
-
-				// ----------
-
-				$( _doc.IDS.botonGuardar ).on( 'click', function ( event ) 
-				{
-					event.preventDefault();
-					procesoElemento( _doc, _doc.IDS.botonGuardar, actualizarElemento );
-				});
-
-				$( _doc.IDS.botonLimpiar ).on( 'click', function ( event )
-				{
-					event.preventDefault();
-					limpiarCampos( _doc );
-				});
+			NA: function ( msj, eventos ) {
+				sigesop.msg( msj, sigesop.parseMsj( eventos ),'warning' );
+			},
+			DEFAULT: function ( msj, eventos ) {
+				sigesop.msg( msj, sigesop.parseMsj( eventos ),'error' );
 			}
-		});
-	} 
-	else $.sigesop.msgBlockUI( 'Seleccione un elemento para continuar', 'error' );
+		});					
+	},
+
+	win = sigesop.ventanaEmergente({
+		idDiv: 'confirmar_eliminacion',
+		titulo: 'Autorización requerida',
+		clickAceptar: clickAceptar,
+		showBsModal: function () {
+			document.getElementById( this.idBody ).innerHTML = 
+			'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>'
+		}
+	});	
 }
 
-function actualizarElemento( doc, btn )
-{
-	boton = $( btn );
-	boton.button( 'loading' );
-	$.sigesop.msgBlockUI('Enviando...', 'loading', 'block', '#divEdicion_unidades_modal' );
+function editarElemento( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function editarElemento: index fuera de rango' );
 
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxUnidades',
-		solicitud: 'actualizarUnidad',
-		type: 'POST',
-		OK: function () 
-		{
-			getData();
-			$( '#divEdicion_unidades' ).modal( 'hide' );
-			$.sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );			
+	var elemento = window.sesion.matrizUnidades[ index ];
+	if( !elemento ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elemento para continuar', 'warning' );
+		throw new Error('function editarElemento: elemento es indefinido');
+	}
+
+	/* creamos la estructura para la edicion de el usuario en la ventana	
+	 */
+	var _doc = sigesop.unidades.document ({
+		obj: elemento,  
+		suf: '-update',
+		success: actualizarElemento,
+		error: sigesop.completeCampos
+	});
+
+	/* guardamos la llave primaria para la actualizacion de datos	
+	 */
+	_doc.datos.numero_unidad_update.valor = elemento.numero_unidad;
+
+	/* insertamos los datos del equipo seleccionado en la ventana emergente de edicion	
+	 */
+	var 
+
+	win = sigesop.ventanaEmergente({
+		idDiv: 'div-edicion-unidades',
+		titulo: 'Edicion de Unidad',
+		clickAceptar: function ( event ) {
+			event.preventDefault();
+			$( win.idDiv ).modal( 'hide' );
 		},
+		showBsModal: function () {
+			document.getElementById( this.idBody )
+			.innerHTML = _doc.html;
+			_doc.javascript();
+		}
+	});
+}
 
-		NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#divEdicion_unidades_modal' ); boton.button('reset'); },
-		DEFAULT: function (data) { $.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#divEdicion_unidades_modal' ); boton.button( 'reset' ); },
-		errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error', 'msgBlock', '#divEdicion_unidades_modal' ); boton.button( 'reset' ) }
+function actualizarElemento( datos, IDS, limpiarCampos ) {
+	datos.numero_unidad.valor = $( datos.numero_unidad.idHTML ).val();
+
+	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI' );
+	sigesop.query({
+		data: datos,
+		class: 'unidades',
+		query: 'actualizarUnidad',
+		queryType: 'sendData',
+		type: 'POST',
+		OK: function ( msj, eventos ) {
+			getData();
+			$.unblockUI();
+			$( '#div-edicion-unidades' ).modal( 'hide' );
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'success' );
+		},
+		NA: function ( msj, eventos ) {
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
+		},
+		DEFAULT: function ( msj, eventos ) {
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+		}
 	}) ;
 }

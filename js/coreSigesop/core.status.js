@@ -1,13 +1,12 @@
-$.sigesop.status = {
+sigesop.status = {
 	// ---------- comprobarDatosPrincipalesNulos --------------------
 
 	comprobarDatosPrincipalesNulos: function () 
 	{
-		$.sigesop.solicitarDatosSistema({
-			clase: 'ajaxStatus',
-			solicitud: 'comprobarDatosPrincipalesNulos',
-			sincrono: false,
-			respuesta: $.sigesop.status.__datosPrincipalesNulos
+		sigesop.query({
+			class: 'status',
+			query: 'comprobarDatosPrincipalesNulos',
+			success: sigesop.status.__datosPrincipalesNulos
 		});			
 	},
 
@@ -28,60 +27,61 @@ $.sigesop.status = {
 		if ( data.roles === null ) 
 		{
 			flag = true;
-			matrizAcciones.push( $.sigesop.status.__roles );
+			matrizAcciones.push( sigesop.status.__roles );
 			camposError += '    <span class="glyphicon glyphicon-remove"></span> Rol de superintendente<br>';
 		} 
 
 		if ( data.areaTrabajo === null ) 
 		{
 			flag = true;
-			matrizAcciones.push( $.sigesop.status.__areaTrabajo );
+			matrizAcciones.push( sigesop.status.__areaTrabajo );
 			camposError += '    <span class="glyphicon glyphicon-remove"></span> Area de Trabajo del superintendente<br>';
 		} 
 
 		if ( data.personal === null ) 
 		{						
 			flag = true;
-			matrizAcciones.push( $.sigesop.status.__personal );			
+			matrizAcciones.push( sigesop.status.__personal );			
 			camposError += '    <span class="glyphicon glyphicon-remove"></span> Información del superintendente<br>';
 		}		
 
 		if ( data.central === null ) 
 		{
 			flag = true;
-			matrizAcciones.push( $.sigesop.status.__central );
+			matrizAcciones.push( sigesop.status.__central );
 			camposError += '    <span class="glyphicon glyphicon-remove"></span> Datos de la central<br>';
 		}
 
 		// ---------------- existe algún elemento nulo?
 
-		if ( flag ) 
-		{
+		if ( flag ) {
 			// ---------------- creacion y ejecucion de la ventana
 
-			var alerta = '' +
+			var alerta =
 				'<div id="datosPrioridad" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">'+
-				'	<div class="modal-dialog modal-lg">'+
-				'		<div id="datosPrioridad_modal" class="modal-content">'+
-				'			<div class="modal-header">'	+
-				'        		<h4 class="modal-title" >Información importante</h4>'+
-				'	    	</div>' +
+					'<div class="modal-dialog modal-lg">'+
+						'<div id="datosPrioridad_modal" class="modal-content">'+
+							'<div class="modal-header">'	+
+								'<h4 class="modal-title" >Información importante</h4>'+
+							'</div>' +
 
-				'	    	<div id="bodyDatosPrioridad" class="modal-body">'+
-				'	    		<div class="alert alert-danger">'+
-				'	    			<p > <h5 class="">'+
-				'						Se ha detectado falta de datos importantes para el funcionamiento del sistema. ' + camposError +
-				'						<br>Haga click al boton continuar para ingresar los datos correspondientes.'+
-				'	    			</h5></p>'+
-				'	    		</div>'+
-				'			</div>'+
+							'<div id="bodyDatosPrioridad" class="modal-body">'+
+								'<div class="alert alert-danger">'+
+									'<p>' +
+										'<h5 class="">'+
+											'Se ha detectado falta de datos importantes para el funcionamiento del sistema. ' + camposError +
+											'<br>Haga click al boton continuar para ingresar los datos correspondientes.'+
+										'</h5>' +
+									'</p>'+
+								'</div>'+
+							'</div>'+
 
-				'		    <div class="modal-footer">'+
-				'		        <button id="btnDatosNuevosCancelar" type="button" class="btn btn-danger">Cancelar</button>'+
-				'		        <button id="btnDatosNuevosSiguiente" type="button" class="btn btn-success">Siguiente</button>'+
-				'		    </div>'+
-				'    	</div>'+
-				'	</div>'+
+							'<div class="modal-footer">'+
+								'<button id="btnDatosNuevosCancelar" type="button" class="btn btn-danger">Cancelar</button> '+
+								'<button id="btnDatosNuevosSiguiente" type="button" class="btn btn-success">Siguiente</button>'+
+							'</div>'+
+						'</div>'+
+					'</div>'+
 				'</div>';
 			$( 'body' ).append( alerta );
 
@@ -92,7 +92,7 @@ $.sigesop.status = {
 				$( '#btnDatosNuevosCancelar' ).on( 'click', function( event ) 
 				{
 					event.preventDefault();
-					$.sigesop.requestCloseSesion();
+					sigesop.cerrarSesion();
 				});
 				
 				// -----------------------click del boton SIGUIENTE
@@ -126,7 +126,7 @@ $.sigesop.status = {
 					} 
 					else 
 					{
-						$.sigesop.alerta({
+						sigesop.alerta({
 							colorEstado: 'danger',
 							titulo: 'Error',
 							mensajeAlerta: 'Debe completar el registro actual para continuar',							
@@ -148,400 +148,349 @@ $.sigesop.status = {
 		}
 	},
 
-	__roles: function ()
-	{	
-		// -------------- descargamos las areas de acceso y los roles del servidor
+	__roles: function () {
+		var 		
+		leerDatos = function ( datos, IDS ) {
+			/* capturamos los accesos seleccionados
+			 */
+			datos.matrizAreaAcceso.length = 0; // vaciamos el arreglo para evitar repetidos
+			var 
+				i = 0,
+				lon = IDS.mtz_areaAcceso.length,
+				matriz = IDS.mtz_areaAcceso;
+			
+			for( i ; i < lon; i++ )
+				if ( $( matriz[ i ].idHTML ).prop( 'checked' ) ) 
+				datos.matrizAreaAcceso.push( $( matriz[ i ].idHTML ).val() );	
 
-		var rol = null,
-			matrizAreaAcceso = null,
-			matrizPermisoAcceso = null;
+
+			/* capturamos los permisos seleccionados
+			 */ 
+			datos.matrizPermisoAcceso.length = 0; // vaciamos el arreglo para evitar repetidos	
+			var 
+				i = 0,
+				lon = IDS.mtz_permisoAcceso.length,
+				matriz = IDS.mtz_permisoAcceso;
+			
+			for( i ; i < lon; i++ )
+				if ( $( matriz[ i ].idHTML ).prop( 'checked' ) ) 
+				datos.matrizPermisoAcceso.push( $( matriz[ i ].idHTML ).val() );
+
+			/* capturamos cajas de texto
+			 */ 
+			datos.nombreRol.valor = $( datos.nombreRol.idHTML ).val().trim();
+			datos.descripcionRol.valor = $( datos.descripcionRol.idHTML ).val().trim();	
+		},
 		
-		$.sigesop.solicitarDatosSistema({
-			clase: 'ajaxUsuarios',
-			solicitud: 'obtenerAreasAcceso',
-			sincrono: false,
-			respuesta: function ( data ) { matrizAreaAcceso = data }
+		nuevoElemento = function ( datos, IDS, limpiarCampos ) {
+			/* capturamos todos los datos del formulario
+			 */
+			leerDatos ( datos, IDS );
+
+			/* Enviamos a servidor
+			 */ 
+			sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+			sigesop.query({										
+				data: datos,
+				class: 'usuarios',
+				query: 'nuevoRolUsuario',
+				queryType: 'sendData',
+				type: 'POST',
+				OK: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					window.sesion.verificaSiguiente = true;
+					$('#bodyDatosPrioridad').html('<div class="alert alert-success"><h4 class="text-center">Rol agregado correctamente</h4></div>');
+				},
+				NA: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
+				},
+				DEFAULT: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+				},
+				error: function () { 
+					$.unblockUI(); 
+					sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
+				}	
+			}) ;
+		},
+
+		rol = sigesop.roles.document({
+			success: nuevoElemento
 		});
 
-		$.sigesop.solicitarDatosSistema({
-			clase: 'ajaxUsuarios',
-			solicitud: 'obtenerPermisoAcceso',
-			sincrono: false,
-			respuesta: function ( data ) { matrizPermisoAcceso = data }
-		});	
+		document.getElementById( 'bodyDatosPrioridad' ).innerHTML = '<br>' + rol.html;
+		rol.javascript();
 
-		if ( matrizAreaAcceso !== null && matrizPermisoAcceso !== null )
-		{
-			rol = $.sigesop.roles.documentoCatalagoRoles( null, matrizAreaAcceso, matrizPermisoAcceso, '_prioridad');
-			document.getElementById( 'bodyDatosPrioridad' ).innerHTML = '<br>' + rol.html;
-			rol.javascript();
-
-			$( rol.IDS.botonGuardar ).on( 'click', function ( event )
+		sigesop.query({
+			class: 'usuarios',
+			query: 'obtenerAreasAcceso',
+			success: function ( data ) 
 			{
-				event.preventDefault();
-				boton = $( this );
-				
-				// --------------capturamos los accesos seleccionados
-				
-				rol.datos.matrizAreaAcceso = []; // vaciamos el arreglo para evitar repetidos
+				window.sesion.matrizAreaAcceso = data;		
+				rol.update_areaAcceso( data );
+			}
+		});
 
-				var matriz = rol.IDS.matrizIDareaAcceso;
-				for( var i in matriz )
-				{
-					$( matriz[ i ] ).prop( 'checked' ) ? 
-						rol.datos.matrizAreaAcceso.push( $( matriz[ i ] ).val() ) : null;
-				}
-
-				// --------------capturamos los permisos seleccionados
-				
-				rol.datos.matrizPermisoAcceso = []; // vaciamos el arreglo para evitar repetidos
-
-				var matriz = rol.IDS.matrizIDpermisoAcceso;	
-				for( var i in matriz ) 
-				{
-					$( matriz[ i ] ).prop( 'checked' ) ?
-						rol.datos.matrizPermisoAcceso.push( $( matriz[ i ] ).val() ) : null;
-				}
-
-				// -------------- capturamos las cajas de datos restantes							
-
-				rol.datos.nombreRol.valor = $( rol.datos.nombreRol.idHTML ).val().trim();
-				rol.datos.descripcionRol.valor = $( rol.datos.descripcionRol.idHTML ).val().trim();
-
-				// --------------validamos los campos
-
-				var flagValidacionPermisos = true;
-				$.isEmptyObject( rol.datos.matrizPermisoAcceso ) ? flagValidacionPermisos = false : null;
-
-				var flagValidacionAreaAcceso = true;
-				$.isEmptyObject( rol.datos.matrizAreaAcceso ) ? flagValidacionAreaAcceso = false : null;
-
-				var arregloComprobacion = [ rol.datos.nombreRol, rol.datos.descripcionRol ];
-				
-				var flagValidacion = false;
-				flagValidacion = $.sigesop.validacion( arregloComprobacion, { tipoValidacion: 'error' } );
-
-				// -------------- enviamos insercion a la base de datos
-
-				if ( flagValidacion ) 
-				{
-					if ( flagValidacionAreaAcceso ) 
-					{
-						if ( flagValidacionPermisos ) 
-						{
-							boton.button( 'loading' );
-							$.sigesop.msgBlockUI( 'Enviando...', 'loading', 'block', '#datosPrioridad_modal');
-							
-							$.sigesop.insertarDatosSistema({										
-								Datos: rol.datos,
-								clase: 'ajaxUsuarios',
-								solicitud: 'nuevoRolUsuario',
-								type: 'POST',
-								OK: function () 
-								{
-									$( '#datosPrioridad_modal' ).unblock();
-									window.sesion.verificaSiguiente = true;
-									$('#bodyDatosPrioridad').html('<div class="alert alert-success"><h4 class="text-center">Rol agregado correctamente</h4></div>');
-								},
-
-								NA: function () 
-								{
-									$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#datosPrioridad_modal' );
-									boton.button('reset');
-								},
-
-								DEFAULT: function (data) 
-								{
-									$.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#datosPrioridad_modal' );
-									boton.button( 'reset' );
-								},
-
-								errorRespuesta: function ()
-								{ 
-									$.sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error', 'msgBlock', '#datosPrioridad_modal' ); 
-									boton.button( 'reset' );
-								}
-							}) ;
-						} else 
-						{
-							$.sigesop.msgBlockUI( 'No se han seleccionado permisos de usuario', 'error', 'msgBlock', '#datosPrioridad_modal' );
-							var permiso = {
-								idHTML: rol.IDS.divPermisoAcceso,
-								popover: {
-									content: 'Seleccione Permisos para el rol de usuario',
-									placement: 'top'
-								}
-							}
-							$.sigesop.validacion( [ permiso ], { tipoValidacion: 'error' } );
-						}
-					} else 
-					{
-						$.sigesop.msgBlockUI( 'No se han seleccionado areas de acceso', 'error', 'msgBlock', '#datosPrioridad_modal' );
-						
-						var acceso = {
-							idHTML: rol.IDS.divAreaAcceso,
-							popover: {
-								content: 'Seleccione areas de acceso visibles para el rol de usuario',
-								placement: 'top'
-							}
-						}
-						$.sigesop.validacion( [ acceso ], { tipoValidacion: 'error' } );										
-					}
-				} 
-				// else $.sigesop.msgBlockUI( 'Complete los campos', 'error', 'msgBlock', '#datosPrioridad_modal' );
-			});
-		}		
+		sigesop.query({
+			class: 'usuarios',
+			query: 'obtenerPermisoAcceso',
+			success: function ( data ) 
+			{
+				window.sesion.matrizPermisoAcceso = data;
+				rol.update_permisoAcceso( data );
+			}
+		});
 	},
 
-	__areaTrabajo: function()
-	{
-		var area = $.sigesop.areaTrabajo.documentoAreaTrabajo( null, 'Prioridad' );
+	__areaTrabajo: function() {
+		var 
+		nuevoElemento = function ( datos, IDS ) {
+			datos.claveAreaTrabajo.valor = $( datos.claveAreaTrabajo.idHTML ).val().trim();
+			datos.descripcionAreaTrabajo.valor = $( datos.descripcionAreaTrabajo.idHTML ).val().trim();
+
+			sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+			sigesop.query({
+				data: datos,
+				class: 'usuarios',
+				query: 'nuevaAreaTrabajo',
+				queryType: 'sendData',
+				type: 'POST',
+				OK: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					window.sesion.verificaSiguiente = true;
+					$( '#bodyDatosPrioridad' ).html( '<div class="alert alert-success"><h4 class="text-center">Área de trabajo agregado correctamente</h4></div>' );
+				},
+				NA: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
+				},
+				DEFAULT: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+				},
+				error: function () { 
+					$.unblockUI(); 
+					sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
+				}
+			}) ;
+		},
+
+		area = sigesop.areaTrabajo.document({
+			success: nuevoElemento
+		});
+
 		document.getElementById( 'bodyDatosPrioridad' ).innerHTML = '<br>' + area.html;
 		area.javascript();
-
-		$( area.IDS.botonGuardar ).on( 'click', function ( event )
-		{
-			event.preventDefault();
-			var boton = $(this);
-
-			// -------------- capturamos los datos de las cajas
-
-			area.datos.claveAreaTrabajo.valor = $( area.datos.claveAreaTrabajo.idHTML ).val().trim();
-			area.datos.descripcionAreaTrabajo.valor = $( area.datos.descripcionAreaTrabajo.idHTML ).val().trim();
-
-			var arregloComprobacion = [
-				area.datos.claveAreaTrabajo,
-				area.datos.descripcionAreaTrabajo
-			];
-
-			var flagValidacion = true;
-			flagValidacion = $.sigesop.validacion( arregloComprobacion, { tipoValidacion: 'error' } );
-
-			if ( flagValidacion ) 
-			{
-				boton.button('loading');
-				$.sigesop.msgBlockUI( 'Enviando...', 'loading', 'block', '#datosPrioridad_modal');
-
-				$.sigesop.insertarDatosSistema({
-					Datos: area.datos,
-					clase: 'ajaxUsuarios',
-					solicitud: 'nuevaAreaTrabajo',
-					type: 'POST',
-					OK: function () 
-					{
-						$( '#datosPrioridad_modal' ).unblock();
-						window.sesion.verificaSiguiente = true;
-						$( '#bodyDatosPrioridad' ).html( '<div class="alert alert-success"><h4 class="text-center">Área de trabajo agregado correctamente</h4></div>' );
-						boton.button( 'reset' );
-					},
-
-					NA: function () 
-					{
-						$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#datosPrioridad_modal' );
-						boton.button( 'reset' );
-					},
-
-					DEFAULT: function (data) 
-					{
-						$.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#datosPrioridad_modal' );
-						boton.button( 'reset' );
-					},
-					errorRespuesta: function ()
-					{
-						$.sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error', 'msgBlock', '#datosPrioridad_modal' );
-						boton.button( 'reset' );
-					}
-				}) ;
-			} 
-			// else $.sigesop.msgBlockUI( 'Complete los campos', 'error', 'msgBlock', '#datosPrioridad_modal' );
-		});
 	},
 
-	__personal: function()
-	{
-		var	usr = null,
-			matrizTipoRol = null,
-			matrizAreaTrabajo = null;
+	__personal: function() {
+		var	
+		nuevoElemento = function ( datos, IDS ) {
+			/* Leemos los datos del formulario
+			 */ 
+		    datos.nombreUsuario.valor = $( datos.nombreUsuario.idHTML ).val().trim();
+			datos.apellidosUsuario.valor = $( datos.apellidosUsuario.idHTML ).val().trim();	
+			datos.RPEusuario.valor = $( datos.RPEusuario.idHTML ).val().trim();
+			datos.usuario.valor = $( datos.usuario.idHTML ).val().trim();
+			datos.claveUsuario.valor = $( datos.claveUsuario.idHTML ).val().trim().SHA1();
+			datos.areaTrabajo.valor = $( datos.areaTrabajo.idHTML ).val();
+			datos.rolUsuario.valor = $( datos.rolUsuario.idHTML ).val();
 
-		$.sigesop.solicitarDatosSistema({
-			clase: 'ajaxUsuarios',
-			solicitud: 'obtenerTipoRolUsuario',
-			sincrono: false,
-			respuesta: function ( data ) { matrizTipoRol = data	}
-		});
-
-		$.sigesop.solicitarDatosSistema({
-			clase: 'ajaxUsuarios',
-			solicitud: 'obtenerAreaTrabajo',
-			sincrono: false,
-			respuesta: function ( data ) { matrizAreaTrabajo = data }
-		});
-
-		if ( matrizTipoRol != null && matrizAreaTrabajo != null ) 
-		{			
-			usr = $.sigesop.usuarios.documentoCatalogoUsuarios( null, matrizTipoRol, matrizAreaTrabajo, '_prioridad' );
-			document.getElementById( 'bodyDatosPrioridad' ).innerHTML = usr.html;
-			usr.javascript()
-
-			$( usr.IDS.botonGuardar ).on( 'click', function ( event ) 
-			{
-				event.preventDefault();
-				var boton = $(this);
-
-				// ----------------- capturamos los datos del HTML
-
-			    usr.datos.nombreUsuario.valor = $( usr.datos.nombreUsuario.idHTML ).val().trim();
-				usr.datos.apellidosUsuario.valor = $( usr.datos.apellidosUsuario.idHTML ).val().trim();
-				usr.datos.RPEusuario.valor = $( usr.datos.RPEusuario.idHTML ).val().trim();
-				usr.datos.usuario.valor = $( usr.datos.usuario.idHTML ).val().trim();
-				usr.datos.areaTrabajo.valor = $( usr.datos.areaTrabajo.idHTML ).val().trim(),
-				usr.datos.rolUsuario.valor = $( usr.datos.rolUsuario.idHTML ).val().trim();
-					
-				var	claveUsuario = null;
-				!jQuery.isEmptyObject( $( usr.datos.claveUsuario.idHTML ).val() ) ?
-					claveUsuario = $.sigesop.SHA1( $( usr.datos.claveUsuario.idHTML ).val() ) : claveUsuario = null ;
-				 
-				usr.datos.claveUsuario.valor = claveUsuario;
-				
-				// ----------------- validamos las cadenas de los campos
-				var arregloComprobacion = [
-					usr.datos.nombreUsuario,
-					usr.datos.apellidosUsuario,
-					usr.datos.RPEusuario,
-					usr.datos.usuario,
-					usr.datos.claveUsuario,
-					usr.datos.areaTrabajo,
-					usr.datos.rolUsuario
-				]
-
-				var flagValidacion = true;
-				flagValidacion = $.sigesop.validacion(arregloComprobacion, {tipoValidacion: 'error'});
-
-
-				// ----------------- comprobamos banderas y ejecutamos ajax al sistema
-
-				if ( flagValidacion ) 
+			/* Enviamos al servidor
+			 */ 
+			sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+			sigesop.query({
+				data: datos,
+				class: 'usuarios',
+				query: 'nuevoUsuario',
+				queryType: 'sendData',
+				type: 'POST',
+				OK: function ( msj, eventos ) 
 				{
-					if ( window.sesion.flagClave )
-					{
-						boton.button( 'loading' );
-						$.sigesop.msgBlockUI( 'Enviando...', 'loading', 'block', '#datosPrioridad_modal');
+					$.unblockUI();
+					window.sesion.verificaSiguiente = true;
+					$( '#bodyDatosPrioridad' ).html( '<div class="alert alert-success"><h4 class="text-center">Usuario agregado correctamente</h4></div>' );
+				},
+				NA: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
+				},
+				DEFAULT: function ( msj, eventos ) 
+				{
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+				},
+				error: function () { 
+					$.unblockUI(); 
+					sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
+				}
+			});
+		},
 
-						$.sigesop.insertarDatosSistema({
-							Datos: usr.datos,
-							clase: 'ajaxUsuarios',
-							solicitud: 'nuevoUsuario',
-							type: 'POST',
-							OK: function()
-							{
-								$( '#datosPrioridad_modal' ).unblock();
-								window.sesion.verificaSiguiente = true;
-								$( '#bodyDatosPrioridad' ).html( '<div class="alert alert-success"><h4 class="text-center">Usuario agregado correctamente</h4></div>' );
-								boton.button( 'reset' );
-							},
-							NA: function()
-							{
-								$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#datosPrioridad_modal' );
-								boton.button('reset');
-							},
-							DEFAULT: function( data )
-							{
-								$.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#datosPrioridad_modal' );
-								boton.button( 'reset' );
-							},
-							errorRespuesta: function()
-							{
-								$.sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error', 'msgBlock', '#datosPrioridad_modal' );
-								boton.button( 'reset' );
-							}
-						});
-					} 
-					else $.sigesop.msgBlockUI( 'error en la coincidencia de las contraseñas', 'error', 'msgBlock', '#datosPrioridad_modal' );
-				} 
-				else $.sigesop.msgBlockUI( 'Complete los campos', 'error', 'msgBlock', '#datosPrioridad_modal' );
-			} );
-		}
+		usr = sigesop.usuarios.document({
+				success: nuevoElemento
+			});
+
+		document.getElementById( 'bodyDatosPrioridad' ).innerHTML = usr.html;
+		usr.javascript();
+
+		sigesop.query({
+			class: 'usuarios',
+			query: 'obtenerAreaTrabajo',		
+			success: function( data )
+			{			
+				window.sesion.matrizAreaTrabajo = data;
+				sigesop.combo({
+					arr: data, 
+					elem: usr.datos.areaTrabajo.idHTML, 
+					campo: 'clave_areaTrabajo, descripcion_areaTrabajo', 
+					campoValor: 'clave_areaTrabajo'
+				});			
+			}
+		});	
+			
+		sigesop.query({
+			class: 'usuarios',
+			query: 'obtenerTipoRolUsuario',
+			success: function( data )
+			{
+				window.sesion.matrizTipoRol = data;
+				sigesop.combo({
+					arr: data, 
+					elem: usr.datos.rolUsuario.idHTML, 
+					campo: 'clave_rol, descripcion_areaTrabajo', 
+					campoValor: 'clave_rol'
+				});			
+			}										
+		});	
 	},
 
-	__central: function()
-	{
-		var central = $.sigesop.gestionCentral.documentoCatalogoGestionCentral( null, '_prioridad', false );
-		document.getElementById( 'bodyDatosPrioridad' ).innerHTML = central.html;
+	__central: function() {
+
+		var 
+
+		error = function () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); },
+
+		nuevaCentral = function ( datos, IDS ) {
+			datos.clave_20.valor = $( datos.clave_20.idHTML ).val().trim();	
+			datos.clave_sap.valor = $( datos.clave_sap.idHTML ).val().trim();
+			datos.centro_costo.valor = $( datos.centro_costo.idHTML ).val().trim();
+			datos.nombre_central.valor = $( datos.nombre_central.idHTML ).val().trim();
+			datos.direccion.valor = $( datos.direccion.idHTML ).val().trim();
+			datos.telefono.valor = $( datos.telefono.idHTML ).val().trim();
+			datos.cp.valor = $( datos.cp.idHTML ).val().trim();
+			datos.superintendente.valor = $( datos.superintendente.idHTML ).val().trim();
+
+			sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+			sigesop.query({
+				data: datos,
+				class: 'gestionCentral',
+				query: 'nuevaCentral',
+				queryType: 'sendData',
+				type: 'POST',
+				OK: function( msj, eventos ) {
+					$.unblockUI();
+					window.sesion.verificaSiguiente = true;
+					document.getElementById( '#bodyDatosPrioridad'.flushChar('#') )
+					.innerHTML = '<div class="alert alert-success"><h4 class="text-center">Datos de central correctamente</h4></div>';
+				},
+				NA: function ( msj, eventos ) {
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
+				},
+				DEFAULT: function ( msj, eventos ) {
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+				}
+			});
+		},
+
+		central = sigesop.gestionCentral.document({
+			error: error,
+			success: nuevaCentral
+		});
+
+		document.getElementById( 'bodyDatosPrioridad' )
+		.innerHTML = central.html;
 		central.javascript();
+		central.enable();
 
-		$( central.IDS.botonGuardar ).on( 'click', function ( event ) 
-		{
-			event.preventDefault();
-			var boton = $( this );
+		// $( central.IDS.botonGuardar ).on( 'click', function ( event ) 
+		// {
+		// 	event.preventDefault();
+		// 	var boton = $( this );
 
-			central.datos.claveCentral.valor = $( central.datos.claveCentral.idHTML ).val().trim();
-			// !$.isEmptyObject(globalDatosCentral) ? envioDatos.claveCentralUpdate.valor = globalDatosCentral[0]["clave_20"] : envioDatos.claveCentralUpdate.valor = null;
-			central.datos.claveSAP.valor = $( central.datos.claveSAP.idHTML ).val().trim();
-			central.datos.centroCosto.valor = $( central.datos.centroCosto.idHTML ).val().trim();
-			central.datos.nombreCentral.valor = $( central.datos.nombreCentral.idHTML ).val().trim();
-			central.datos.direccion.valor = $( central.datos.direccion.idHTML ).val().trim();
-			central.datos.telefono.valor = $( central.datos.telefono.idHTML ).val().trim();
-			central.datos.codigoPostal.valor = $( central.datos.codigoPostal.idHTML ).val().trim();
-			// central.datos.superintendente.valor = $( central.datos.superintendente.idHTML ).val().trim();		
+		// 	central.datos.claveCentral.valor = $( central.datos.claveCentral.idHTML ).val().trim();
+		// 	// !$.isEmptyObject(globalDatosCentral) ? envioDatos.claveCentralUpdate.valor = globalDatosCentral[0]["clave_20"] : envioDatos.claveCentralUpdate.valor = null;
+		// 	central.datos.claveSAP.valor = $( central.datos.claveSAP.idHTML ).val().trim();
+		// 	central.datos.centroCosto.valor = $( central.datos.centroCosto.idHTML ).val().trim();
+		// 	central.datos.nombreCentral.valor = $( central.datos.nombreCentral.idHTML ).val().trim();
+		// 	central.datos.direccion.valor = $( central.datos.direccion.idHTML ).val().trim();
+		// 	central.datos.telefono.valor = $( central.datos.telefono.idHTML ).val().trim();
+		// 	central.datos.codigoPostal.valor = $( central.datos.codigoPostal.idHTML ).val().trim();
+		// 	// central.datos.superintendente.valor = $( central.datos.superintendente.idHTML ).val().trim();		
 
-			var arregloValidacion = [
-				central.datos.claveCentral,			
-				central.datos.claveSAP,
-				central.datos.centroCosto,
-				central.datos.nombreCentral,
-				central.datos.direccion,
-				central.datos.telefono,
-				central.datos.codigoPostal,
-				central.datos.superintendente
-			];
+		// 	var arregloValidacion = [
+		// 		central.datos.claveCentral,			
+		// 		central.datos.claveSAP,
+		// 		central.datos.centroCosto,
+		// 		central.datos.nombreCentral,
+		// 		central.datos.direccion,
+		// 		central.datos.telefono,
+		// 		central.datos.codigoPostal,
+		// 		central.datos.superintendente
+		// 	];
 
-			var flagValidacion = false;
-			flagValidacion = $.sigesop.validacion(arregloValidacion, {tipoValidacion: 'error'});
+		// 	var flagValidacion = false;
+		// 	flagValidacion = sigesop.validacion(arregloValidacion, {tipoValidacion: 'error'});
 
-			if ( flagValidacion ) 
-			{
-				boton.button( 'loading' );
-				$.sigesop.msgBlockUI( 'Enviando...', 'loading', 'block', '#datosPrioridad_modal');
+		// 	if ( flagValidacion ) 
+		// 	{
+		// 		boton.button( 'loading' );
+		// 		sigesop.msgBlockUI( 'Enviando...', 'loading', 'block', '#datosPrioridad_modal');
 
-				$.sigesop.insertarDatosSistema({
-					Datos: central.datos,
-					clase: 'ajaxGestionCentral',
-					solicitud: 'nuevaCentral',
-					type: 'POST',
-					OK: function()
-					{	
-						$( '#datosPrioridad_modal' ).unblock();
-						window.sesion.verificaSiguiente = true;
-						$('#bodyDatosPrioridad').html('<div class="alert alert-success"><h4 class="text-center">Datos de central correctamente</h4></div>');
-					},
+		// 		sigesop.query({
+		// 			data: central.datos,
+		// 			class: 'gestionCentral',
+		// 			query: 'nuevaCentral',
+		// 			queryType: 'sendData',
+		// 			type: 'POST',
+		// 			OK: function()
+		// 			{	
+		// 				$( '#datosPrioridad_modal' ).unblock();
+		// 				window.sesion.verificaSiguiente = true;
+		// 				$('#bodyDatosPrioridad').html('<div class="alert alert-success"><h4 class="text-center">Datos de central correctamente</h4></div>');
+		// 			},
 
-					NA: function()
-					{
-						$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#datosPrioridad_modal' );
-						boton.button( 'reset' );
-					},
+		// 			NA: function()
+		// 			{
+		// 				sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#datosPrioridad_modal' );
+		// 				boton.button( 'reset' );
+		// 			},
 
-					DEFAULT: function( data )
-					{
-						$.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#datosPrioridad_modal' );
-						boton.button( 'reset' );
-					},
-
-					errorRespuesta: function()
-					{
-						$.sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error', 'msgBlock', '#datosPrioridad_modal' );
-						boton.button( 'reset' );	
-					}
-				});
-			} 
-			else $.sigesop.msgBlockUI( 'Complete los campos', 'error', 'msgBlock', '#datosPrioridad_modal' );
-		} );
+		// 			DEFAULT: function( data )
+		// 			{
+		// 				sigesop.msgBlockUI( data, 'error', 'msgBlock', '#datosPrioridad_modal' );
+		// 				boton.button( 'reset' );
+		// 			}
+		// 		});
+		// 	} 
+		// 	else sigesop.msgBlockUI( 'Complete los campos', 'error', 'msgBlock', '#datosPrioridad_modal' );
+		// } );
 	},
 
 	// --------------------------------------------------------------
 
-	graficaPastel: function ( data, elem ) 
-	{
+	graficaPastel: function ( data, elem ) {
     	if ( data !== null ) 
     	{
     		try 
@@ -611,6 +560,7 @@ $.sigesop.status = {
 				        },
 				        plotOptions: {
 				            pie: {
+				            	size: '100%',
 				                allowPointSelect: true,
 				                cursor: 'pointer',
 				                dataLabels: {
@@ -667,8 +617,7 @@ $.sigesop.status = {
 		else console.log( 'function: graficaPastel, [data] es nulo' );
 	},
 
-	tablaCapacidades: function ( data, suf ) 
-	{
+	tablaCapacidades: function ( data, suf ) {
 		if ( jQuery.isEmptyObject( data ) )
 		{
 			console.log( 'function: tablaCapacidades, [data] es nulo ' );
@@ -773,7 +722,7 @@ $.sigesop.status = {
 				var
 					html =
 					'<div class="panel-heading">Tabla desglosada</div>' +
-					'<table class="table table-hover">' +												
+					'<div class="table-responsive"><table class="table table-hover">' +												
 						'<thead><tr><th>Aerogenerador</th><th>Capacidad efectiva</th><th>' +
 						'Fecha de operación</th><th>Estado</th></tr></thead>' +
 						'<tbody>';
@@ -801,6 +750,10 @@ $.sigesop.status = {
 								mensajeEstado = 'Causa ajena';
 								estadoColor = 'warning';
 								break;
+							case 'F.A.':							
+								mensajeEstado = 'Falta de Aire';
+								estadoColor = 'success';
+								break;
 						}
 
 						// insertamos las filas de la tabla
@@ -813,7 +766,7 @@ $.sigesop.status = {
 						'</tr>';
 					}
 					
-					html += '</tbody></table>'
+					html += '</tbody></table></div>'
 					return html;					
 			},
 

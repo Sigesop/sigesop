@@ -2,166 +2,138 @@ $( document ).on( 'ready', main );
 
 function main ()
 {
-	doc = $.sigesop.areaTrabajo.documentoAreaTrabajo( null, '' );
+	/* Documento principal
+	 */ 
+	doc = sigesop.areaTrabajo.document({
+		error: error,
+		success: nuevoElemento
+	});
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
-	// -------------------------------------------------------------------------
-
-	docR = $.sigesop.tablaRegistro({
-		head: 'CLAVE DE ÁREA DE TRABAJO, DESCRIPCIÓN',
-		campo: 'clave_areaTrabajo, descripcion_areaTrabajo'
-	});
-	document.getElementById( 'areasRegistradas' ).innerHTML = '<br>' + docR.html;
-
-	$( docR.IDS.body ).contextMenu({
-		selector: 'tr',
-		items:{
-            editar: 
-            {
-            	name: 'Editar', 
-            	icon: 'edit',
-        		callback: editarElemento
-            },
-            eliminar: 
-            {
-            	name: 'Eliminar', 
-            	icon: 'delete',
-        		callback: eliminarElemento
-            }
+	/* Tabla de registros
+	 */
+	docR = sigesop.areaTrabajo.documentRegistro({
+		table: {
+			actions: {
+				editar: editarElemento,
+				eliminar: eliminarElemento
+			}
 		}
 	});
+	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
+	docR.javascript();
 
-	// -------------------------------------------------------------------------
-
-	$.sigesop.barraHerramientas( 'header' );
-		
+	/* Descarga de datos
+	 */ 
+	$( 'header' ).barraHerramientas();	
 	getData();
-
-	// -------------------------------------------------------------------------
-
-	$( doc.IDS.botonGuardar ).on('click', function(event) {
-		event.preventDefault();
-		procesoElemento( doc, doc.IDS.botonGuardar, nuevoElemento );
-	});
-
-	$( doc.IDS.botonLimpiar ).on('click', function(event)
-	{
-		event.preventDefault();
-		limpiarCampos( doc );
-	});
 }
 
-function procesoElemento ( doc, btn, callback )
+function error () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); }
+
+function nuevoElemento( datos, IDS, limpiarCampos )
 {
-	doc.datos.claveAreaTrabajo.valor = $( doc.datos.claveAreaTrabajo.idHTML ).val().trim();
-	doc.datos.descripcionAreaTrabajo.valor = $( doc.datos.descripcionAreaTrabajo.idHTML ).val().trim();
+	datos.claveAreaTrabajo.valor = $( doc.datos.claveAreaTrabajo.idHTML ).val().trim();
+	datos.descripcionAreaTrabajo.valor = $( doc.datos.descripcionAreaTrabajo.idHTML ).val().trim();
 
-	var arregloComprobacion = [
-		doc.datos.claveAreaTrabajo,
-		doc.datos.descripcionAreaTrabajo
-	];
-
-	var flagValidacion = true;
-	flagValidacion = $.sigesop.validacion( arregloComprobacion, { tipoValidacion: 'error' } );
-
-	if (flagValidacion) callback( doc, btn );
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' );
-}
-
-function nuevoElemento( doc, btn )
-{
-	var boton = $( btn );
-	boton.button('loading');
-	$.sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
-
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxUsuarios',
-		solicitud: 'nuevaAreaTrabajo',
+	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+	sigesop.query({
+		data: doc.datos,
+		class: 'usuarios',
+		query: 'nuevaAreaTrabajo',
+		queryType: 'sendData',
 		type: 'POST',
-		OK: function () 
+		OK: function ( msj, eventos ) 
 		{
-			limpiarCampos( doc );
-			getData();			
-			$.sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
-			boton.button('reset');
+			$.unblockUI();
+			limpiarCampos();
+			getData();
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
-		NA: function ()
+		NA: function ( msj, eventos ) 
 		{
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
-			boton.button('reset');
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, doc.IDS.$form ),'warning' );
 		},
-		DEFAULT: function ( data ) 
+		DEFAULT: function ( msj, eventos ) 
 		{
-			$.sigesop.msgBlockUI( data, 'error' );
-			boton.button('reset');
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, doc.IDS.$form ),'error' );
 		},
-		errorRespuesta: function() { boton.button( 'reset' ) }
+		error: function () { 
+			$.unblockUI(); 
+			sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
+		}
 	}) ;
 }
 
-function limpiarCampos( doc )
-{
-	doc.datos = $.sigesop.vaciarCampos ( doc.datos );
-}
-
-function eliminarElemento ( key, opt )
+function eliminarElemento ( index )
 {
 	var 
-		index = $( this ).index(),
 		elemento = window.sesion.matrizAreaTrabajo[ index ];
 
 	if( elemento )
 	{
-		var win = $.sigesop.ventanaEmergente({								
+		var 
+		win = sigesop.ventanaEmergente({								
 			idDiv: 'confirmarSolicitud',
 			titulo: 'Autorización requerida',
-			clickAceptar: function(event) 
+			clickAceptar: function ( event ) 
 			{
 				event.preventDefault();
 				$( win.idDiv ).modal( 'hide' );
 
-				$.sigesop.insertarDatosSistema({
-					Datos: { clave_areaTrabajo: elemento.clave_areaTrabajo },
-					clase: 'ajaxUsuarios',
-					solicitud: 'eliminarAreaTrabajo',
-					OK: function ()
-					{
+				sigesop.query({
+					data: { clave_areaTrabajo: elemento.clave_areaTrabajo },
+					class: 'usuarios',
+					query: 'eliminarAreaTrabajo',
+					queryType: 'sendData',
+					OK: function ( msj, eventos ) {
 						getData();
-						$.sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );
+						sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 					},
-					NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ); },
-					DEFAULT: function ( data ) { $.sigesop.msgBlockUI( data, 'error' ); }
+					NA: function ( msj, eventos ) {
+						sigesop.msg( msj, sigesop.parseMsj( eventos, doc.IDS.$form ),'warning' );
+					},
+					DEFAULT: function ( msj, eventos ) {
+						sigesop.msg( msj, sigesop.parseMsj( eventos, doc.IDS.$form ),'error' );
+					},
+					error: function () { 
+						sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
+					}
 				});					
 			},
 			showBsModal: function () {
-				$( '#' + this.idBody ).html( '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento?</h4></div>' );
+				document.getElementById( this.idBody ).innerHTML =
+				'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento?</h4></div>';
 			}
 		});		
 	} 
-	else $.sigesop.msgBlockUI( 'Seleccione un elemento para continuar'	, 'error' ); 
+	else sigesop.msgBlockUI( 'Seleccione un elemento para continuar'	, 'error' ); 
 }
 
-function editarElemento ( key, opt )
+function editarElemento ( index )
 {
 	var 
-		index = $( this ).index(),
 		elemento = window.sesion.matrizAreaTrabajo[ index ];
 
 	if ( elemento )
 	{
-		// ---------- creamos la estructura para la edicion de el usuario en la ventana
+		var
+		_doc = 	sigesop.areaTrabajo.document({
+					obj: elemento, 
+					suf: '_edicion',
+					error: error,
+					success: actualizarElemento
+				});
 
-		_doc = $.sigesop.areaTrabajo.documentoAreaTrabajo( elemento, '_edicion' );
-
-		// ---------- guardamos la llave primaria para la actualizacion de datos
-
+		/* guardamos la llave primaria para la actualizacion de datos
+		 */
 		_doc.datos.claveAreaTrabajoUpdate.valor = elemento.clave_areaTrabajo;
-
-		// ---------- insertamos los datos del equipo seleccionado en la ventana emergente de edicion
 		
-		var win = $.sigesop.ventanaEmergente({
+		var 
+		win = sigesop.ventanaEmergente({
 			idDiv: 'divEdicionArea',
 			titulo: 'Edicion de Area de Trabajo',
 			clickAceptar: function ( event )
@@ -171,80 +143,61 @@ function editarElemento ( key, opt )
 			},
 			showBsModal: function () 
 			{
-				// ---------- ejecutamos el HTML y el Javascript del formulario
-
 				document.getElementById( this.idBody ).innerHTML = _doc.html;
-				_doc.javascript();					
-
-				// ---------- creamos el evento del boton GUARDAR 
-
-				$( _doc.IDS.botonGuardar ).on( 'click', function ( event ) 
-				{
-					event.preventDefault();					
-					procesoElemento( _doc, _doc.IDS.botonGuardar, actualizarElemento );
-				});
-
-				$( _doc.IDS.botonLimpiar ).on( 'click', function ( event )
-				{
-					event.preventDefault();
-					limpiarCampos( _doc );
-				});
-
+				_doc.javascript();
 			}
 		});
 	}
-	else $.sigesop.msgBlockUI( 'Seleccione un elemento para continuar', 'error' );
+	else sigesop.msgBlockUI( 'Seleccione un elemento para continuar', 'error' );
 }
 
-function actualizarElemento( doc, btn )
+function actualizarElemento( datos, IDS )
 {
-	boton = $( btn );
-	boton.button( 'loading' );
-	$.sigesop.msgBlockUI( 'Enviando...', 'loading', 'block', '#divEdicionArea_modal' );
+	datos.claveAreaTrabajo.valor = $( datos.claveAreaTrabajo.idHTML ).val().trim();
+	datos.descripcionAreaTrabajo.valor = $( datos.descripcionAreaTrabajo.idHTML ).val().trim();
 
-	$.sigesop.insertarDatosSistema({										
-		Datos: doc.datos,
-		clase: 'ajaxUsuarios',
-		solicitud: 'actualizarAreaTrabajo',
+	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+	sigesop.query({										
+		data: datos,
+		class: 'usuarios',
+		query: 'actualizarAreaTrabajo',
+		queryType: 'sendData',
 		type: 'POST',
-		OK: function () 
+		OK: function ( msj, eventos ) 
 		{
+			$.unblockUI();
 			$( '#divEdicionArea' ).modal( 'hide' );
 			getData();
-			$.sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
-
-		NA: function () 
+		NA: function ( msj, eventos ) 
 		{
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#divEdicionArea_modal' );
-			boton.button('reset');
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
 		},
-
-		DEFAULT: function (data) 
+		DEFAULT: function ( msj, eventos ) 
 		{
-			$.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#divEdicionArea_modal' );
-			boton.button( 'reset' );
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
 		},
-		errorRespuesta: function()
-		{ 
-			boton.button( 'reset' ); 
-			$.sigesop.msgBlockUI( 'error de comunicación al servidor', 'error', 'msgBlock', '#divEdicionArea_modal' );
+		error: function () { 
+			$.unblockUI(); 
+			sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
 		}
 	}) ;
 }
 
 function getData()
 {
-	$.sigesop.solicitarDatosSistema({
-		clase: 'ajaxUsuarios',
-		solicitud: 'obtenerAreaTrabajo',		
-		respuesta: function( data )
+	sigesop.query({
+		class: 'usuarios',
+		query: 'obtenerAreaTrabajo',		
+		success: function( data )
 		{
 			window.sesion.matrizAreaTrabajo = data;
-			data != null ?
-				document.getElementById( 'badge_areaTrabajo' ).innerHTML = data.length:
-				document.getElementById( 'badge_areaTrabajo' ).innerHTML = '0';
-			docR.update_table( data );
+			document.getElementById( 'badge_areaTrabajo' ).innerHTML = data != null ?
+				data.length : '0';
+			docR.table.update_table( data );
 		}
 	});
 }

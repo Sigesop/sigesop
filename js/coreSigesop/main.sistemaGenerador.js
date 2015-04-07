@@ -2,13 +2,13 @@ $( document ).on( 'ready', main );
 
 function main ()
 {
-	doc = $.sigesop.sistemaGenerador.documentoSistemaGenerador();
+	doc = sigesop.sistemaGenerador.documentoSistemaGenerador();
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
 	// ----------------------------------------------------------------------
 
-	docR = $.sigesop.tablaRegistro({
+	docR = sigesop.tablaRegistro({
 		suf: '_',
 		head: 'ID DEL SISTEMA, NOMBRE DEL SISTEMA',
 		// body: data,
@@ -36,8 +36,7 @@ function main ()
 
 	// ----------------------------------------------------------------------
 	
-	$.sigesop.barraHerramientas( 'header' );
-		
+	$( 'header' ).barraHerramientas();
 	getData();
 
 	$( doc.IDS.botonGuardar ).click( function ( event ) 
@@ -69,62 +68,47 @@ function procesoElemento ( doc, btn, callback )
 
 	// -------------- enviamos insercion a la base de datos
 
-	if ( $.sigesop.validacion( array, { tipoValidacion: 'error' } ) ) 
+	if ( sigesop.validacion( array, { tipoValidacion: 'error' } ) ) 
 		callback( doc, btn );
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' );
+	else sigesop.msgBlockUI( 'Complete los campos', 'error' );
 }
 
 function nuevoElemento( doc, btn )
 {
-	boton = $( btn );
-	boton.button( 'loading' );
-	 
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxSistemasGenerador',
-		solicitud: 'nuevoSistema',
+	sigesop.query({
+		data: doc.datos,
+		class: 'sistemasGenerador',
+		query: 'nuevoSistema',
+		queryType: 'sendData',
 		type: 'POST',
 		OK: function()
 		{
 			limpiarCampos( doc );
 			getData();
-			$.sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
-			boton.button('reset');							
+			sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
 		},
 		NA: function()
 		{
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
-			boton.button('reset');								
+			sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );						
 		},
 		DEFAULT: function( data )
 		{
-			$.sigesop.msgBlockUI( data, 'error' );
-			boton.button( 'reset' );
-		},
-		errorRespuesta: function () 
-		{ 
-			$.sigesop.msgBlockUI( 'Error de comunicación al servidor', 'error' );
-			boton.button( 'reset' ) 
+			sigesop.msgBlockUI( data, 'error' );
 		}
 	});
 }
 
 function getData()
 {
-	$.sigesop.solicitarDatosSistema({
-		clase: 'ajaxSistemasGenerador',
-		solicitud: 'obtenerSistemas',
-		respuesta: function( data )
+	sigesop.query({
+		class: 'sistemasGenerador',
+		query: 'obtenerSistemas',
+		success: function( data )
 		{
 			window.sesion.matrizSistemas = data;
-
-			if ( data != null )
-			{
-				document.getElementById( 'badge_sistemas' ).innerHTML = data.length;
-				docR.update_table( data );
-			}
-
-			else document.getElementById( 'badge_sistemas' ).innerHTML = '0';
+			docR.update_table( data );
+			document.getElementById( 'badge_sistemas' ).innerHTML = 
+				!$.isEmptyObject( data ) ? data.length : '0';
 		}
 	});	
 }
@@ -148,24 +132,24 @@ function eliminarElemento ( key, option )
 			event.preventDefault();
 			$( win.idDiv ).modal( 'hide' );
 
-			$.sigesop.insertarDatosSistema({
-				Datos: { id_sistema_aero: elemento.id_sistema_aero },
-				clase: 'ajaxSistemasGenerador',
-				solicitud: 'eliminarSistema',
+			sigesop.query({
+				data: { id_sistema_aero: elemento.id_sistema_aero },
+				class: 'sistemasGenerador',
+				query: 'eliminarSistema',
+				queryType: 'sendData',
 				OK: function()
 				{
 					getData();
-					$.sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );	
+					sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );	
 				},
-				NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
-				DEFAULT: function ( data ) { $.sigesop.msgBlockUI( data, 'error' ) },
-				errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ) }
+				NA: function () { sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
+				DEFAULT: function ( data ) { sigesop.msgBlockUI( data, 'error' ) }
 			});	
 		};
 
 	if ( elemento )
 	{
-		var win = $.sigesop.ventanaEmergente({										
+		var win = sigesop.ventanaEmergente({										
 			idDiv: 'confirmarSolicitud',
 			titulo: 'Autorización requerida',			
 			clickAceptar: clickAceptar,
@@ -182,14 +166,14 @@ function editarElemento ( key, option )
 	var
 		index = $( this ).index(),
 		elemento = window.sesion.matrizSistemas[ index ],
-		docU = $.sigesop.sistemaGenerador.documentoSistemaGenerador( elemento, 'edicion' );
+		docU = sigesop.sistemaGenerador.documentoSistemaGenerador( elemento, 'edicion' );
 
 	if ( elemento )
 	{
 		// guardamos el ID del sistema original antes de actualizar
 		docU.datos.idSistemaUpdate.valor = elemento.id_sistema_aero;
 
-		var win = $.sigesop.ventanaEmergente({
+		var win = sigesop.ventanaEmergente({
 			idDiv: 'ventanaEdicionSistema',
 			titulo: 'Edición de sistema de generador',
 			clickAceptar: function( event ) 
@@ -215,35 +199,26 @@ function editarElemento ( key, option )
 
 function actualizarElemento( doc, btn )
 {
-	boton = $( btn );
-	boton.button( 'loading' );
-	$.sigesop.msgBlockUI('Enviando...', 'loading', 'block', '#ventanaEdicionSistema_modal' );
-	 
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxSistemasGenerador',
-		solicitud: 'actualizarSistema',
+	sigesop.msgBlockUI('Enviando...', 'loading', 'block', '#ventanaEdicionSistema_modal' );
+	sigesop.query({
+		data: doc.datos,
+		class: 'sistemasGenerador',
+		query: 'actualizarSistema',
+		queryType: 'sendData',
 		type: 'POST',
 		OK: function()
 		{
 			getData();
 			$( '#ventanaEdicionSistema' ).modal( 'hide' );
-			$.sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );			
+			sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );			
 		},
 		NA: function()
 		{
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#ventanaEdicionSistema_modal' );
-			boton.button('reset');								
+			sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#ventanaEdicionSistema_modal' );							
 		},
 		DEFAULT: function( data )
 		{
-			$.sigesop.msgBlockUI( data, 'error', 'msgBlock', '#ventanaEdicionSistema_modal' );
-			boton.button( 'reset' );
-		},
-		errorRespuesta: function () 
-		{ 
-			$.sigesop.msgBlockUI( 'Error de comunicación al servidor', 'error', 'msgBlock', '#ventanaEdicionSistema_modal' );
-			boton.button( 'reset' ) 
+			sigesop.msgBlockUI( data, 'error', 'msgBlock', '#ventanaEdicionSistema_modal' );
 		}
 	});
 }

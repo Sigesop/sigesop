@@ -1,4 +1,4 @@
-$.sigesop.tipoMantenimiento = {
+sigesop.tipoMantenimiento = {
 	documentoTipoMantenimiento: function ( obj, suf )
 	{
 		suf = suf || '';
@@ -12,45 +12,45 @@ $.sigesop.tipoMantenimiento = {
 		var 
 			html =
 				'<form class="form-horizontal" role="form">' +
-				'	<div id="formNombreMantenimiento' + suf + '" class="form-group">'+
-				'		<label class="col-sm-3 control-label">Nombre Mantenimiento:</label>'+
-				'		<div class="col-sm-7">'+
-				'			<input id="nombreMantenimiento' + suf + '" class="form-control input-md eventoCambioMayuscula" ' +
+					'<div id="formNombreMantenimiento' + suf + '" class="form-group">'+
+						'<label class="col-sm-3 control-label">Nombre Mantenimiento:</label>'+
+						'<div class="col-sm-7">'+
+							'<input id="nombreMantenimiento' + suf + '" class="form-control input-md eventoCambioMayuscula" ' +
 							'value="' + obj.nombre_mantenimiento + '" placeholder="Ingrese nombre del nuevo tipo de mantenimiento"></input>'+
-				'		</div>'+
-				'	</div>'+
+						'</div>'+
+					'</div>'+
 
-				'	<div id="formIDMantenimiento' + suf + '" class="form-group">'+
-				'		<label class="col-sm-3 control-label">ID Mantenimiento:</label>'+
-				'		<div class="col-sm-7">'+
-				'			<input id="IDMantenimiento' + suf + '" class="form-control input-md eventoCambioMayuscula" ' +
+					'<div id="formIDMantenimiento' + suf + '" class="form-group">'+
+						'<label class="col-sm-3 control-label">ID Mantenimiento:</label>'+
+						'<div class="col-sm-7">'+
+							'<input id="IDMantenimiento' + suf + '" class="form-control input-md eventoCambioMayuscula" ' +
 							'value ="' + obj.id_mantenimiento + '" placeholder="Ingrese ID del mantenimiento (2 Caracteres)"></input>'+
-				'		</div>'+
-				'	</div>'+
+						'</div>'+
+					'</div>'+
 
-				'	<div id="FormNumeroFrecuenciaMantenimiento' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">Frecuencia:</label>' +
-				'		<div class="col-sm-3">' +
-				'			<input id="numeroFrecuenciaMantenimiento' + suf + '" class="form-control input-md" ' +
+					'<div id="FormNumeroFrecuenciaMantenimiento' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">Frecuencia:</label>' +
+						'<div class="col-sm-3">' +
+							'<input id="numeroFrecuenciaMantenimiento' + suf + '" class="form-control input-md" ' +
 							'value="' + obj.numero_frecuencia + '" placeholder="Frecuencia"></input>' +
-				'		</div>' +
-				'		<div class="col-sm-4">' +
-				'			<select id="tipoFrecuenciaMantenimiento' + suf + '" class="form-control">' +
-				'				<option value="">' + $.sigesop.seleccioneOpcion + '</option>' +
-				'				<option value="d">DIAS</option>' +
-				'				<option value="M">MESES</option>' +
-				'				<option value="y">AÑOS</option>' +
-				'			</select>' +
-				'		</div>' +
-				'	</div>' +
+						'</div>' +
+						'<div class="col-sm-4">' +
+							'<select id="tipoFrecuenciaMantenimiento' + suf + '" class="form-control">' +
+								'<option value="">' + sigesop.seleccioneOpcion + '</option>' +
+								'<option value="d">DIAS</option>' +
+								'<option value="M">MESES</option>' +
+								'<option value="y">AÑOS</option>' +
+							'</select>' +
+						'</div>' +
+					'</div>' +
 
-				'	<div class="form-group">'+
-				'		<div class="col-sm-3 control-label"></div>'+
-				'		<p class="col-sm-7">'+
-				'			<button id="btnGuardarTipoMantenimiento' + suf + '" type="submit" class="btn btn-success" data-loading-text="Enviando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button>'+
-				'			<button id="btnLimpiarTipoMantenimiento' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>'+
-				'		</p>'+
-				'	</div>	'+
+					'<div class="form-group">'+
+						'<div class="col-sm-3 control-label"></div>'+
+						'<p class="col-sm-7">'+
+							'<button id="btnGuardarTipoMantenimiento' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> '+
+							'<button id="btnLimpiarTipoMantenimiento' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>'+
+						'</p>'+
+					'</div>'+
 				'</form>',
 
 			doc = {
@@ -60,7 +60,7 @@ $.sigesop.tipoMantenimiento = {
 				{
 					$( doc.datos.tipo_frecuencia.idHTML ).val( obj.tipo_frecuencia );
 
-					$.sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
+					sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
 
 					$( doc.datos.numero_frecuencia.idHTML ).spinner({
 						spin: function ( event, ui )

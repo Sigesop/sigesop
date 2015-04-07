@@ -1,220 +1,550 @@
-$.sigesop.mantenimiento = {
-	documentoProgramaMantenimiento: function ( obj, suf )
+sigesop.mantenimiento = {
+	document: function ( opt )
 	{
-		obj = obj || {};
+		/* suf
+		 * obj
+		 * success
+		 * error
+		 */
 
-		suf = suf || '';	
+		var
+			obj = opt.obj || {},
+			suf = opt.suf || '';
 				
 		// -------------------- Estructura HTML del documento
 
 		var 
 			html =
 				'<div class="panel panel-success">' +
-				'	<div class="panel-heading">Datos de la orden de trabajo</div>' +
-				'	<br>' +
-				'	<form class="form-horizontal" role="form">' +
-				'		<div id="formUnidad' + suf + '" class="form-group">' +
-				'			<label class="control-label col-sm-3">Unidad: </label>' +
-				'			<div class="col-sm-7">' +
-				'				<select id="numeroUnidad' + suf + '" class="form-control"></select>' +
-				'			</div>' +
-				'		</div>' +
+					'<div class="panel-heading">Datos de la orden de trabajo</div>' +
+					'<br>' +
 
-				'		<div id="formNumeroGenerador' + suf + '" class="form-group">' +
-				'			<label class="control-label col-sm-3">Aerogenerador: </label>' +
-				'			<div class="col-sm-7">' +
-				'				<select id="numeroGenerador' + suf + '" class="form-control" disabled></select>' +
-				'			</div>' +
-				'		</div>' +
-						
-				'		<div id="formTipoMantto' + suf + '" class="form-group">' +
-				'			<label for="" class="control-label col-sm-3">Tipo Mantenimiento: </label>' +
-				'			<div class="col-sm-7">' +
-				'				<select id="tipoMantto' + suf + '" class="form-control" disabled></select>' +
-				'			</div>' +
-				'		</div>' +
+					'<form id="formCrearMantto' + suf + '" class="form-horizontal" role="form">' +				
+						'<div class="form-group">' +
+						'	<label class="control-label col-sm-3">Unidad: </label>' +
+						'	<div class="col-sm-7">' +
+						'		<select name="numero_unidad" id="numero_unidad' + suf + '" class="form-control"></select>' +
+						'	</div>' +
+						'</div>' +
 
-				'		<div id="formDuracion' + suf + '" class="form-group">' +
-				'			<label for="" class="control-label col-sm-3">Duración: </label>' +
-				'			<div class="col-sm-3">' +
-				'				<input id="duracion' + suf + '" class="form-control" >' +
-				'			</div>' +
-				'			<div class="col-sm-4">' +
-				'				<select id="magnitudDuracion' + suf + '" class="form-control" >' +
-				'					<option value="">' + $.sigesop.seleccioneOpcion + '</option>' +
-				'					<option value="d">DIAS</option>' +
-				'					<option value="M">MESES</option>' +
-				'					<option value="y">AÑOS</option>' +
-				'				</select>' +
-				'			</div>' +
-				'		</div>' +
-
-				'		<div id="formFechas' + suf + '" class="form-group">' +
-				'			<label for="" class="control-label col-sm-3">Periodo de Programación Inicial: </label>' +
-				'			<div class="col-sm-7">' +
-				'					<input id="fechaProgramada' + suf + '" type="text" class="form-control">' +
-				'			</div>' +
-				'		</div>' +
-
-				'		<div id="formFechaFinalProgramada' + suf + '" class="form-group">' +
-				'			<label for="" class="control-label col-sm-3">Periodo de Programación Final: </label>' +
-				'			<div class="col-sm-7">' +
-				'					<input id="fechaFinalProgramada' + suf + '" type="text" class="form-control">' +
-				'			</div>' +
-				'		</div>' +
-
-				// '		<div id="formUsuarioResponsable' + suf + '" class="form-group">' +
-				// '			<label for="" class="control-label col-sm-3">Trabajador Responsable: </label>' +
-				// '			<div class="col-sm-5">' +
-				// '					<input id="usuarioResponsable' + suf + '" type="text" class="form-control" disabled>' +
-				// '			</div>' +			
-				// '			<div class="col-sm-4">'+
-				// '				<p class="pull-center">'+
-				// '					<button id="btnResp' + suf + '" class="btn btn-primary" > <span class="glyphicon glyphicon-user"></span> Seleccionar </button>'+
-				// '				</p>'+
-				// '			</div>'+
-				// '		</div>' +
-
-				// '		<div id="formUsuarioSuper' + suf + '" class="form-group">' +
-				// '			<label for="" class="control-label col-sm-3">Trabajador Supervisor</label>' +
-				// '			<div class="col-sm-5">' +
-				// '					<input id="usuarioSuper' + suf + '" type="text" class="form-control" disabled>' +
-				// '			</div>' +				
-				// '			<div class="col-sm-4">'+
-				// '				<p class="pull-center">'+
-				// '					<button id="btnSuperv' + suf + '" class="btn btn-primary" > <span class="glyphicon glyphicon-user"></span> Seleccionar </button>'+
-				// '				</p>'+
-				// '			</div>'+
-				// '		</div>' +
-
-				// '		<div id="formUsuarioAuxiliar' + suf + '" class="form-group">' +
-				// '			<label for="" class="control-label col-sm-3">Trabajador Auxiliar: </label>' +				
-				// '			<div class="col-sm-4">'+
-				// '				<p class="pull-center">'+
-				// '					<button id="btnAuxiliar' + suf + '" class="btn btn-primary" > <span class="glyphicon glyphicon-user"></span> Seleccionar </button>'+
-				// '				</p>'+
-				// '			</div>'+
-				// '		</div>' +			
-
-				// '		<div class="form-group">'+
-				// '			<div class="col-sm-3"> </div>'+
-				// '			<div id="listaUsuarioAux' + suf + '" class="col-sm-5"> </div>' +
-				// '		</div>'+
-
-				'		<div id="formTrabajoSolicitado' + suf + '" class="form-group">' +
-				'			<label class="control-label col-sm-3">Trabajo solicitado: </label>' +
-				'			<div class="col-sm-7">' +
-				'				<textarea id="trabajoSolicitado' + suf + '" class="form-control eventoCambioMayuscula' + suf + '" ></textarea>' +
-				'			</div>' +
-				'		</div>' +
+						'<div class="form-group">' +
+						'	<label class="control-label col-sm-3">Aerogenerador: </label>' +
+						'	<div class="col-sm-7">' +
+						'		<select name="numero_aero" id="numero_aero' + suf + '" class="form-control"></select>' +
+						'	</div>' +
+						'</div>' +
 							
-				'		<div class="form-group">' +
-				'			<div class="col-sm-3 control-label"></div>' +
-				'			<p class="col-sm-9">' +
-				'				<button id="btnGenerarOrdenes' + suf + '" type="submit" class="btn btn-success" data-loading-text="Enviando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Generar</button>' +
-				'				<button id="btnLimpiarFormOrdenes' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
-				'			</p>' +
-				'		</div>' +
-				'	</form>' +
+						'<div class="form-group">' +
+						'	<label for="" class="control-label col-sm-3">Tipo Mantenimiento: </label>' +
+						'	<div class="col-sm-7">' +
+						'		<select name="id_mantenimiento" id="id_mantenimiento' + suf + '" class="form-control"></select>' +
+						'	</div>' +
+						'</div>' +
+
+						'<div class="form-group">' +
+						'	<label for="" class="control-label col-sm-3">Duración: </label>' +
+						'	<div class="col-sm-3">' +
+						'		<input name="duracion" id="duracion' + suf + '" class="form-control" >' +
+						'	</div>' +
+						'	<div class="col-sm-4">' +
+						'		<select name="magnitud_duracion" id="magnitud_duracion' + suf + '" class="form-control" >' +
+						'			<option value="">' + sigesop.seleccioneOpcion + '</option>' +
+						'			<option value="d">DIAS</option>' +
+						'			<option value="M">MESES</option>' +
+						'			<option value="y">AÑOS</option>' +
+						'		</select>' +
+						'	</div>' +
+						'</div>' +
+
+						'<div class="form-group">' +
+						'	<label for="" class="control-label col-sm-3">Periodo de Programación Inicial: </label>' +
+						'	<div class="col-sm-4">' +
+						'			<input name="fecha_inicial" id="fecha_inicial' + suf + '" type="text" class="form-control">' +
+						'	</div>' +
+						'</div>' +
+
+						'<div class="form-group">' +
+						'	<label for="" class="control-label col-sm-3">Periodo de Programación Final: </label>' +
+						'	<div class="col-sm-4">' +
+						'			<input name="fecha_final" id="fecha_final' + suf + '" type="text" class="form-control">' +
+						'	</div>' +
+						'</div>' +				
+
+						'<div class="form-group">' +
+						'	<label class="control-label col-sm-3">Trabajo solicitado: </label>' +
+						'	<div class="col-sm-7">' +
+						'		<textarea name="trabajo_solicitado" id="trabajo_solicitado' + suf + '" class="form-control eventoCambioMayuscula' + suf + '" ></textarea>' +
+						'	</div>' +
+						'</div>' +
+								
+						'<div class="form-group">' +
+						'	<div class="col-sm-3 control-label"></div>' +
+						'	<p class="col-sm-9">' +
+						'		<button type="submit" id="btnGenerarOrdenes' + suf + '" class="btn btn-success" data-loading-text="Enviando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Generar</button>' +
+						'		<button type="reset" id="btnLimpiarFormOrdenes' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
+						'	</p>' +
+						'</div>' +
+
+					'</form>' +
 				'</div>',
 
-			obj = {
-				html: html,
+			javascript = function ()
+			{
+				sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
 
-				javascript: function ()
+				var 
+				form = this.IDS.form,
+				$numero_unidad = $( this.datos.numero_unidad.idHTML ),
+				$numero_aero = $( this.datos.numero_aero.idHTML ),
+				$id_mantenimiento = $( this.datos.id_mantenimiento.idHTML ),
+				$duracion = $( this.datos.duracion.idHTML ),
+				$fecha_inicial = $( this.datos.fecha_inicial.idHTML ),
+				$fecha_final = $( this.datos.fecha_final.idHTML ),
+				$form = $( form ).formValidation({
+			        icon: {
+			            valid: 'glyphicon glyphicon-ok',
+			            invalid: 'glyphicon glyphicon-remove',
+			            validating: 'glyphicon glyphicon-refresh'
+			        },
+
+			        onSuccess: function ( e ) {
+			        	e.preventDefault();			        	
+			        	typeof opt.success == 'function' ?
+			        		opt.success( doc.datos, limpiarCampos ) :
+			        		console.log( 'success is null' );
+			        },
+
+			        onError: function ( e ) {
+			        	e.preventDefault();			        	
+			        	typeof opt.error == 'function' ?
+			        		opt.error() : console.log( 'error is null' );			        	
+			        },
+
+			        fields: {
+			            numero_unidad: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Seleccione número de unidad'
+			                    }
+			                }
+			            },
+			            numero_aero: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Seleccione número de aerogenerador'
+			                    }
+			                }
+			            },
+			            id_mantenimiento: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Seleccione un tipo de Mantenimiento'
+			                    }
+			                }
+			            },
+			            duracion: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Agregue duracion de mantenimiento'
+			                    },
+			                    integer: {
+			                        message: 'Sólo números enteros'
+			                    }
+			                }
+			            },
+			            magnitud_duracion: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Seleccione magnitud de duración'
+			                    }
+			                }
+			            },
+			            fecha_inicial: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Es necesaria la fecha de inicio de periodo'
+			                    },
+                                date: {
+                                	format: 'DD-MM-YYYY',
+                                	message: 'Escriba un formato de fecha válido'
+                                }
+			                }
+			            },
+			            fecha_final: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Es necesaria la fecha de fin de periodo'
+			                    },
+                                date: {
+                                	format: 'DD-MM-YYYY',
+                                	message: 'Escriba un formato de fecha válido'
+                                }
+			                }
+			            },
+			            trabajo_solicitado: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Agregue la descripcion del trabajo solicitado'
+			                    },
+			                    regexp: {
+			                        regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]*$/i,
+			                        message: 'Caracteres inválidos'
+			                    }
+			                }
+			            },				            
+			        }
+				})
+				.on( 'success.field.fv', function( e, data ) {
+					data.fv.disableSubmitButtons( false );
+				});
+
+				this.IDS.$form = $form;
+
+				$numero_unidad.change( function ()
 				{
-					$.sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
-				},
+					$numero_aero.empty();
 
-				datos: {
-					numero_unidad: {
-						valor: null,
-						idHTML: '#numeroUnidad' + suf,
-						idValidacion: '#formUnidad' + suf,
-						popover: {
-							content: 'Seleccione un número de unidad válido',
-							placement: 'top'
+					var valorUnidad = $( this ).val();
+					if ( valorUnidad )
+					{
+						sigesop.query({
+							data: { numero_unidad: valorUnidad },
+							class: 'generadores',
+							query: 'obtenerGeneradores',
+							queryType: 'sendGetData',
+							success: function ( data ) 
+							{
+								$numero_aero.combo({
+									arr: data, 
+									campo: 'numero_aero'
+								});	
+
+								$form.formValidation( 'revalidateField', 'numero_aero' );							
+							}
+						});
+					}
+
+					else doc.datos.numero_unidad.valor = null;
+				});
+
+				$numero_aero.change( function ( event ) 
+				{
+					var val = $numero_aero.val().trim();						
+
+					if ( val ) 
+					{
+						sigesop.query({
+							data: { numero_aero: val, option: 'ultima_orden' },
+							class: 'mantenimiento',
+							query: 'obtenerOrdenTrabajo',
+							queryType: 'sendGetData',
+							success: function ( data ) 
+							{
+								window.sesion.matrizOrdenesPorGenerador = data;
+								$id_mantenimiento.val( '' );
+								$form.formValidation( 'revalidateField', 'id_mantenimiento' );
+								
+								// ----------
+
+								// $fecha_inicial.prop( 'disabled', false );
+								// $fecha_inicial.val( '' );
+								// data != null ? $( doc.datos.numero_aero.idHTML ).prop('disabled', false) : null;
+							}
+						});					
+					}
+					else 
+					{
+						// doc.datos.numero_aero.valor = null;
+						$id_mantenimiento.val( '' );
+						$form.formValidation( 'revalidateField', 'id_mantenimiento' );
+						// $id_mantenimiento.prop('disabled', true);
+						
+						// ----------
+
+						// $fecha_inicial.prop( 'disabled', false );
+						// $fecha_inicial.val( '' );
+					}
+				});
+
+				$id_mantenimiento.change( function ( event ) { change_id_mantenimiento.call( $id_mantenimiento, $fecha_inicial ); });
+
+				$duracion.spinner({
+					spin: function (event, ui) 
+					{
+						if ( $.isNumeric( ui.value ) ) 
+						{
+							if (ui.value <= 0) {
+								$( this ).spinner('value', 1);
+								return false;
+							}
 						}
 					},
+					change: function ( event, ui ) {
+						$form.formValidation( 'revalidateField', 'duracion' );
+					}
+				});
 
-					numero_aero: {
-						valor: null,
-						idHTML: '#numeroGenerador' + suf,
-						idValidacion: '#formNumeroGenerador' + suf,
-						popover: {
-							content: 'Seleccione un número de generador válido',
-							placement: 'left'
+				$fecha_inicial.val( moment().format( 'DD-MM-YYYY' ) );
+				$fecha_inicial.datepicker({
+					defaultDate: "+1w",
+					changeMonth: true,
+					changeYear: true,
+					numberOfMonths: 3,
+					dateFormat: 'dd-mm-yy',
+					showAnim: 'slide',
+					onClose: function( selectedDate ) {
+						$form.formValidation( 'revalidateField', 'fecha_inicial' );
+					}
+				})
+				.on( 'success.field.fv', function ( e, data ) {
+					var 
+						fecha_1 = moment( $fecha_inicial.val(), 'DD-MM-YYYY' ),
+						fecha_2 = moment( $fecha_final.val(), 'DD-MM-YYYY' );
+
+					if( $fecha_inicial.val() && $fecha_final.val() )
+						if ( fecha_2.isBefore( fecha_1 ) )
+						{			
+							$form.data( 'formValidation' ).updateStatus( 'fecha_inicial', 'INVALID' );
+							$fecha_inicial.val('');
+							sigesop.msg( 'Advertencia', 'Fecha fuera de rango', 'warning' );
 						}
-					},
+				});
 
-					id_mantenimiento: {
-						valor: null,
-						idHTML: '#tipoMantto' + suf,
-						idValidacion: '#formTipoMantto' + suf,
-						popover: {
-							content: 'Seleccione un tipo de Mantenimiento válido',
-							placement: 'top'
+				$fecha_final.datepicker({
+					defaultDate: "+1w",
+					changeMonth: true,
+					changeYear: true,
+					numberOfMonths: 3,
+					dateFormat: 'dd-mm-yy',
+					showAnim: 'slide',
+					onClose: function( selectedDate ) {
+						$form.formValidation( 'revalidateField', 'fecha_final' );
+					}
+				})
+				.on( 'success.field.fv', function ( e, data ) {
+					var 
+						fecha_1 = moment( $fecha_inicial.val(), 'DD-MM-YYYY' ),
+						fecha_2 = moment( $fecha_final.val(), 'DD-MM-YYYY' );
+
+					if( $fecha_inicial.val() && $fecha_final.val() )
+						if ( fecha_2.isBefore( fecha_1 ) )
+						{			
+							$form.data( 'formValidation' ).updateStatus( 'fecha_final', 'INVALID' );
+							$fecha_final.val('');
+							sigesop.msg( 'Advertencia', 'Fecha fuera de rango', 'warning' );
 						}
-					},
+				});
 
-					duracion: {
-						valor: null,
-						idHTML: '#duracion' + suf,
-						idValidacion: '#formDuracion' + suf,
-						popover: {
-							content: 'Agregue duracion de mantenimiento',
-							placement: 'top'
+				$( this.IDS.botonLimpiar ).on( 'click', function ( event ) { vaciarDatos(); });
+			},
+
+			change_id_mantenimiento = function ( $fecha_inicial )
+			{
+				var valor = this.val();
+				if ( valor ) 
+				{
+					/* buscamos la fecha de la ultima orden 
+					 * del id_mantenimiento seleccionado
+					 */
+					
+					if ( !$.isEmptyObject ( window.sesion.matrizTipoMantto ) && 
+						 !$.isEmptyObject ( window.sesion.matrizOrdenesPorGenerador ) ) 
+					{
+						var indice = sigesop.indexOfObjeto( window.sesion.matrizOrdenesPorGenerador, 'id_mantenimiento', valor );
+						if( indice != -1 )
+						{
+							var fechaServidor = window.sesion.matrizOrdenesPorGenerador[ indice ].fecha_programada,
+								fechaLocal = moment( fechaServidor ).format( 'DD-MM-YYYY' );									
+							
+							/* ponemos la fecha en la caja, los datos y la deshabilitamos
+							 */
+							// doc.datos.fecha_inicial.valor = fechaLocal;
+							$fecha_inicial.val( fechaLocal );
+							$fecha_inicial.prop( 'disabled', true );
 						}
-					},
-
-					magnitud_duracion: {
-						valor: null,
-						idHTML: '#magnitudDuracion' + suf,
-						idValidacion: '#formDuracion' + suf,
-						popover: {
-							content: 'Seleccione una magnitud de duración válida',
-							placement: 'right'
-						}
-					},
-
-					fecha_inicial: {
-						valor: null,
-						idHTML: '#fechaProgramada' + suf,
-						idValidacion: '#formFechas' + suf,
-						popover: {
-							content: 'Seleccione una fecha válida',
-							placement: 'top'
-						}
-					},
-
-					fecha_final: {
-						valor: null,
-						idHTML: '#fechaFinalProgramada' + suf,
-						idValidacion: '#formFechaFinalProgramada' + suf,
-						popover: {
-							content: 'Seleccione una fecha válida',
-							placement: 'left'
-						}
-					},
-
-					trabajo_solicitado: {
-						valor: null,
-						idHTML: '#trabajoSolicitado' + suf,
-						idValidacion: '#formTrabajoSolicitado' + suf,
-						popover: {
-							content: 'Agregue la descripcion del trabajo solicitado',
-							placement: 'top'
+						else
+						{
+							// doc.datos.fecha_inicial.valor = null;
+							$fecha_inicial.val('');
+							$fecha_inicial.prop( 'disabled', false );
 						}
 					}
+
+					else 
+					{
+						$fecha_inicial.val('');
+						$fecha_inicial.prop( 'disabled', false );
+						console.log( 'matrizTipoMantto o matrizOrdenesPorGenerador se encuentra nulo' );
+					}
+				}
+			},
+
+			limpiarCampos = function ()
+			{
+				$( doc.datos.numero_unidad.idHTML ).val( '' );
+				$( doc.datos.numero_aero.idHTML ).val( '' );
+				$( doc.datos.id_mantenimiento.idHTML ).val( '' );    
+				$( doc.datos.duracion.idHTML ).val( '' );
+				$( doc.datos.magnitud_duracion.idHTML ).val('');
+				$( doc.datos.fecha_inicial.idHTML ).val( moment().format( 'DD-MM-YYYY' ) );
+				$( doc.datos.fecha_final.idHTML ).val( '' );
+				$( doc.datos.trabajo_solicitado.idHTML ).val( '' );				
+				vaciarDatos();
+			},
+
+			vaciarDatos = function ()
+			{
+				$( doc.datos.fecha_inicial.idHTML ).prop( 'disabled', false );
+				doc.datos.numero_unidad.valor = null;
+				doc.datos.numero_aero.valor = null;
+				doc.datos.id_mantenimiento.valor = null;
+				doc.datos.duracion.valor = null;
+				doc.datos.magnitud_duracion.valor = null;
+				doc.datos.fecha_inicial.valor = null;
+				doc.datos.fecha_final.valor = null;
+				doc.datos.trabajo_solicitado.valor = null;
+	
+				doc.IDS.$form.formValidation( 'resetForm' );		
+			},
+
+			datos = {
+				numero_unidad: {
+					valor: null,
+					idHTML: '#numero_unidad' + suf
 				},
 
+				numero_aero: {
+					valor: null,
+					idHTML: '#numero_aero' + suf
+				},
+
+				id_mantenimiento: {
+					valor: null,
+					idHTML: '#id_mantenimiento' + suf
+				},
+
+				duracion: {
+					valor: null,
+					idHTML: '#duracion' + suf
+				},
+
+				magnitud_duracion: {
+					valor: null,
+					idHTML: '#magnitud_duracion' + suf
+				},
+
+				fecha_inicial: {
+					valor: null,
+					idHTML: '#fecha_inicial' + suf
+				},
+
+				fecha_final: {
+					valor: null,
+					idHTML: '#fecha_final' + suf
+				},
+
+				trabajo_solicitado: {
+					valor: null,
+					idHTML: '#trabajo_solicitado' + suf
+				}
+			},
+
+			doc = {
+				html: html,
+				javascript: javascript,
+				datos: datos,
 				IDS: {
+					$form: null,
+					form: '#formCrearMantto' + suf,					
 					botonGuardar: '#btnGenerarOrdenes' + suf,
 					botonLimpiar: '#btnLimpiarFormOrdenes' + suf
 				}
 			};
 
-		return obj;
+		return doc;
+	},
+
+	documentoRegistro: function ( opt )
+	{
+		var suf = opt.suf || '';
+
+		var 
+			html =
+				'<form id="formRegistroMantto' + suf + '">' +
+					'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
+						'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
+							'<span aria-hidden="true">×</span>' +
+						'</button>' +
+						'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
+					'</div>' +
+
+					'<div class="form-group">' +					
+						'<div class="col-sm-12 col-md-12" id="tabla_registro_mantto' + suf + '"></div>' +
+					'</div>' +
+				'</form>',
+
+			javascript = function () {
+				var
+				tabla = sigesop.tablaRegistro({
+					suf: 	'_Rmtto',
+					head: 	'NÚMERO DE ORDEN, TRABAJO SOLICITADO, MANTENIMIENTO, ' +
+							'SUPERVISOR, RESPONSABLE, AUXILIAR, FECHA PROGRAMADA, ' +
+							'FECHA REPROGRAMADA',
+					campo: 	'numero_orden, trabajo_solicitado, nombre_mantenimiento, ' +
+							'orden_trabajo_personal.supervisor, orden_trabajo_personal.responsable, ' +
+							'orden_trabajo_personal.auxiliar, fecha_programada, fecha_reprogramada'
+				});
+				
+				this.table.update_table = tabla.update_table; // enlazamos a vista publica
+				this.table.body = tabla.IDS.body;
+				document.getElementById( this.IDS.idTabla.flushChar('#') )
+				.innerHTML = '<br>' + tabla.html
+
+				$( tabla.IDS.body ).contextMenu({
+					selector: 'tr',
+					items: {
+			            insertar: 
+			            {
+			            	name: 'Asignar orden de trabajo', 
+			            	icon: 'user',
+			        		callback: function ( key, _opt ) {
+			        			var index = $( this ).index();
+			        			typeof opt.table.actions.insertar == 'function' ?
+			        				opt.table.actions.insertar( index ):
+			        				console.log( 'function insertar is null' );
+			        		}
+			            },
+			            programacion: 
+			            {
+			            	name: 'Ver programación de mantenimiento', 
+			            	icon: 'copy',
+			        		callback: function ( key, _opt ) {
+			        			var index = $( this ).index();
+			        			typeof opt.table.actions.programacion == 'function' ?
+			        				opt.table.actions.programacion( index ):
+			        				console.log( 'function programacion is null' );
+			        		}
+			            }
+					}
+				});
+			},
+
+			IDS = {
+				idTabla: '#tabla_registro_mantto' + suf,
+				form: '#formRegistroMantto' + suf
+			},
+
+			doc = {
+				html: html,
+				javascript: javascript,
+				IDS: IDS,
+				table: {
+					body: null,
+					update_table: null
+				}
+			};
+
+		return doc;
 	},
 
 	documentoVistaPreliminar: function ( suf )
@@ -249,96 +579,227 @@ $.sigesop.mantenimiento = {
 		return objetoRetorno;
 	},
 
-	documentoAgregarUsuario: function( obj, suf, arr_user )
+	documentAddUser: function( opt )
 	{
-		obj = obj || {};
-		suf = suf || '';
+		/* obj
+		 * suf
+		 * arr_user
+		 */
+
+		var  
+			obj = opt.obj || {},
+			suf = opt.suf || '';
 
 		var 
 			html = 
-				'<form class="form-horizontal" role="form">' +
-				// '	<div id="formUsuarioSuper' + suf + '" class="form-group">' +
-				// '		<label for="" class="control-label col-sm-3">Trabajador Supervisor</label>' +
-				// '		<div class="col-sm-7">' +
-				// '				<select id="usuarioSuper' + suf + '" type="text" class="form-control"></select>' +
-				// '		</div>' +
-				// '	</div>' +
+				'<form id="formAgregarUsuarios" class="form-horizontal" role="form">' +
+					'<div class="form-group">' +
+						'<label class="control-label col-sm-3">Trabajador Responsable: </label>' +
+						'<div class="col-sm-7">' +
+							'<select name="responsable" id="usuarioResponsable' + suf + '" type="text" class="form-control"></select>' +
+						'</div>' +
+					'</div>' +
 
-				'	<div id="formUsuarioResponsable' + suf + '" class="form-group">' +
-				'		<label for="" class="control-label col-sm-3">Trabajador Responsable: </label>' +
-				'		<div class="col-sm-7">' +
-				'				<select id="usuarioResponsable' + suf + '" type="text" class="form-control"></select>' +
-				'		</div>' +
-				'	</div>' +
+					'<div class="form-group">' +
+						'<label for="" class="control-label col-sm-3">Trabajador Auxiliar: </label>' +				
+						'<div id="divUsuarioAuxiliar' + suf + '" class="col-sm-7"></div>'+
+					'</div>' +
 
-				'	<div id="formUsuarioAuxiliar' + suf + '" class="form-group">' +
-				'		<label for="" class="control-label col-sm-3">Trabajador Auxiliar: </label>' +				
-				'		<div id="usuarioAuxiliar' + suf + '" class="col-sm-7"></div>'+
-				'	</div>' +
-
-				'	<div class="form-group">' +
-				'		<div class="col-sm-3 control-label"></div>' +
-				'		<p class="col-sm-9">' +
-				'			<button id="btnAgregarUsuarios' + suf + '" type="submit" class="btn btn-success" data-loading-text="Enviando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Generar</button>' +
-				'			<button id="btnLimpiarUsuarios' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
-				'		</p>' +
-				'	</div>' +
+					'<div class="form-group">' +
+						'<div class="col-sm-3 control-label"></div>' +
+						'<p class="col-sm-9">' +
+							'<button id="btnAgregarUsuarios' + suf + '" type = "submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Agregar</button> ' +
+							'<button id="btnLimpiarUsuarios' + suf + '" type = "reset" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
+						'</p>' +
+					'</div>' +
 				'</form>',
 
-			update_user = function ( arr )
+			change_check = function ( state, value, $elem )
 			{
-				if ( !jQuery.isEmptyObject( arr ) )
+				if ( value == $( doc.datos.responsable.idHTML ).val() ) 
 				{
-					$.sigesop.insertaCombo( arr, this.datos.supervisor.idHTML, 'nombre_trabajador, apellidos_trabajador', 'nombre_usuario', '  ' );
-					$.sigesop.insertaCombo( arr, this.datos.responsable.idHTML, 'nombre_trabajador, apellidos_trabajador', 'nombre_usuario', '  ' );
-					
-					var aux = 	$.sigesop.generaArregloCheck( arr,
-								[ 'nombre_trabajador', 'apellidos_trabajador' ], 'nombre_usuario' );
-					$( this.IDS.usuarioAuxiliar ).html( aux.html );
-					this.IDS.checkAuxiliar = aux.matrizCheck;
-				}
+					if ( state === true ) 
+					{
+						doc.IDS.$form.data( 'formValidation' ).updateStatus( 'responsable', 'INVALID' );
+						sigesop.msg( 'Info', 'El usuario auxiliar debe ser distinto al usuario responsable', 'info' );
+					}
 
-				else console.log( 'function: documentoAgregarUsuario \n[arr_user] es nulo' )
+					else
+						doc.IDS.$form.formValidation( 'revalidateField', 'responsable' );
+				}
+			},
+
+			tabla = sigesop.tabla({
+				head: {
+					campo: 'RPE, NOMBRE, APELLIDOS'
+				},
+				body: {
+					campo: 'RDE_trabajador, nombre_trabajador, apellidos_trabajador',
+					campoValor: 'nombre_usuario',
+					callback: change_check,
+					disabled: {
+						campo: 'nombre_usuario',
+						campoValor: window.localStorage.usuario
+					}
+				},
+				tipo: 'checkbox'
+			}),
+
+			update_user = function ( arr ) {
+				var doc = this;
+				sigesop.combo({
+					arr: arr, 
+					elem: doc.datos.responsable.idHTML, 
+					campo: 'nombre_trabajador, apellidos_trabajador', 
+					campoValor: 'nombre_usuario',
+					del: ' '
+				});
+	
+				tabla.update_table( arr );
+				// update_auxiliar.call( doc, arr );
+			},
+
+			check_arr = function ( arr ) {
+				var 
+					i = 0,
+					lon = arr.length;
+
+				for ( i ; i < lon ; i++ )
+					if ( arr[ i ].valor !== null ) return true;
+
+				return false;
+			},
+
+			javascript = function () {
+				var
+				doc = this,
+				form = doc.IDS.form,
+				$responsable = $( doc.datos.responsable.idHTML ),
+				$form = $( form ).formValidation({
+			        icon: {
+			            valid: 'glyphicon glyphicon-ok',
+			            invalid: 'glyphicon glyphicon-remove',
+			            validating: 'glyphicon glyphicon-refresh'
+			        },
+
+			        onSuccess: function ( e ) {
+			        	e.preventDefault();
+
+			        	/* verificamos que la matriz [mtz_auxiliar] tenga seleccionado
+			        	 * por lo menos a un elemento
+			        	 */ 
+			        	if ( check_arr( doc.IDS.mtz_auxiliar ) )
+			        	{
+				        	typeof opt.success == 'function' ?
+				        		opt.success( doc.datos, doc.IDS, limpiarCampos ) :
+				        		console.log( 'success is null' );
+				        }
+
+				        else 
+				        sigesop.msg( 'Advertencia', 'Seleccione usuario auxiliar', 'warning' );
+			        },
+
+			        onError: function ( e ) {
+			        	e.preventDefault();			        	
+			        	typeof opt.error == 'function' ?
+			        		opt.error() : console.log( 'error is null' );			        	
+			        },
+
+			        fields: {			            
+			            responsable: {
+			                validators: {
+			                    notEmpty: {
+			                        message: 'Campo requerido'
+			                    }
+			                }
+			            }				            
+			        }
+				})
+				.on( 'success.field.fv', function( e, data ) {
+					data.fv.disableSubmitButtons( false );
+				});
+				
+				doc.IDS.$form = $form;
+
+				document.getElementById( doc.IDS.divUsuarioAuxiliar.flushChar('#') )
+				.innerHTML = tabla.html;
+				doc.IDS.mtz_auxiliar = tabla.matrizInput;
+
+				$responsable.on( 'success.field.fv', function ( event ) {
+					var val_this = $responsable.val();
+
+					if ( val_this == window.localStorage.usuario )
+					{
+						$form.data( 'formValidation' ).updateStatus( 'responsable', 'INVALID' );
+						sigesop.msg( 'Info', 'El usuario responsable debe ser distinto al usuario supervisor', 'info' );
+					}
+					else
+					{
+						/* si seleccionamos a un usuario responsable valido entonces
+						 * buscamos si el usuario responsable no ha sido seleccionado
+						 * como usuario auxiliar
+						 */
+
+						var
+							i = 0,
+							lon = doc.IDS.mtz_auxiliar.length;
+
+						for ( i ; i < lon ; i++ )
+						{
+							var
+								// val_this = $responsable.val(),
+								val_mtz = doc.IDS.mtz_auxiliar[ i ].valor;
+
+	 						if ( val_this == val_mtz )
+							{
+								$form.data( 'formValidation' ).updateStatus( 'responsable', 'INVALID' );
+								sigesop.msg( 'Info', 'El usuario responsable debe ser distinto al usuario auxiliar', 'info' );
+							}
+						}
+					}
+				});
+
+				$( doc.IDS.botonLimpiar ).on( 'click', function ( event ) { vaciarDatos(); });
+			},
+
+			limpiarCampos = function ()
+			{
+				$( doc.datos.responsable.idHTML ).val( '' );
+				vaciarDatos();
+			},
+
+			vaciarDatos = function ()
+			{
+				doc.datos.supervisor.valor = null;
+				doc.datos.responsable.valor = null;
+				doc.datos.auxiliar.length = 0;
+				tabla.reset();
+				doc.IDS.$form.formValidation( 'resetForm' );		
+			},
+
+			datos = {
+				supervisor:{ valor: null },
+				responsable: {
+					valor: null,
+					idHTML: '#usuarioResponsable' + suf
+				},
+				auxiliar: []
+			},
+
+			IDS = {
+				botonGuardar: '#btnAgregarUsuarios' + suf,
+				botonLimpiar: '#btnLimpiarUsuarios' + suf,
+				form: '#formAgregarUsuarios' + suf,
+				$form: null,
+				divUsuarioAuxiliar: '#divUsuarioAuxiliar' + suf,
+				mtz_auxiliar: []
 			},
 
 			doc = {
 				html: html,
-				javascript: function ()
-				{
-
-				},
-
-				datos: {
-					supervisor:{
-						valor: null
-						// idHTML: '#usuarioSuper' + suf,
-						// idValidacion: '#formUsuarioSuper' + suf,
-						// popover: {
-						// 	content: 'Seleccione usuario supervisor',
-						// 	placement: 'top'
-						// }
-					},
-
-					responsable: {
-						valor: null,
-						idHTML: '#usuarioResponsable' + suf,
-						idValidacion: '#formUsuarioResponsable' + suf,
-						popover: {
-							content: 'Seleccione usuario responsable',
-							placement: 'left'
-						}
-					},
-
-					auxiliar: []
-				},
-
-				IDS: {
-					botonGuardar: '#btnAgregarUsuarios' + suf,
-					botonLimpiar: '#btnLimpiarUsuarios' + suf,
-					usuarioAuxiliar: '#usuarioAuxiliar' + suf,
-					checkAuxiliar: null
-				},
-
+				javascript: javascript,
+				datos: datos,
+				IDS: IDS,
 				update_user: update_user
 			};
 
@@ -433,7 +894,7 @@ $.sigesop.mantenimiento = {
 									mesFechaInicio = objFechaInicio.month(),
 									anioFechaInicio = objFechaInicio.year();
 
-								// var	objFechaFinal = $.sigesop.mantenimiento.propiedadesFecha( fechaFinal ),
+								// var	objFechaFinal = sigesop.mantenimiento.propiedadesFecha( fechaFinal ),
 								// 	diaFechaFinal = objFechaFinal.numeroDia,
 								// 	mesFechaFinal = objFechaFinal.numeroMes,
 								// 	anioFechaFinal = objFechaFinal.numeroAnio;
@@ -599,973 +1060,9 @@ $.sigesop.mantenimiento = {
                     series: series
                 });
 			} 
-			else $(idHTML).html('<h4 text-center>' + $.sigesop.sinRegistros + '</h4>');
+			else $(idHTML).html('<h4 text-center>' + sigesop.sinRegistros + '</h4>');
         // } catch (e) {
         // 	alert('Es necesario importar la libreria de graficación');
         // } 
-	},
-
-	// --------------------------------------------------------------
-
-	documentoOrdenTrabajo: function ( suf )
-	{
-		var 
-			html = 
-				// '<div class="row">' +
-				// '	<div class="col-md-1"></div>' +
-				// '	<div class="col-md-10">' +
-				// '		<nav class="navbar navbar-cfe" role="navigation">' +
-	  			// '			<div class="container-fluid">' +
-				// '				<form class="navbar-form" role="Search">' +
-				// '					<select class="form-control"><option value="" >' + $.sigesop.sinRegistros + '</option></select>' +
-				// '					<div class="form-group">' +
-				// '						<input type="text" class="form-control" placeholder="Filtrar">' +
-				// '					</div>' +
-				// '					<button id="botonFiltro' + suf + '" type="submit" class="btn btn-default">Filtrar</button>' +				
-				// '				</form>' +
-				// '			</div>' +
-				// '		</nav>' +
-				// '	</div>' +
-				// '	<div class="col-md-1"></div>' +
-				// '</div>' +
-
-				'<form  class="form-horizontal panelLista' + suf + '" role="form" method="post" >'+	
-				'	<div class="form-group">'+
-				'		<div class="col-sm-1"></div>'+
-				'			<ol id="regListaVerificacion' + suf + '" class="col-sm-10 selectable"></ol>'+
-				'		<div class="col-sm-1"></div>'+
-				'	</div>'+
-				'</form>';
-
-		var doc = {
-			html: html,
-			javascript: function ()
-			{
-				$( doc.IDS.botonFiltro ).on('click', function ( event )
-				{
-					event.preventDefault();
-					alert( 'test' );
-				});
-
-				$( doc.IDS.listaRegistro ).selectable({
-					stop: function() 
-					{
-						// var nombreLista = $( '#' + statusNombreLista ).empty(),
-						// 	numeroLista = $( '#' + statusNumeroLista ).empty();
-
-						window.sesion.indexOrdenTrabajoPorUsuario = null;
-
-						$( ".ui-selected", this ).each( function() 
-						{
-							var index = window.sesion.indexOrdenTrabajoPorUsuario = $( doc.IDS.listaRegistro + ' li' ).index( this );
-							// nombreLista.text( " Nombre del lista de verificacion: " + window.sesion.matrizListaVerificacion[ index ]['descripcion_lista_verificacion']);
-							// numeroLista.text( "Numero de lista de verificacion: " + window.sesion.matrizListaVerificacion[ index ]['id_lista_verificacion']);	
-						});
-					}
-				});
-				
-			    $( doc.IDS.listaRegistro ).contextMenu({
-			        selector: 'li', 
-			        items: {
-			        	insertar:
-			        	{
-			        		name: 'Insertar datos', 
-			        		icon: 'paste',
-			        		callback: function ( key, option )
-			        		{
-			        			var index = $( this ).index();
-			        			typeof doc.callback.menuInsertar === 'function' ? 
-			        				doc.callback.menuInsertar( index, window.sesion.matrizOrdenTrabajoPorUsuario, key, option ) : null;
-			        		}
-			        	},
-			        	pdf: 
-			        	{ 
-			        		name: 'Generar PDF', 
-			        		icon: 'add',
-			        		callback: function ( key, option )
-			        		{
-			        			var index = $( this ).index();
-			        			typeof doc.callback.menuPDF === 'function' ? 
-			        				doc.callback.menuPDF( index, window.sesion.matrizOrdenTrabajoPorUsuario, key, option ) : null;
-			        		}
-			        	 },
-			            editar: 
-			            {
-			            	name: 'Editar', 
-			            	icon: 'edit',
-			        		callback: function ( key, option )
-			        		{
-			        			var index = $( this ).index();
-			        			typeof doc.callback.menuEditar === 'function' ? 
-			        				doc.callback.menuEditar( index, window.sesion.matrizOrdenTrabajoPorUsuario, key, option ) : null;
-			        		}
-			            },
-			            eliminar: 
-			            {
-			            	name: 'Eliminar', 
-			            	icon: 'delete',
-			        		callback: function ( key, option )
-			        		{
-			        			var index = $( this ).index();
-			        			typeof doc.callback.menuEliminar === 'function' ? 
-			        				doc.callback.menuEliminar( index, window.sesion.matrizOrdenTrabajoPorUsuario, key, option ) : null;
-			        		}
-			            }
-			        }
-			    });	
-			},
-			IDS: {
-				panelLista: '.panelLista' + suf,
-				listaRegistro: '#regListaVerificacion' + suf,
-				botonFiltro: '#botonFiltro' + suf
-			},
-
-			callback:
-			{
-				menuInsertar: null,
-				menuPDF: null,
-				menuEditar: null,
-				menuEliminar: null
-			}
-		}
-
-		return doc;
-	},
-
-	generarPDFordenTrabajo: function ( data )
-	{
-		if ( jQuery.isEmptyObject( data ) ) 
-		{
-			$.sigesop.msgBlockUI( 'Se requiere de los datos de la orden de trabajo', 'error' );
-			return null;
-		}
-
-		var href = '',
-			div = '';
-
-		for( var i = 0, lon = obj.length; i < lon; i++ )
-		{
-			href += '<li><a href="#' + obj[ i ].id_lista_verificacion + suf + '" role="tab" data-toggle="tab">' + 
-					obj[ i ].descripcion_lista_verificacion + ' &nbsp; <span class="glyphicon glyphicon-remove"></span> </a></li>';
-
-			var tabla = '';			
-			for( var j = 0, y = obj[ i ].actividades.length; j < y; j++ )
-			{
-                tabla += '<tr>' +     
-                		'<td class="active col-lg-2 col-sm-2">' + obj[ i ].actividades[ j ].actividad_verificar + '</td>' +
-                        '<td class="success col-lg-2 col-sm-2"><center>' + obj[ i ].actividades[ j ].parametro_aceptacion + '</center></td>';
-
-                tabla += '<td class="success col-lg-2 col-sm-2"><center>';
-                for( var k = 0, z = obj[ i ].actividades[ j ].lectura_actual.length; k < z; k++  )
-                {
-                	var secuencia = 'actual_' + obj[ i ].actividades[ j ].id_actividad_verificar + obj[ i ].actividades[ j ].lectura_actual[ k ].secuencia_datos,
-                		tipoDato = obj[ i ].actividades[ j ].lectura_actual[ k ].tipo_dato;
-                	
-                	tabla += obj[ i ].actividades[ j ].lectura_actual[ k ].parametro;
-    				
-    				if( tipoDato == 'Binario' ) tabla += '&nbsp; <input type="radio" name="' + secuencia + '" id="' + secuencia + '_si" value="si"> &nbsp; SI &nbsp;<input type="radio" name="' + secuencia + '" id="' + secuencia + '_no" value="no"> &nbsp; NO<br>';
-    				else if( tipoDato == 'Datos' ) tabla += '&nbsp; <input type="text" id="' + secuencia + '_dato" > &nbsp;' +
-    					obj[ i ].actividades[ j ].lectura_actual[ k ].unidad_medida + '<br>';                	
-                }
-
-                tabla += '</center></td><td class="success col-lg-2 col-sm-2"><center>';
-
-                for( var k = 0, z = obj[ i ].actividades[ j ].lectura_posterior.length; k < z; k++  )
-                {
-                	var secuencia = 'post_' + obj[ i ].actividades[ j ].id_actividad_verificar + obj[ i ].actividades[ j ].lectura_actual[ k ].secuencia_datos,
-                		tipoDato = obj[ i ].actividades[ j ].lectura_posterior[ k ].tipo_dato;
-
-                	tabla += obj[ i ].actividades[ j ].lectura_posterior[ k ].parametro;
-    				
-    				if( tipoDato == 'Binario' ) tabla += '&nbsp; <input type="radio" name="' + secuencia + '" id="' + secuencia + '_si" value="si"> &nbsp; SI &nbsp; <input type="radio" name="' + secuencia + '" id="' + secuencia + '_no" value="no"> &nbsp; NO <br>';
-    				else if( tipoDato == 'Datos' ) tabla += '&nbsp; <input type="text" id="' + secuencia + '_dato" > &nbsp;' +
-    					obj[ i ].actividades[ j ].lectura_posterior[ k ].unidad_medida + '<br>';
-                }
-                tabla += '</center></td><td class="info col-lg-2 col-sm-2"><textarea  id="' + secuencia + '_obser" class="form-control"></textarea></td></tr>';
-			}			
-
-			div += '<div class="tab-pane fade" id="' + obj[ i ].id_lista_verificacion + suf + '"><br>' +
-		            '<div class="panel panel-default table-responsive">' +
-		            '    <div class="panel-heading">' + obj[ i ].descripcion_lista_verificacion + '</div>' +
-		            '    <table class="table table-bordered">' +
-		            '        <thead><tr><th>Actividad</th><th> Parámetro de aceptación</th><th>Lectura Actual</th>' +
-		            '               <th>Lectura Posterior</th><th>Observaciones</th></tr>' +
-		            '        </thead>' +
-		            '        <tbody>' + tabla + '</tbody>' +
-		            '    </table>' +
-		            '</div></div>';
-		}
-
-		var html = '' +
-		'<ul id="myTab" class="nav nav-tabs" role="tablist">' +
-		'	<li class="dropdown">' +
-		'		<a class="dropdown-toggle" data-toggle="dropdown" href="#"> Captura Listas de verificación</a>' +
-		'		<ul class="dropdown-menu" role="menu" aria-labelledby="myTabDrop1">' + href + '</ul>' +
-		'	</li>' +
-		'</ul>' +
-
-		'<div class="tab-content">' + div + '</div>';
-
-		var doc = {
-			html: html,
-			javascript: function ()
-			{
-				$( '#myTab a' ).on( 'show.bs.tab', function (e)
-				{
-					e.target // activated tab
-					e.relatedTarget // previous tab
-					// alert( 'antes de entrar' )
-				});
-
-				// $( '#myTab a' ).click( function (e)
-				// {
-				// 	e.preventDefault()
-					// $(this).tab('show')
-				// })
-			}
-		}
-
-		return doc;
-	},
-	
-	// -------------------------------------------------------------
-
-	documentoInsertarDatos: function ( opt )
-	{
-		/*
-		 * name
-		 * suf
-		 * arr
-		 * sortable
-		 * activate
-		 * campo
-		 * dataValue
-		 */
-
-		opt.suf = opt.suf || '';
-		opt.name = opt.name + opt.suf || 'accordion' + opt.suf;
-		opt.activate = opt.activate || function () {};
-
-		var 
-			update_accordion = function ( arr )
-			{
-				if ( jQuery.isEmptyObject( arr ) )
-				{
-					console.log( '[arr] es nulo' );
-					return null;
-				}
-
-				var 
-					html = '<div id="' + opt.name + '">';
-
-				// if ( opt.sortable ) // con el efecto sortable
-				// {
-				// 	for( var i = 0, lon = arr.length; i < lon; i++ )
-				// 	{
-				// 		html +=
-				// 		'<div class="group">' +
-				// 		'	<h3>' + arr[ i ][ opt.campo ] + '</h3>' +
-				// 		'	<div data-value="' + arr[ i ][ opt.dataValue ] + '"></div>' +
-				// 		'</div>';		
-				// 	}
-				// }
-
-				// else
-				// {
-				// 	for( var i = 0, lon = arr.length; i < lon; i++ )
-				// 	{
-				// 		html +=
-				// 		'	<h3>' + arr[ i ][ opt.campo ] + '</h3>' +
-				// 		'	<div data-value="' + arr[ i ][ opt.dataValue ] + '"></div>' ;
-				// 	}
-				// }
-
-				for( var i = 0, lon = arr.length; i < lon; i++ )
-				{
-					html +=
-					'	<h3>' + arr[ i ][ opt.campo ] + '</h3>' +
-					'	<div data-value="' + arr[ i ][ opt.dataValue ] + '"></div>' ;
-				}				
-				
-				html += '</div>'
-
-				return html;
-			},
-
-			doc = {
-				html: update_accordion( opt.arr ),
-
-				javascript: function ()
-				{
-					// if ( opt.sortable )
-					// {
-					// 	$( '#' + opt.name ).accordion({
-					// 		collapsible: true,
-					// 		active: false,
-					// 		heightStyle: 'content',
-					// 		header: "> div > h3",
-					// 		icons: {
-					// 			header: "ui-icon-circle-arrow-e",
-					// 			activeHeader: "ui-icon-circle-arrow-s"
-					// 		},
-					// 		beforeActivate: function( event, ui ) 
-					// 		{
-					// 			_ui = ui;
-					// 			// _event = event;
-
-					// 			var 
-					// 				id = ui.newPanel[0].id,
-					// 				value = document.getElementById( ui.newPanel[0].id ).getAttribute('data-value');
-
-					// 			typeof opt.activate === 'function' ? 
-					// 				opt.activate( id, value ): null;
-					// 		}
-					// 	})
-					// 	.sortable({
-					// 		axis: "y",
-					// 		handle: "h3",
-					// 		stop: function( event, ui ) 
-					// 		{
-					// 			// IE doesn't register the blur when sorting
-					// 			// so trigger focusout handlers to remove .ui-state-focus
-					// 			ui.item.children( "h3" ).triggerHandler( "focusout" );
-					// 			// Refresh accordion to handle new order
-					// 			$( this ).accordion( "refresh" );
-					// 		}
-					// 	});
-					// }
-
-					// else
-					// {
-					// 	$( '#' + opt.name ).accordion({
-					// 		collapsible: true,
-					// 		active: false,
-					// 		heightStyle: 'content',
-					// 		icons: {
-					// 			header: "ui-icon-circle-arrow-e",
-					// 			activeHeader: "ui-icon-circle-arrow-s"
-					// 		},
-					// 		beforeActivate: function( event, ui ) 
-					// 		{
-					// 			_ui = ui;
-					// 			// _event = event;
-
-					// 			var 
-					// 				id = ui.newPanel[0].id,
-					// 				value = document.getElementById( ui.newPanel[0].id ).getAttribute('data-value');
-
-					// 			typeof opt.activate === 'function' ? 
-					// 				opt.activate( id, value ): null;
-					// 		}
-					// 	});
-					// }
-
-					$( '#' + opt.name ).accordion({
-						collapsible: true,
-						active: false,
-						heightStyle: 'content',
-						icons: {
-							header: "ui-icon-circle-arrow-e",
-							activeHeader: "ui-icon-circle-arrow-s"
-						},
-						beforeActivate: function( event, ui ) 
-						{
-							// _ui = ui;
-							// _event = event;
-
-							var 
-								id = ui.newPanel[0].id,
-								value = document.getElementById( ui.newPanel[0].id ).getAttribute('data-value');
-
-							typeof opt.activate === 'function' ? 
-								opt.activate( id, value ): null;
-						}
-					});
-				},
-
-				activate: opt.activate,
-
-				datos: {
-
-				},
-
-				IDS: {
-					id_accordion: '#' + opt.name
-				}
-			};
-
-		return doc;
-	},
-
-	/*
-	 * crea el documento de una lisa de verificacion en especifico
-	 * @param {Object} obj - objeto de datos de la lista de verificacion
-	 * @param {String} suf - sufijo HTML para los id's del documento
-	 */ 
-	documentoActividades: function ( opt )
-	{
-		/*
-		 * obj
-		 * suf
-		 * submit
-		 * clean
-		 */ 
-
-		if ( jQuery.isEmptyObject( opt.obj.actividades ) )
-		{
-			$.sigesop.msgBlockUI( 'Se requiere de los datos de la orden de trabajo', 'error' );
-			return null;
-		}
-
-		opt.submit = opt.submit || function ( doc, btn ){};
-		opt.clean = opt.clean || function ( doc, btn ) {};
-		
-		// ---------- 
-
-		var 
-			obj = opt.obj,
-			
-			suf = opt.suf || '',
-
-			struct_tabla = function ( obj )
-			{
-				var 
-					datos = [],
-					tabla = '';
-
-			    // ---------- iteracion del objeto para estructurar las propiedades
-
-				for( var j = 0, y = obj.actividades.length; j < y; j++ )
-				{
-					// ---------- creacion del objeto datosAct
-
-					var 
-						datosAct = {
-							id_actividad: obj.actividades[ j ].id_actividad_verificar,
-							observaciones: {
-								valor: null,
-								idHTML: '#obser_' + obj.id_orden_trabajo + '_' + j + suf,
-								regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]{1,5000}$/i,
-								popover: {
-									content: 'Caracteres no válidos ( 1-5000 caracteres )',
-									placement: 'top'
-								}
-							},
-
-							validacion: [],
-							
-							datos_lectura_actual: [],
-							datos_lectura_posterior: []
-						};
-
-					// ----------
-
-		            tabla += '<tr>' +     
-		            		'<td class="active col-lg-2 col-sm-2 text-justify">' + obj.actividades[ j ].actividad_verificar + '</td>';
-
-		            // ---------- iteracion de parametros
-
-		            tabla += '<td class="success col-lg-2 col-sm-2 text-justify">';
-
-		            for( var k = 0, z = obj.actividades[ j ].parametro_actividad.length; k < z; k++  )
-		            {
-		            	var mtz = obj.actividades[ j ].parametro_actividad[ k ];
-
-		            	// ---------- vista html
-
-		            	// ---------- datos para validacion
-
-		            	var datoValidar = {
-		            		tipo_dato: mtz.tipo_dato
-		            	}
-
-		            	switch ( mtz.tipo_dato )
-		            	{
-		            		case 'BINARIO':
-		            			tabla += mtz.parametro + '&nbsp;' + mtz.dato + '<br>';
-		            			datoValidar.dato = mtz.dato;
-		            			break;
-
-		            		case 'TEXTO':
-		            			tabla += mtz.parametro + '&nbsp;' + mtz.dato + '<br>';
-		            			datoValidar.dato = mtz.dato;
-		            			break;
-
-		            		case 'COMPARACION':
-		            			tabla += mtz.parametro + '&nbsp;' + mtz.dato + '&nbsp;' + mtz.unidad_medida + '<br>';
-		            			datoValidar.dato = mtz.dato;
-		            			break;
-
-		            		case 'RANGO' :
-								var values = $.sigesop.splitParametros( mtz.dato, ',' );
-
-		            			tabla += mtz.parametro + '&nbsp;' + values[0] + 
-		            				'&nbsp; <span class="glyphicon glyphicon-minus"></span> &nbsp;' + values[1] + 
-		            				'&nbsp;' + mtz.unidad_medida + '<br>';
-
-
-		            			datoValidar.dato_inf = values[0];
-		            			datoValidar.dato_sup = values[1];
-		            			break;
-
-		            		case 'TOLERANCIA' :
-            					var 
-		            				values = $.sigesop.splitParametros( mtz.dato, ',' ),
-		            				target = parseInt( values[ 0 ] ),
-		            				tol = parseInt( values[ 1 ] );
-
-		            			tabla += mtz.parametro + '&nbsp;' + values[0] + 
-		            				'&nbsp; <span class="glyphicon glyphicon-plus"></span><span class="glyphicon glyphicon-minus"></span> &nbsp;' + values[1] + 
-		            				'&nbsp;' + mtz.unidad_medida + '<br>';
-
-
-		            			datoValidar.dato_inf = target - tol;
-		            			datoValidar.dato_sup = target + tol;
-		            			break;
-
-		            		default:
-		            			tabla += mtz.parametro + '&nbsp;' + mtz.dato + '&nbsp;' + mtz.unidad_medida + '<br>';
-		            			break;
-		            	}
-
-		            	datosAct.validacion.push( datoValidar );
-		            }
-
-		            tabla += '</td>';
-
-					// ---------- iteracion de lectura actual
-
-		            tabla += '<td class="success col-lg-2 col-sm-2">';
-
-		            for( var k = 0, z = obj.actividades[ j ].lectura_actual.length; k < z; k++  )
-		            {
-		            	var mtz = obj.actividades[ j ].lectura_actual[ k ],
-		            		secuencia = 'actual_' + obj.id_orden_trabajo + '_' + obj.actividades[ j ].id_actividad_verificar + 
-		            			mtz.secuencia_datos + suf,
-		            		tipoDato = mtz.tipo_dato;
-
-		            	// ---------- creacion del objeto datosLecAct
-
-		            	var datosLecAct = {
-		            		id_lectura: mtz.id,            		
-		            		dato: { 
-		            			valor: null,
-		            			name: secuencia
-		            		},
-		            		tipo_dato: mtz.tipo_dato
-		            	}
-
-		            	// ----------
-		            	
-		            	tabla += mtz.parametro;
-						
-						if( tipoDato == 'Binario' ) 
-						{
-							tabla += 	'<br> &nbsp; <input type="radio" id="' + secuencia + '_si" name="' + secuencia + 
-										'"  value="si"> &nbsp; SI &nbsp;<input type="radio" name="' + 
-										secuencia + '" id="' + secuencia + '_no" value="no"> &nbsp; NO <br><br>';
-
-							datosLecAct.dato.idHTML = '#' + secuencia + '_si';
-							datosLecAct.dato.popover = {
-								content: 'valor no válido, seleccione una opcion',
-								placement: 'top'
-							}
-						}
-						else if( tipoDato == 'Datos' ) 
-						{
-							tabla += 	'&nbsp; <input type="text" id="' + secuencia + '" > &nbsp;' +
-										mtz.unidad_medida + '<br><br>';
-
-							datosLecAct.dato.idHTML = '#' + secuencia;
-							datosLecAct.dato.regexp = /^[\-+]?([0-9](\.[0-9])?){1,50}$/i;
-							datosLecAct.dato.popover = {
-								content: 'valor no válido, (1-50 caracteres numericos)',
-								placement: 'top'
-							}
-						}
-
-						datosAct.datos_lectura_actual.push( datosLecAct );
-		            }
-
-		            tabla += '</td>';
-
-		            // ---------- iteracion de lectura posterior
-
-		            tabla += '<td class="success col-lg-2 col-sm-2">';
-
-		            for( var k = 0, z = obj.actividades[ j ].lectura_posterior.length; k < z; k++  )
-		            {
-		            	var mtz = obj.actividades[ j ].lectura_posterior[ k ],
-		            		secuencia = 'post_' + obj.id_orden_trabajo + '_' + obj.actividades[ j ].id_actividad_verificar + 
-		            			obj.actividades[ j ].lectura_actual[ k ].secuencia_datos + suf,
-		            		tipoDato = mtz.tipo_dato;
-
-		            	// ---------- creacion del objeto datosLecPost
-
-		            	var datosLecPost = {
-		            		id_lectura: mtz.id,            		
-		            		dato: { 
-		            			valor: null,
-		            			name: secuencia
-		            		},
-		            		tipo_dato: mtz.tipo_dato
-		            	}
-
-		            	// ----------
-
-		            	tabla += mtz.parametro;
-						
-						if( tipoDato == 'Binario' ) 
-						{ 
-							tabla += 	
-								'<br> &nbsp; <input type="radio" name="' + secuencia + '" value="si" id="' + secuencia + 
-								'_si" > &nbsp; SI &nbsp; <input type="radio" name="' + secuencia + '"  value="no"> &nbsp; NO <br><br>';
-							
-							datosLecPost.dato.idHTML = '#' + secuencia + '_si';
-							datosLecPost.dato.popover = {
-								content: 'valor no válido, seleccione una opcion',
-								placement: 'top'
-							}
-						}
-						else if( tipoDato == 'Datos' ) 
-						{ 
-							tabla += 	
-								'&nbsp; <input type="text" id="' + secuencia + '" > &nbsp;' +
-								mtz.unidad_medida + '<br><br>';
-							
-							datosLecPost.dato.idHTML = '#' + secuencia;
-							datosLecPost.dato.regexp = /^[\-+]?([0-9](\.[0-9])?){1,50}$/i;
-							datosLecPost.dato.popover = {
-								content: 'valor no válido, (1-50 caracteres numericos)',
-								placement: 'top'
-							}
-						}
-
-						datosAct.datos_lectura_posterior.push( datosLecPost );
-		            }
-
-		            datos.push( datosAct );
-
-		            // ---------- campo observaciones
-
-		            tabla += '</td><td class="info col-lg-2 col-sm-2"><textarea  id="obser_' + obj.id_orden_trabajo + '_' + j + suf
-		            	+ '" class="form-control eventoCambioMayuscula"></textarea></td></tr>';
-				}
-
-	            return {
-	            	tabla: tabla,
-	            	actividades: datos
-	            };
-			};
-
-		object = struct_tabla( obj );		
-
-		var
-			html = 
-				'<form class="form-horizontal" role="form">' +				
-				'	<div class="form-group">' +
-	            '		<div class="panel panel-default table-responsive">' +
-	            '	   	 	<div class="panel-heading">LISTA DE VERIFICACION</div>' +
-	            '	    	<table class="table table-bordered">' +
-	            '	   	    	<thead><tr><th><center>Actividad</center></th><th><center>Parámetro de aceptación</center></th><th><center>Lectura Actual</center></th>' +
-	            '	       	    	<th><center>Lectura Posterior</center></th><th><center>Observaciones</center></th></tr>' +
-	            '	       		</thead>' +
-	            '	       		<tbody>' + object.tabla + '</tbody>' +
-	        	'    		</table>' +		            
-	            '		</div>' +         
-	            '	</div>' +
-
-				'	<div class="form-group">' +					
-				'		<p class="col-sm-9">' +
-				'			<button id="btnGuardarLista_' + obj.id_orden_trabajo + suf + '" class="btn btn-success" data-loading-text="Enviando..." type="submit"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button>' +
-				'			<button id="btnLimpiarLista_' + obj.id_orden_trabajo + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
-				'		</p>' +
-				'	</div>' +	            
-	            '</form><br>',
-	     
-	    	doc = {
-		    	html: html,
-
-		    	javascript: function ()
-		    	{
-		    		$.sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
-
-		    		$( doc.IDS.botonGuardar ).on('click', function ( event )
-		    		{
-		    			event.preventDefault();
-		    			opt.submit( doc, doc.IDS.botonGuardar );
-		    		});
-
-		    		$( doc.IDS.botonLimpiar ).on('click', function ( event )
-		    		{
-		    			event.preventDefault();
-		    			opt.clean( doc, doc.IDS.botonLimpiar );
-		    		});
-		    	},
-
-		    	datos: {
-					// id_lista_verificacion: obj.id_lista_verificacion,
-					id_orden_trabajo: obj.id_orden_trabajo,
-					// id_orden_lista: obj.id_orden_lista,
-					// observaciones: {
-					// 	valor: null,
-					// 	idHTML: ,
-					// 	idValidacion, 
-					// }
-					datos_actividad: object.actividades
-				},
-
-				IDS:
-				{
-					botonGuardar: '#btnGuardarLista_' + obj.id_orden_trabajo + suf,
-					botonLimpiar: '#btnLimpiarLista_' + obj.id_orden_trabajo + suf
-				}
-	    	};
-
-	    return doc;
-	},
-
-	// --------------------------------------------------------------
-
-	/*
-	 * valida los datos de las listas de verificacion de las ordenes de trabajo
-	 * @param {Object | Array} obj - objeto de datos o arreglo de objeto de datos.
-	 * 		Cada objeto es una lista de verificacion de una orden de trabajo
-	 */  
-	validacion: function ( obj )
-	{
-		if ( jQuery.isEmptyObject( obj ) ) 
-		{
-			console.log( 'Matriz vacia, imposible continuar con validacion' );
-			return false;
-		}
-
-		var 
-			mtzValidacion = [],
-
-			datosActividad = function ( mtz )
-			{
-				if ( jQuery.isArray( mtz ) )
-				{
-					var mtzValidacion = [];
-
-					// ---------- recorrido de las actividades de la lista de verificacion
-
-					// for ( var i = 0, lon = mtz.length; i < lon; i++ )
-					// {
-					// 	var 
-					// 		prop = Object.getOwnPropertyNames( mtz[ i ] ),
-					// 		obs = prop.indexOf( 'observaciones' ),
-					// 		actual = prop.indexOf( 'datos_lectura_actual' ),
-					// 		post = prop.indexOf( 'datos_lectura_posterior' ),
-					// 		val = prop.indexOf( 'validacion' );
-
-					// 	// ---------- iniciamos la verificacion de los datos de la lista de verificacion
-
-					// 	if ( ( obs && actual && post && val ) != -1 ) // existen los 4 campos
-					// 		mtzValidacion.push( comparacion( mtz[ i ].datos_lectura_actual, mtz[ i ].datos_lectura_posterior, mtz[ i ].validacion, mtz[ i ].observaciones ) );
-					// 	else 
-					// 	{
-					// 		console.log( 'Propiedades incompletas para iniciar validacion de Actividades' );
-					// 		return false
-					// 	}
-					// }
-
-					for ( var i = 0, lon = mtz.length; i < lon; i++ )
-					{
-						var 
-							obs = $.sigesop.array_key_exists( 'observaciones', mtz[ i ] ),
-							actual = $.sigesop.array_key_exists( 'datos_lectura_actual', mtz[ i ] ),
-							post = $.sigesop.array_key_exists( 'datos_lectura_posterior', mtz[ i ] ),
-							val = $.sigesop.array_key_exists( 'validacion', mtz[ i ] );
-
-						// ---------- iniciamos la verificacion de los datos de la lista de verificacion
-
-						if ( obs && actual && post && val ) // existen los 4 campos
-							mtzValidacion.push( comparacion( mtz[ i ].datos_lectura_actual, mtz[ i ].datos_lectura_posterior, mtz[ i ].validacion, mtz[ i ].observaciones ) );
-						else 
-						{
-							console.log( 'Propiedades incompletas para iniciar validacion de Actividades' );
-							return false
-						}
-					}
-
-					// ---------- verificar objetos no validos
-					
-					for( var i = 0, lon = mtzValidacion.length; i < lon; i++ ) 
-						if( mtzValidacion[ i ] === false ) return false;
-
-					return true;
-				}
-
-				else
-				{
-					return false
-					console.log( 'Elemento propiedad: datos_actividad no es un arreglo' );
-				}
-			},
-
-			comparacion = function ( arr_actual, arr_post, arr_validar, obser )
-			{
-				// b = arr_actual;
-				// c = arr_post;
-				// d = arr_validar;
-
-				// ---------- verificando arreglos vacios
-
-				if ( jQuery.isEmptyObject( arr_actual ) && jQuery.isEmptyObject( arr_post ) &&
-					 jQuery.isEmptyObject( arr_validar ) )
-				{
-					console.log( 'arreglos [ arr_actual || arr_post || arr_validar ] vacios' )
-					return false;
-				}
-
-				var flag = true;
-					
-				if ( obser.valor )
-					flag = $.sigesop.validacion( [ obser ], { tipoValidacion: 'error' } );
-				else $.sigesop.vaciarPopover( [ obser ] );	
-
-				// ---------- inicio de validaciones
-
-				if ( flag )
-				{
-					// ---------- verificamos longitudes de los arreglos para definir acciones
-
-					var 
-						lon_actual = arr_actual.length,	
-						lon_post = arr_post.length,
-						lon_validar = arr_validar.length;
-
-					if ( lon_validar == 1 ) // contiene un paramentro, hay que validar el unico con todas las lecturas
-						return __verificaParametro( arr_validar[ 0 ], arr_actual, arr_post );
-
-					else if ( lon_validar > 1 ) // contiene varios parametros, hay que validar lecturas por filas correspondientes
-					{
-						if ( ( lon_actual && lon_post ) == lon_validar )
-							return __verificaMtzParametros( arr_validar, arr_actual, arr_post );
-						else 
-						{
-							console.log( 'arr_actual: ' + lon_actual + ' arr_post: ' + lon_post + ' arr_avalidar: ' + lon_validar );
-							console.log( 'longitud de [ arr_actual || arr_post || arr_avalidar ] no son iguales' );
-							return false;
-						}
-					}
-
-					else
-					{
-						return false;
-						console.log( 'longitud de [ arr_validar ] no valida o es nula' )
-					}
-				}
-
-				else return false;				
-			},
-
-			__verificaParametro = function ( obj_validar, arr_actual, arr_post )
-			{
-				var mtzValidacion = [];
-
-				switch ( obj_validar.tipo_dato )
-				{
-					case 'TEXTO': // sólo verifica que los campos no sean nulos y con el formato regexp
-						for ( var i = 0, lon = arr_actual.length; i < lon; i++ )
-						{
-							mtzValidacion.push( $.sigesop.validacion( [ arr_actual[ i ].dato ], { tipoValidacion: 'error' } ) );
-							mtzValidacion.push( $.sigesop.validacion( [ arr_post[ i ].dato ], { tipoValidacion: 'error' } ) );
-						}						
-						break;
-
-					case 'COMPARACION':
-						for ( var i = 0, lon = arr_actual.length; i < lon; i++ )
-						{
-							// ---------- validar nulo y formato regexp
-							
-							var a = $.sigesop.validacion( [ arr_actual[ i ].dato ], { tipoValidacion: 'error' } ),
-								p = $.sigesop.validacion( [ arr_post[ i ].dato ], { tipoValidacion: 'error' } );
-
-							if ( a && p )
-							{
-								arr_actual[ i ].dato.valor == obj_validar.dato ?								
-									arr_actual[ i ].dato.prioridad = null :
-									arr_actual[ i ].dato.prioridad = 'U';
-
-								arr_post[ i ].dato.valor == obj_validar.dato ?
-									arr_post[ i ].dato.prioridad = null :
-									arr_post[ i ].dato.prioridad = 'U';
-
-								mtzValidacion.push( true );							 
-							}
-							else mtzValidacion.push( false );
-						}
-						break;
-
-					case 'RANGO':
-						return 'RANGO';
-						break;
-
-					case 'TOLERANCIA':
-						return 'TOLERANCIA';
-						break;
-
-					default:
-						console.log( 'Tipo de dato: [' + obj_validar.tipo_dato + '] no esta definido' );
-						return false;
-						break;
-				}
-
-				return $.sigesop.mtzValidacion( mtzValidacion );
-			},
-
-			__verificaMtzParametros = function ( arr_validar, arr_actual, arr_post )
-			{
-				var mtzValidacion = [],
-					i = 0,
-					lon = arr_validar.length;
-
-				for( i; i < lon; i++ )
-					mtzValidacion.push( __verificaParametro( arr_validar[ i ], [ arr_actual[ i ] ], [ arr_post[ i ] ] ) );
-
-				return $.sigesop.mtzValidacion( mtzValidacion );
-			};			
-
-		// ---------- iniciamos recorriendo cada una de las listas de verificacion existentes que deseamos validar
-
-		if ( jQuery.isPlainObject( obj ) )
-		{
-			// var prop = Object.getOwnPropertyNames( obj );
-
-			// if ( prop.indexOf( 'datos_actividad' ) != -1 ) 
-			// {
-			// 	mtzValidacion.push( datosActividad ( obj.datos_actividad ) );
-			// }
-
-			if ( $.sigesop.array_key_exists( 'datos_actividad', obj ) ) 
-			{
-				mtzValidacion.push( datosActividad ( obj.datos_actividad ) );
-			}
-
-			else
-			{
-				mtzValidacion.push( false );
-				console.log( 'Elemento sin propiedad: datos_actividad' );
-			}
-		}
-
-		else if ( jQuery.isArray( obj ) )
-		{
-			// ----------- recorremos y validamos los elementos del arreglo recursivamente
-
-			for( i = 0, lon = obj.length ; i < lon; i++ )
-				mtzValidacion.push( this.validacion( obj[ i ] ) );
-		}
-
-		else
-		{ 
-			console.log( 'El elemento ingresado no es una lista de datos válida para listas de verificacion' );
-			return false;
-		}
-
-		return $.sigesop.mtzValidacion( mtzValidacion );
 	}
 };

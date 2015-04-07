@@ -1,4 +1,4 @@
-$.sigesop.equipoGenerador = {
+sigesop.equipoGenerador = {
 	documentoEquipoGenerador: function ( obj, suf )
 	{
 		suf = suf || '';
@@ -12,41 +12,41 @@ $.sigesop.equipoGenerador = {
 		var 
 			html =
 				'<form class="form-horizontal" role="form" method="post">' +
-				'	<div id="formNombreEquipo' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">Nombre Equipo:</label>' +
-				'		<div class="col-sm-7">' +
-				'			<input id="nombreEquipo' + suf + '" value="' + obj.nombre_equipo_aero + 
+					'<div id="formNombreEquipo' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">Nombre Equipo:</label>' +
+						'<div class="col-sm-7">' +
+							'<input id="nombreEquipo' + suf + '" value="' + obj.nombre_equipo_aero + 
 							'" class="form-control input-md eventoCambioMayuscula" placeholder="Ingrese nombre del componente">' +
-				'		</div>' +
-				'	</div>' +
+						'</div>' +
+					'</div>' +
 				
-				'	<div id="formIdEquipo' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">ID del Equipo:</label>' +
-				'		<div class="col-sm-7">' +
-				'			<input id="idEquipo' + suf + '" value="' + obj.id_equipo_aero + 
+					'<div id="formIdEquipo' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">ID del Equipo:</label>' +
+						'<div class="col-sm-7">' +
+							'<input id="idEquipo' + suf + '" value="' + obj.id_equipo_aero + 
 							'" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="Ingrese ID de equipo ( 1-4 caracteres, signos aceptados [-_.] [A-Za-z] [0-9])" />' +
-				'		</div>' +
-				'	</div>' +
+						'</div>' +
+					'</div>' +
 
-				'	<div id="formIdSistema' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">Sistema:</label>' +
-				'		<div class="col-sm-5">' +
-				'			<input id="idSistema' + suf + '" disabled value="' + obj.nombre_sistema_aero + '" class="form-control input-md eventoCambioMayuscula" placeholder="Seleccione Sistema">' +
-				'		</div>' +
-				'		<div class="col-sm-2">' +
-				'			<button type="button" id="botonSistema' + suf + '" class="btn btn-primary">Seleccione sistema</button>' +
-				'		</div>' +
-				'	</div>' +
+					'<div id="formIdSistema' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">Sistema:</label>' +
+						'<div class="col-sm-5">' +
+							'<input id="idSistema' + suf + '" disabled value="' + obj.nombre_sistema_aero + '" class="form-control input-md eventoCambioMayuscula" placeholder="Seleccione Sistema">' +
+						'</div>' +
+						'<div class="col-sm-2">' +
+							'<button type="button" id="botonSistema' + suf + '" class="btn btn-primary">Seleccione sistema</button>' +
+						'</div>' +
+					'</div>' +
 
-				'	<div class="form-group">' +
-				'		<div class="col-sm-3"></div>' +
-				'		<div class="col-sm-7">' +
-				'			<p>' +
-				'				<button id="btnNuevoEquipo' + suf + '" class="btn btn-success" data-loading-text="Enviando..."><span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button>' +
-				'				<button id="btnlimpiarCamposEquipo' + suf + '" class="btn btn-success"><span class=" glyphicon glyphicon-repeat"></span> Limpiar</button>' +
-				'			</p>' +
-				'		</div>' +
-				'	</div>' +
+					'<div class="form-group">' +
+						'<div class="col-sm-3"></div>' +
+						'<div class="col-sm-7">' +
+							'<p>' +
+								'<button id="btnNuevoEquipo' + suf + '" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
+								'<button id="btnlimpiarCamposEquipo' + suf + '" class="btn btn-success"><span class=" glyphicon glyphicon-repeat"></span> Limpiar</button>' +
+							'</p>' +
+						'</div>' +
+					'</div>' +
 				'</form>',
 
 			doc = {
@@ -54,7 +54,7 @@ $.sigesop.equipoGenerador = {
 
 				javascript: function ()
 				{
-					$.sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
+					sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
 					this.datos.idSistema.valor = obj.id_sistema_aero;
 				},
 

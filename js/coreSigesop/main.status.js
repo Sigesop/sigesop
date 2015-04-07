@@ -2,12 +2,12 @@ $( document ).on( 'ready', main );
 
 function main()
 {
-	$.sigesop.barraHerramientas( 'header' );
+	$( 'header' ).barraHerramientas();
 
-	$.sigesop.solicitarDatosSistema({ 
-		clase: 'ajaxStatus',
-		solicitud: 'obtenerCapacidadEfectiva',
-		respuesta: function ( data ) 
+	sigesop.query({ 
+		class: 'status',
+		query: 'obtenerCapacidadEfectiva',
+		success: function ( data ) 
 		{
 			if ( data.capacidad_instalada_central !== null ) 
 			{
@@ -62,14 +62,14 @@ function main()
 				$('#barFalla').attr('style', attrFalla);
 				$('#barFalla span').text(porcentFalla.toFixed(2) + '%');
 
-				$.sigesop.status.graficaPastel( data.unidades, '#resumenUnidades' );
+				sigesop.status.graficaPastel( data.unidades, '#resumenUnidades' );
 				
-				doc_tabla = $.sigesop.status.tablaCapacidades( data.unidades );
+				doc_tabla = sigesop.status.tablaCapacidades( data.unidades );
 				document.getElementById( 'tablaDesglosada' ).innerHTML = '<br>' + doc_tabla.html;
 				doc_tabla.javascript();
 			} 
 
-			else $.sigesop.status.comprobarDatosPrincipalesNulos();
+			else sigesop.status.comprobarDatosPrincipalesNulos();
 		}
 	});
 }

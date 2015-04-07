@@ -1,4 +1,4 @@
-$.sigesop.licencias = {
+sigesop.licencias = {
 	document: function ( obj, suf )
 	{
 		obj = obj || {
@@ -32,7 +32,7 @@ $.sigesop.licencias = {
 				html: html,
 
 				javascript: function () {
-					$.sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
+					sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
 				},
 
 				datos: {

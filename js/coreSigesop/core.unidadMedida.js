@@ -1,4 +1,4 @@
-$.sigesop.unidadMedida = {
+sigesop.unidadMedida = {
 	documentoCatalogoUnidadMedida: function ( obj, suf )
 	{
 		suf = suf || '';
@@ -11,34 +11,34 @@ $.sigesop.unidadMedida = {
 		var 
 			html = 
 				'<form class="form-horizontal" role="form">' +
-				'	<div id="formUnidadMedida' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">Unidad de Medida:</label>' +
-				'		<div class="col-sm-7">' +
-				'			<input id="unidadMedida' + suf + '" class="form-control input-md evtCambioMay" placeholder="Ingrese descripcion de la actividad" value="' + obj.unidad_medida + '" > ' +
-				'		</div>' +
-				'	</div>' +
+					'<div id="formUnidadMedida' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">Unidad de Medida:</label>' +
+						'<div class="col-sm-7">' +
+							'<input id="unidadMedida' + suf + '" class="form-control input-md evtCambioMay" placeholder="Ingrese descripcion de la actividad" value="' + obj.unidad_medida + '" > ' +
+						'</div>' +
+					'</div>' +
 
-				'	<div id="formDescUnidadMedida' + suf + '" class="form-group">' +
-				'		<label class="col-sm-3 control-label">Descripcion Unidad de Medida:</label>' +
-				'		<div class="col-sm-7">' +
-				'			<textarea id="descUnidadMedida' + suf + '" class="form-control input-md evtCambioMay" placeholder="Ingrese descripcion de la actividad">' + obj.descripcion_unidad_medida + '</textarea>' +
-				'		</div>' +
-				'	</div>' +
+					'<div id="formDescUnidadMedida' + suf + '" class="form-group">' +
+						'<label class="col-sm-3 control-label">Descripcion Unidad de Medida:</label>' +
+						'<div class="col-sm-7">' +
+							'<textarea id="descUnidadMedida' + suf + '" class="form-control input-md evtCambioMay" placeholder="Ingrese descripcion de la actividad">' + obj.descripcion_unidad_medida + '</textarea>' +
+						'</div>' +
+					'</div>' +
 
-				'	<div class="form-group">' +
-				'		<div class="col-sm-3 control-label"></div>' +
-				'		<p class="col-sm-7">' +
-				'			<button id="btnGuardarUnidadMedida' + suf + '" type="submit" class="btn btn-success" data-loading-text="Enviando..." > <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button>' +
-				'			<button id="btnLimpiarUnidadMedida' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
-				'		</p>' +
-				'	</div>' +
+					'<div class="form-group">' +
+						'<div class="col-sm-3 control-label"></div>' +
+						'<p class="col-sm-7">' +
+							'<button id="btnGuardarUnidadMedida' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
+							'<button id="btnLimpiarUnidadMedida' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
+						'</p>' +
+					'</div>' +
 				'</form>',
 
 			doc = {
 				html: html,
 				javascript: function ()
 				{
-					$.sigesop.eventoCambioMayuscula( '.evtCambioMay' );
+					sigesop.eventoCambioMayuscula( '.evtCambioMay' );
 				},
 				datos: {
 					unidad_medida: {

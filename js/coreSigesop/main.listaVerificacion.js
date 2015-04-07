@@ -1,92 +1,42 @@
 $( document ).on( 'ready', main );
 
-function main ()
-{
-	// ---------- documento de creacion de listas de verificacion
-
-	doc = $.sigesop.listaVerificacion.documentoListaVerificacion( null, '' );
+function main () {
+	/* documento de creacion de listas de verificacion
+	 */
+	doc = sigesop.listaVerificacion.document({
+		success: nuevoElemento,
+		error: error
+	});
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
-	// ---------- documento de registro de listas de verificacion
-
-	docR = $.sigesop.tablaRegistro({
-		head: 'SISTEMA, ACTIVIDADES REGISTRADAS',
-		campo: "nombre_sistema_aero, elementos",
-		suf: '_lista_verificacion'
-	});
-
-	document.getElementById( 'listasRegistradas' ).innerHTML = '<br>' + docR.html;
-
-	$( docR.IDS.body ).contextMenu({
-		selector: 'tr',
-		items: {
-            editar: 
-            {
-            	name: 'Editar', 
-            	icon: 'edit',
-        		callback: editarElemento
-            }
+	/* documento de registro de listas de verificacion
+	 */
+	docR = sigesop.listaVerificacion.registro({
+		table: {
+			actions: {
+				actividades: editarElemento
+			}
 		}
 	});
-
-	// docR.callback.menuPDF = function ( index, data )
-	// {
-	// 	var doc = new jsPDF(),
-	// 		nombre = window.sesion.matrizListaVerificacion[ index ]['descripcion_lista_verificacion'];
-
-	// 	doc.setFont("courier");
-	// 	doc.setFontType("bolditalic");
-	// 	doc.text(20, 60, nombre );
-	// 	doc.save( nombre + '.pdf' );
-	// }
+	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
+	docR.javascript();
 
 	// ----------------------------------------------------------
 
-	$.sigesop.barraHerramientas( 'header' );
-
+	$( 'header' ).barraHerramientas();
 	getData();
-
-	$( doc.IDS.botonGuardar ).on('click', function(event) {
-		event.preventDefault();
-	
-		// var m = [ 'IDS', 'botonGuardar' ];
-
-		// var temp = doc[ m[0] ];
-		// temp = temp[ m[1] ];
-		// alert( temp );
-		procesoElemento ( doc, doc.IDS.botonGuardar, nuevoElemento )
-	});
-
-	$( doc.IDS.botonLimpiar ).on( 'click', function ( event )
-	{
-		event.preventDefault();
-		limpiarCampos( doc );
-	});
-
-	$( doc.IDS.botonActividad ).on( 'click', function ( event ) 
-	{
-		event.preventDefault();
-		procesarActividad( doc );
-	});
-
-	$( doc.IDS.botonReiniciarAct ).on( 'click', function ( event ) 
-	{
-		event.preventDefault();
-		reiniciarActividad( doc );
-	});
 }
 
-function getData()
-{
-	$.sigesop.solicitarDatosSistema ({
-		clase: 'ajaxListaVerificacion',
-		solicitud: 'obtenerTipoMantenimiento',
-		respuesta: function ( data )
+function getData() {
+	sigesop.query ({
+		class: 'listaVerificacion',
+		query: 'obtenerTipoMantenimiento',
+		success: function ( data )
 		{
 			window.sesion.matrizTipoMantto = data;
 			
-			$.sigesop.combo({
+			sigesop.combo({
 				arr: data, 
 				elem: doc.datos.id_mantenimiento.idHTML,
 				campo: 'nombre_mantenimiento',
@@ -95,212 +45,193 @@ function getData()
 		}
 	});
 
-	$.sigesop.solicitarDatosSistema ({
-		clase: 'ajaxSistemasGenerador',
-		solicitud: 'obtenerSistemas',
-		respuesta: function ( data )
-		{
-			window.sesion.matrizSistemas = data;
-			
-			$.sigesop.combo({
-				arr: data, 
-				elem: doc.actividad_verificar.id_sistema_aero.idHTML,
-				campo: 'nombre_sistema_aero',
-				campoValor: 'id_sistema_aero'
-			});
-		}
-	});
-
-	$.sigesop.solicitarDatosSistema ({
-		clase: 'ajaxListaVerificacion',
-		solicitud: 'systems_into_mantto',
-		respuesta: function ( data )
-		{
+	sigesop.query ({
+		class: 'listaVerificacion',
+		query: 'num_actividades_into_lista',
+		success: function ( data ) {
+			window.sesion.num_actividades_into_lista = data;
 			document.getElementById( 'badge_listaVerificacion' ).innerHTML = data !== null ?
 				data.length : 0;
 
-			docR.update_table( data );
+			docR.table.update_table( data );
 		}
 	});
 }
 
-function procesoElemento ( doc, btn, callback )
-{	
-	// -------------- capturamos las cajas de datos restantes						
-	
-	doc.datos.id_mantenimiento.valor = $( doc.datos.id_mantenimiento.idHTML ).val().trim();
-	doc.datos.descripcion_lista_verificacion.valor = $( doc.datos.descripcion_lista_verificacion.idHTML ).val().trim();
+function error() { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); }
 
-	// doc.actividad_verificar.id_equipo_aero.valor = $( doc.actividad_verificar.id_equipo_aero.idHTML ).val().trim();
-	// doc.actividad_verificar.id_sistema_aero.valor = $( doc.actividad_verificar.id_sistema_aero.idHTML ).val().trim();	
+function nuevoElemento( datos, IDS, limpiarCampos ) {
+	datos.id_mantenimiento.valor = 
+		$( datos.id_mantenimiento.idHTML ).val().trim();
+	datos.descripcion_lista_verificacion.valor = 
+		$( datos.descripcion_lista_verificacion.idHTML ).val().trim();
 
-	// -------------- validamos los campos
-
-	var arr = [
-		doc.datos.id_mantenimiento,	
-		// doc.actividad_verificar.id_equipo_aero,
-		// doc.actividad_verificar.id_sistema_aero,
-		doc.datos.descripcion_lista_verificacion
-	]; 
-
-	// -------------- enviamos insercion a la base de datos
-
-	if ( $.sigesop.validacion( arr, { tipoValidacion: 'error' } ) ) 
-	{
-		if ( !jQuery.isEmptyObject( doc.datos.actividad_verificar ) ) callback( doc, btn );
-		else
-		{			
-			$.sigesop.validacion( [ doc.actividad_verificar.actividad_verificar ], { tipoValidacion: 'error' } );
-			$.sigesop.msgBlockUI( 'No existen actividades agregadas', 'error' );	
-		} 
-	}
-
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' );
-}
-
-function nuevoElemento( doc, btn )
-{
-	var boton = $( btn );
-	boton.button( 'loading' );
-	 
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxListaVerificacion',
-		solicitud: 'nuevaListaVerificacion',
+	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+	sigesop.query({
+		data: datos,
+		class: 'listaVerificacion',
+		query: 'nuevaListaVerificacion',
+		queryType: 'sendData',
 		type: 'POST',
-		OK: function () 
+		OK: function ( msj, eventos ) 
 		{
-			limpiarCampos( doc );
+			$.unblockUI();
+			limpiarCampos();
 			getData();
-			$.sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
-			boton.button('reset');
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
-
-		NA: function () 
-		{ 
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
-			boton.button('reset');
-		},
-
-		DEFAULT: function (data) 
-		{ 
-			$.sigesop.msgBlockUI( data, 'error' );
-			boton.button( 'reset' );
-		},
-		errorRespuesta: function () 
-		{ 
-			$.sigesop.msgBlockUI( 'Error de comunicación al servidor', 'error' );
-			boton.button( 'reset' ) 
-		}
+		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
 	}) ;
 }
 
-function limpiarCampos( doc )
-{
-	// doc.datos = $.sigesop.vaciarCampos( doc.datos );
+/**
+ * [editarElemento description]
+ * @param  {Int} {index} Genera ventana emergente para
+ * 
+ * @return {Void}
+ */
+function editarElemento( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function editarElemento: index fuera de rango' );
 
-	// ---------- vaciar datos
-	
-	doc.datos.id_mantenimiento.valor = null;	
-	doc.datos.actividad_verificar = [];
-	doc.datos.descripcion_lista_verificacion.valor = null;
-
-	// ----------
-
-	$( doc.datos.id_mantenimiento.idHTML ).val( '' );
-	$( doc.datos.descripcion_lista_verificacion.idHTML ).val( '' );
-
-	// ---------- limpiar actividades
-
-	reiniciarActividad( doc )
-	$( doc.IDS.listaActividades ).empty();
-}
-
-function procesarActividad( doc )
-{
-	// -------------- capturamos las cajas de datos restantes
-	
-	doc.actividad_verificar.id_sistema_aero.valor = $( doc.actividad_verificar.id_sistema_aero.idHTML ).val().trim();
-	doc.actividad_verificar.id_equipo_aero.valor = $( doc.actividad_verificar.id_equipo_aero.idHTML ).val().trim();	
-	doc.actividad_verificar.actividad_verificar.valor = $( doc.actividad_verificar.actividad_verificar.idHTML ).val().trim();
-
-	var arr = [
-		doc.actividad_verificar.id_equipo_aero,
-		doc.actividad_verificar.id_sistema_aero,
-		doc.actividad_verificar.actividad_verificar
-	];
-
-	if ( $.sigesop.validacion( arr, { tipoValidacion: 'error' } ) )
-	{
-	
-		doc.datos.actividad_verificar.push( copy_actividad( doc.actividad_verificar ) );
-
-		doc.IDS.update_table_actividad ( doc.datos.actividad_verificar );
-
-		reiniciarActividad( doc ); // reiniciamos la actividad
+	var elem = window.sesion.num_actividades_into_lista[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function editarElemento: elem es indefinido');
 	}
 
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' );
+	var
+
+	showBsModal = function () {
+		var 
+
+		getLista = function () {
+			sigesop.query({
+				data: {	lista_verificacion: elem.lista_verificacion },
+				class: 'listaVerificacion',
+				query: 'actividades_into_lista',
+				success: function ( data ) { 
+					window.sesion.actividades_into_lista = data;
+					actividades.update_table( data ); 
+				}
+			});
+		},
+
+		actividades = sigesop.tablaRegistro({
+			head: 	'ACTIVIDAD, PARAMETRO DE ACEPTACION, LECTURA ACTUAL,' +
+					'LECTURA POSTERIOR',
+			campo:  'actividad_verificar, parametro_aceptacion.texto, ' +
+					'lectura_actual.texto, lectura_posterior.texto',
+			suf: 	'tabla-actividades'
+		});
+
+		document.getElementById( this.idBody )
+		.innerHTML = actividades.html;
+
+		$( actividades.IDS.body ).contextMenu({
+			selector: 'tr',
+			items: {
+	            actividad: {
+	            	name: 'Editar Actividad', 
+	            	icon: 'edit',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).index();
+	        			editarActividadVerificar( index, getLista );
+	        		}
+	            },
+	            parametro_aceptacion: {
+	            	name: 'Editar Paramentro de Aceptación', 
+	            	icon: 'edit',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).index();
+	        		}
+	            },
+	            lectura_actual: {
+	            	name: 'Editar Lectura Actual', 
+	            	icon: 'edit',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).index();
+	        		}
+	            },
+	            lectura_posterior: {
+	            	name: 'Editar Lectura Posterior', 
+	            	icon: 'edit',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).index();
+	        		}
+	            },
+			}
+		});
+
+		getLista();
+	},
+
+	win = sigesop.ventanaEmergente({
+		idDiv: 'div-insertar-datos-lista-v',
+		titulo: 'Edición de actividad',
+		clickAceptar: function ( event ) {
+			event.preventDefault();
+			$( win.idDiv ).modal( 'hide' );
+		},
+		showBsModal: showBsModal
+	});
 }
 
-function copy_actividad( data )
-{
-	// ---------- copiamos doc.actividad_verificar a [doc.datos] principal
-	
-	var act = jQuery.extend( true, {}, data );
+function editarActividadVerificar ( index, update_table ) {
+	if ( index < 0 ) 
+		throw new Error( 'function editarActividad: index fuera de rango' );
 
-	// ---------- eliminar datos innecesarios
+	var elem = window.sesion.actividades_into_lista[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function editarActividad: elem es indefinido');
+	}
 
-	delete act.id_sistema_aero.idHTML;
-	delete act.id_sistema_aero.idValidacion;
-	delete act.id_sistema_aero.popover;
+	var
 
-	delete act.id_equipo_aero.idHTML;
-	delete act.id_equipo_aero.idValidacion;
-	delete act.id_equipo_aero.popover;
+	success = function ( datos, IDS ) {
+		datos.actividad_verificar.valor = 
+			$( datos.actividad_verificar.idHTML ).val().trim();
 
-	delete act.actividad_verificar.idHTML;
-	delete act.actividad_verificar.idValidacion;
-	delete act.actividad_verificar.regexp;
-	delete act.actividad_verificar.popover;
+		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+		sigesop.query({
+			data: datos,
+			class: 'listaVerificacion',
+			query: 'actualizar_actividad_verificar',
+			queryType: 'sendData',
+			type: 'POST',
+			OK: function ( msj, eventos ) 
+			{
+				update_table();
+				$.unblockUI();
+				$( win.idDiv ).modal('hide');
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+		}) ;
+	},
 
-	return act;
-}
+	showBsModal = function () {
+		var actividadVerificar =
+			sigesop.listaVerificacion.actividadVerificar({
+				obj: elem,
+				suf: 'win-editar',
+				success: success
+			});
 
-function reiniciarActividad( doc )
-{
-	// ---------- reiniciar datos
-	
-	doc.actividad_verificar.id_equipo_aero.valor = null;
-	doc.actividad_verificar.id_sistema_aero.valor = null;
-	doc.actividad_verificar.actividad_verificar.valor = null;
-	doc.actividad_verificar.parametro_actividad = [];
-	doc.actividad_verificar.lectura_actual = [];
-	doc.actividad_verificar.lectura_posterior = [];	
+		document.getElementById( this.idBody )
+		.innerHTML = actividadVerificar.html;
+		actividadVerificar.javascript();
+	},
 
-	// ----------
-
-	$( doc.actividad_verificar.id_equipo_aero.idHTML ).val( '' );
-	$( doc.actividad_verificar.id_equipo_aero.idHTML ).prop( 'disabled', true );
-
-	$( doc.actividad_verificar.id_sistema_aero.idHTML ).val( '' );
-	$( doc.actividad_verificar.actividad_verificar.idHTML ).val( '' );
-
-	$( doc.IDS.parametroAceptacion ).val('');	
-	$( doc.IDS.divParametroAceptacion ).empty();			
-
-	$( doc.IDS.lecturaActual ).val('');
-	$( doc.IDS.lecturaActual ).prop( 'disabled', false );
-	$( doc.IDS.divLecturaActual ).empty();		
-	
-	$( doc.IDS.lecturaPost ).val( '' );
-	$( doc.IDS.lecturaPost ).prop( 'disabled', true );
-	$( doc.IDS.divLecturaPost ).empty();
-
-	$( doc.IDS.botonActividad ).prop( 'disabled', true );
-}
-
-function editarElemento( key, opt )
-{
-
+	win = sigesop.ventanaEmergente({
+		idDiv: 'win-edicion-actividad-verificar',
+		ttulo: 'Editar actividad',
+		clickAceptar: function( event ) {
+			$( win.idDiv ).modal('hide');
+		},
+		showBsModal: showBsModal
+	});
 }

@@ -2,43 +2,29 @@ $( document ).on( 'ready', main );
 
 function main ()
 {
-	// ------------------------------------------------------
-
-	$.sigesop.barraHerramientas( 'header' );
+	doc = sigesop.gestionCentral.document({
+		error: error,
+		success: actualizarElemento
+	});
+	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
+	doc.javascript();
 		
-	$.sigesop.solicitarDatosSistema({
-		clase: 'ajaxGestionCentral',
-		solicitud: 'obtenerDatosCentral',
-		respuesta: function(data)
-		{
+	$( 'header' ).barraHerramientas();
+	getData();
+}
+
+function getData () {
+	sigesop.query({
+		class: 'gestionCentral',
+		query: 'obtenerDatosCentral',
+		success: function( data ) {
 			window.sesion.matrizCentral = data;
-
-			if ( data !== null ) 
-			{
-				doc = $.sigesop.gestionCentral.documentoCatalogoGestionCentral( data[0], '', true );
-				document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
-				doc.javascript();
-
-				// ----------------------------------------------------------------------
-
-				$( doc.IDS.botonGuardar ).click(function ( event )
-				{
-					event.preventDefault();
-					procesoElemento( doc, doc.IDS.botonGuardar, actualizarElemento );
-				});		
-			}
-			else
-			{
-				$( '#main' ).html( '<br> <h4 class="text-center" >' + $.sigesop.sinRegistros + '</h4> <br>' );
-				$.sigesop.status.comprobarDatosPrincipalesNulos();
-			}
-		},
-		errorRespuesta: function ()
-		{
-			document.getElementById( 'main' ).innerHTML = '<br> <h4 class="text-center" >ERROR DE COMUNICACIÓN AL SERVIDOR</h4> <br>'
+			doc.update_data( data );
 		}
 	});
 }
+
+function error() { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); }
 
 function procesoElemento( doc, btn, callback )
 {
@@ -62,83 +48,59 @@ function procesoElemento( doc, btn, callback )
 		doc.datos.superintendente
 	];
 
-	if ( $.sigesop.validacion( arr, {tipoValidacion: 'error'} ) ) 
+	if ( sigesop.validacion( arr, {tipoValidacion: 'error'} ) ) 
 	{
 		if ( !jQuery.isEmptyObject( doc.datos.claveCentralUpdate.valor ) ) callback( doc, btn );
-		else $.sigesop.msgBlockUI( 'La clave anterior de la central se encuentra nula' );
+		else sigesop.msgBlockUI( 'La clave anterior de la central se encuentra nula' );
 	} 
 
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' );
+	else sigesop.msgBlockUI( 'Complete los campos', 'error' );
 }
 
-function actualizarElemento( doc, btn )
+function actualizarElemento( datos, IDS, vaciarDatos )
 {
-	boton = $( btn );
-	// boton.button( 'loading' );
-	$.sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+	datos.clave_20.valor = $( datos.clave_20.idHTML ).val().trim();	
+	datos.clave_sap.valor = $( datos.clave_sap.idHTML ).val().trim();
+	datos.centro_costo.valor = $( datos.centro_costo.idHTML ).val().trim();
+	datos.nombre_central.valor = $( datos.nombre_central.idHTML ).val().trim();
+	datos.direccion.valor = $( datos.direccion.idHTML ).val().trim();
+	datos.telefono.valor = $( datos.telefono.idHTML ).val().trim();
+	datos.cp.valor = $( datos.cp.idHTML ).val().trim();
+	datos.superintendente.valor = $( datos.superintendente.idHTML ).val().trim();
 
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxGestionCentral',
-		solicitud: 'actualizarDatosCentral',
+	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+	sigesop.query({
+		data: datos,
+		class: 'gestionCentral',
+		query: 'actualizarDatosCentral',
+		queryType: 'sendData',
 		type: 'POST',
-		OK: function()
-		{				
-			$.sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );
-			boton.button( 'reset' );
+		OK: function( msj, eventos )
+		{
+			vaciarDatos();
+			doc.disable();			
+			$.unblockUI();			
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 
-			// ----------- limpiar campos
-
-			doc.datos = $.sigesop.vaciarCampos( doc.datos );
-			doc.datos.claveCentralUpdate.valor = null;
-
-			// ----------- reingresar datos actualizados
-
-			$.sigesop.solicitarDatosSistema({
-				clase: 'ajaxGestionCentral',
-				solicitud: 'obtenerDatosCentral',
-				respuesta: function( data )
+			/* reingresar datos actualizados			
+			 */
+			sigesop.query({
+				class: 'gestionCentral',
+				query: 'obtenerDatosCentral',
+				success: function( data )
 				{
 					window.sesion.matrizCentral = data;
-					if (data !== null) 
-					{
-						// ----------- rellenar con los nuevos datos
-
-						$( doc.datos.claveCentral.idHTML ).val( data[ 0 ][ "clave_20" ] );
-						$( doc.datos.claveSAP.idHTML ).val( data[ 0 ][ "clave_sap" ] );
-						$( doc.datos.centroCosto.idHTML ).val( data[ 0 ][ "centro_costo" ] );
-						$( doc.datos.nombreCentral.idHTML ).val( data[ 0 ][ "nombre_central" ] );
-						$( doc.datos.direccion.idHTML ).val( data[ 0 ][ "direccion" ] );
-						$( doc.datos.telefono.idHTML ).val( data[ 0 ][ "telefono" ] );
-						$( doc.datos.codigoPostal.idHTML ).val( data[ 0 ][ "cp" ] );
-						$( doc.datos.superintendente.idHTML ).val( data[ 0 ][ 'superintendente' ] );
-						$( doc.datos.capacidadInstalada.idHTML ).val( data[ 0] [ "capacidad_instalada" ] );
-					}
+					doc.update_data( data );
 				}
 			});
-
-			// ----------- desabilitar los campos
-
-			$.sigesop.habilitarElementos( doc.datos, true );
-
-			// ----------- deshabilitamos los botones no necesario
-
-			// $.sigesop.habilitarElementoSimple( [
-			// 	doc.IDS.botonGuardar,
-			// 	doc.IDS.botonSuperintendente
-			// ], true );
-
-			$( doc.IDS.botonGuardar ).prop('disabled', true);
-			$( doc.IDS.botonSuperintendente ).prop('disabled', true);
-
-			// ----------- habilitamos el boton editar
-			
-			$( doc.IDS.botonEditar ).prop('disabled', false);
-			// $.sigesop.habilitarElementoSimple( [ doc.IDS.botonEditar ], false );
 		},
-
-		NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ); boton.button('reset'); },
-		DEFAULT: function (data) { $.sigesop.msgBlockUI( data, 'error' ); boton.button( 'reset' ); },
-		errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ); boton.button( 'reset' ) }
+		NA: function ( msj, eventos ) {
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
+		},
+		DEFAULT: function ( msj, eventos ) {
+			$.unblockUI();
+			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+		}
 	});
 }

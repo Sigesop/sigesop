@@ -1,4 +1,19 @@
-<?php include("conexion/conexionGestionCentral.php");?>
+<?php
+require ( '../ajax/sistema/sigesop.class.php' );
+require ( '../ajax/sistema/session.class.php' );
+$session = new session();
+$user = $_SESSION['user'];
+$pass = $_SESSION['pass'];
+$host = $_SESSION['host']; 
+
+$obj = new sigesop( $user, $pass );
+
+if ( !$obj->accesoPagina( 'gestionCentral.php' ) ) {
+    session_destroy();
+    header('Location: ../error.php');
+}
+?>
+
 <!doctype html>
 <html lang="es">
 	<head>
@@ -8,7 +23,9 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 		<link rel="stylesheet" href="../css/bootstrap.css">
 		<link rel="stylesheet" href="../css/style.css">		
-		<link rel="stylesheet" href="../css/cfe/jquery.ui.all.css">				
+		<link rel="stylesheet" href="../css/cfe/jquery.ui.all.css">	
+		<link rel="stylesheet" href="../js/pnotify/pnotify.custom.min.css">
+		<link rel="stylesheet" href="../js/formValidation/formValidation.min.css">
 	</head>
 
 	<body>
@@ -26,8 +43,14 @@
 		<script type="text/javascript" src="../js/jquery.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script>
 		<!-- // <script type="text/javascript" src="../js/ui/jquery-ui.custom.min.js"></script> -->
+		<script type="text/javascript" src="../js/pnotify/pnotify.custom.min.js"></script>
+
+		<script type="text/javascript" src="../js/formValidation/formValidation.min.js"></script>
+		<script type="text/javascript" src="../js/formValidation/bootstrap.min.js"></script>
+
 		<script type="text/javascript" src="../js/contextMenu/jquery.contextMenu.js"></script>
 		<script type="text/javascript" src="../js/jquery.blockUI.js"></script>	
+		
 		<script type="text/javascript" src="../js/coreSigesop/core.sigesop.cfe.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/core.status.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/core.roles.js"></script>

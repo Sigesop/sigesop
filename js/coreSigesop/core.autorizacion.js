@@ -1,4 +1,4 @@
-$.sigesop.autorizacion = {
+sigesop.autorizacion = {
 	documentoAutorizacion : function ( obj, suf )
 	{
 		var 

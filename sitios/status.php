@@ -1,4 +1,19 @@
-<?php include("conexion/conexionStatus.php");?>
+<?php
+require ( '../ajax/sistema/sigesop.class.php' );
+require ( '../ajax/sistema/session.class.php' );
+$session = new session();
+$user = $_SESSION['user'];
+$pass = $_SESSION['pass'];
+$host = $_SESSION['host']; 
+
+$obj = new sigesop( $user, $pass );
+
+if ( !$obj->accesoPagina( 'status.php' ) ) {
+    session_destroy();
+    header('Location: ../error.php');
+}
+?>
+
 <!doctype html>
 <html lang="es">
 	<head>
@@ -9,6 +24,8 @@
 		<link rel="stylesheet" href="../css/bootstrap.css">
 		<link rel="stylesheet" href="../css/base/jquery.ui.all.css">
 		<link rel="stylesheet" href="../css/style.css">
+		<link rel="stylesheet" href="../js/formValidation/formValidation.min.css">
+		<link rel="stylesheet" href="../js/pnotify/pnotify.custom.min.css">
 	</head>
 
 	<body>
@@ -62,9 +79,19 @@
 
 		<script type="text/javascript" src="../js/jquery.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="../js/pnotify/pnotify.custom.min.js"></script>
+		
+		<script type="text/javascript" src="../js/ui/jquery.ui.core.js"></script> 
+		<script type="text/javascript" src="../js/ui/jquery.ui.widget.js"></script>
+		<script type="text/javascript" src="../js/ui/jquery.ui.mouse.js"></script>
+		<script type="text/javascript" src="../js/ui/jquery.ui.accordion.js"></script>
 		<script type="text/javascript" src="../js/Highcharts/highcharts.js"></script>
 		<script type="text/javascript" src="../js/modules/exporting.js"></script>	
 		<script type="text/javascript" src="../js/jquery.blockUI.js"></script>
+
+		<script type="text/javascript" src="../js/formValidation/formValidation.min.js"></script>
+		<script type="text/javascript" src="../js/formValidation/bootstrap.min.js"></script>
+
 		<script type="text/javascript" src="../js/coreSigesop/core.sigesop.cfe.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/core.status.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/core.roles.js"></script>

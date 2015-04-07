@@ -2,13 +2,13 @@ $( document ).on( 'ready', main );
 
 function main()
 {
-	doc = $.sigesop.licencias.document();
+	doc = sigesop.licencias.document();
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
 	// ----------
 
-	docR = $.sigesop.tablaRegistro({
+	docR = sigesop.tablaRegistro({
 			head: 'AÑOS REGISTRADOS',
 			campo: 'anio_licencia'
 		});
@@ -29,7 +29,7 @@ function main()
 
 	// ----------
 
-	$.sigesop.barraHerramientas( 'header' );
+	$( 'header' ).barraHerramientas();
 	getData();
 
 	// ----------
@@ -49,10 +49,10 @@ function main()
 
 function getData()
 {
-	$.sigesop.solicitarDatosSistema({
-		clase: 'ajaxOperacion',
-		solicitud: 'obtener_libro_licencia',
-		respuesta: function ( data ) 
+	sigesop.query({
+		class: 'operacion',
+		query: 'obtener_libro_licencia',
+		success: function ( data ) 
 		{
 			window.sesion.matrizLicencia = data;
 
@@ -71,41 +71,41 @@ function procesoElemento ( doc, btn, callback )
 
 	// ----------------- comprobamos banderas y ejecutamos ajax al sistema
 
-	if ( $.sigesop.validacion( [ doc.datos.anio_licencia ], {tipoValidacion: 'error'} ) ) 
+	if ( sigesop.validacion( [ doc.datos.anio_licencia ], {tipoValidacion: 'error'} ) ) 
 		callback( doc, btn )
-	else $.sigesop.msgBlockUI( 'Complete los campos', 'error' );
+	else sigesop.msgBlockUI( 'Complete los campos', 'error' );
 }
 
 function nuevoElemento( doc, btn )
 {
 	var boton = $( btn );
 	boton.button( 'loading' );
-	$.sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');		
+	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');		
 
-	$.sigesop.insertarDatosSistema({
-		Datos: doc.datos,
-		clase: 'ajaxOperacion',
-		solicitud: 'nuevo_libro_licencia',
+	sigesop.query({
+		data: doc.datos,
+		class: 'operacion',
+		query: 'nuevo_libro_licencia',
+		queryType: 'sendData',
 		type: 'POST',
-		OK: function()
+		OK: function()	
 		{
 			limpiarCampos( doc );
 			getData();
-			$.sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
+			sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
 			boton.button('reset');		
 		},
 		NA: function () 
 		{
-			$.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
+			sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
 			boton.button('reset');
 		},
 
 		DEFAULT: function (data) 
 		{
-			$.sigesop.msgBlockUI( data, 'error' );
+			sigesop.msgBlockUI( data, 'error' );
 			boton.button( 'reset' );
-		},
-		errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ); boton.button( 'reset' ) }
+		}
 	});
 }
 
@@ -123,7 +123,7 @@ function eliminarElemento( key, opt )
 
 	if ( elemento )
 	{
-		var win = $.sigesop.ventanaEmergente({
+		var win = sigesop.ventanaEmergente({
 			idDiv: 'confirmarSolicitud',
 			titulo: 'Autorización requerida',
 			clickAceptar: function( event ) 
@@ -131,18 +131,18 @@ function eliminarElemento( key, opt )
 				event.preventDefault();
 				$( win.idDiv ).modal( 'hide' );
 
-				$.sigesop.insertarDatosSistema({
-					Datos: { id_libro_licencia: elemento.id_libro_licencia },
-					clase: 'ajaxOperacion',
-					solicitud: 'eliminar_libro_licencia',
+				sigesop.query({
+					data: { id_libro_licencia: elemento.id_libro_licencia },
+					class: 'operacion',
+					query: 'eliminar_libro_licencia',
+					queryType: 'sendData',
 					OK: function ()
 					{
 						getData();
-						$.sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );
+						sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );
 					},
-					NA: function () { $.sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
-					DEFAULT: function ( data ) { $.sigesop.msgBlockUI( data, 'error' ) },
-					errorRespuesta: function () { $.sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ) }
+					NA: function () { sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
+					DEFAULT: function ( data ) { sigesop.msgBlockUI( data, 'error' ) }					
 				});					
 			},
 			showBsModal: function () 
