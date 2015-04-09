@@ -50,7 +50,7 @@ sigesop.sistemaGenerador = {
 			var datos = this.datos;
 			datos.nombre_sistema_aero.valor = null;			
 			datos.id_sistema_aero.valor = null;
-			datos.id_sistema_aero_update.valor = null;
+			// datos.id_sistema_aero_update.valor = null;
 			if( this.IDS.$form !== null )
 				this.IDS.$form.formValidation( 'resetForm' );
 		},

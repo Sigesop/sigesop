@@ -131,7 +131,7 @@ sigesop.equipoGenerador = {
 			var datos = this.datos;
 			datos.nombre_equipo_aero.valor = null;			
 			datos.id_equipo_aero.valor = null;
-			datos.id_equipo_aero_update.valor = null;
+			// datos.id_equipo_aero_update.valor = null;
 			datos.id_sistema_aero.valor = null;
 			if( this.IDS.$form !== null )
 				this.IDS.$form.formValidation( 'resetForm' );
