@@ -1,320 +1,179 @@
 $( document ).on( 'ready', main );
 
-function main ()
-{
-	doc = sigesop.equipoGenerador.documentoEquipoGenerador();
+function main () {
+	/* Documento principal
+	 */
+	doc = sigesop.equipoGenerador.document({
+		error: sigesop.completeCampos,
+		success: nuevoElemento
+	});
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
-	// -----------------------------------------------------
-
-	docR = sigesop.tablaRegistro({
-			head: 'ID EQUIPO, NOMBRE EQUIPO, SISTEMA ASOCIADO',
-			campo: 'id_equipo_aero, nombre_equipo_aero, nombre_sistema_aero'
-		});
-
-	document.getElementById( 'equiposRegistrados' ).innerHTML = '<br>' + docR.html;
-
-	$( docR.IDS.body ).contextMenu({
-		selector: 'tr',
-		items: {
-            editar: 
-            {
-            	name: 'Editar', 
-            	icon: 'edit',
-        		callback: editarElemento
-            },
-            eliminar: 
-            {
-            	name: 'Eliminar', 
-            	icon: 'delete',
-        		callback: eliminarElemento
-            }
+	/* Tabla de registro	
+	 */
+	docR = sigesop.equipoGenerador.registro({
+		table: {
+			actions: {
+				eliminar: eliminarElemento,
+				editar: editarElemento
+			}
 		}
 	});
 
-	// -----------------------------------------------------
+	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
+	docR.javascript();
+
+	/* Descarga de datos
+	 */
 
 	$( 'header' ).barraHerramientas();
 	getData();
-
-	// -----------------------------------------------------
-
-	// boton "SELECCIONE SISTEMA" lanza la ventana emergente y la rellena de una lista de los sistemas
-	// almacenados en la base de datos
-	$( doc.IDS.botonSistema ).on( 'click', function ( event )
-	{
-		event.preventDefault();
-		seleccionSistema( doc );
-	});
-
-	// boton "GUARDAR" el nuevo equipo en la base de datos
-	$( doc.IDS.botonGuardar ).on( 'click', function ( event )
-	{
-		event.preventDefault();
-		procesoElemento( doc, doc.IDS.botonGuardar, nuevoElemento );
-	});
-
-	// boton para LIMPIAR los campos
-	$( doc.IDS.botonLimpiar ).on( 'click', function ( event )
-	{
-		event.preventDefault();
-		limpiarCampos( doc );
-	});
 }
 
-function getData()
-{
+function getData() {
 	sigesop.query({
 		class: 'equiposGenerador',
 		query: 'obtenerEquipoGenerador',
 		success: function( data )
 		{
-			window.sesion.matrizEquipos = data;	
-			docR.update_table( data );
+			window.sesion.matrizEquipos = data;				
 			document.getElementById( 'badge_equipoGenerador' ).innerHTML =
 				!$.isEmptyObject( data ) ? data.length : '0';
+			docR.table.update_table( data );
 		}
 	})
 }
 
-function procesoElemento ( doc, btn, callback )
-{
-	//------------------------- guardamos los datos seleccionados a la estructura de datos
-	
-	doc.datos.idEquipo.valor = $( doc.datos.idEquipo.idHTML ).val().trim();
-	doc.datos.nombreEquipo.valor = $( doc.datos.nombreEquipo.idHTML ).val().trim();
+function nuevoElemento ( datos, IDS, limpiarCampos ) {
+	datos.nombre_equipo_aero.valor = $( datos.nombre_equipo_aero.idHTML ).val().trim();
+	datos.id_equipo_aero.valor = $( datos.id_equipo_aero.idHTML ).val().trim();
+	datos.id_sistema_aero.valor = $( datos.id_sistema_aero.idHTML ).val().trim();
 
-	// ------------------------ validamos los datos capturados y marcamos los datos nulos
-	
-	var arr = [
-		doc.datos.idEquipo,
-		doc.datos.idSistema,
-		doc.datos.nombreEquipo
-	];
-
-	if ( sigesop.validacion( arr, { tipoValidacion: 'error' } ) ) callback( doc, btn );
-	else sigesop.msgBlockUI( 'Complete los campos', 'error' )
-}
-
-function nuevoElemento ( doc, btn )
-{
 	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
 	sigesop.query({
-		data: doc.datos,
+		data: datos,
 		class: 'equiposGenerador',
 		query: 'nuevoEquipoGenerador',
 		queryType: 'sendData',
 		type: 'POST',
-		OK: function()
-		{
-			limpiarCampos( doc );
+		OK: function ( msj, eventos ) {
+			$.unblockUI();
+			limpiarCampos();
 			getData();
-			sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
-		NA: function () 
-		{
-			sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );
-		},
+		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+	});
+}
 
-		DEFAULT: function (data) 
-		{
-			sigesop.msgBlockUI( data, 'error' );
+function eliminarElemento ( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function eliminarElemento: index fuera de rango' );
+
+	var elem = window.sesion.matrizEquipos[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function eliminarElemento: elem es indefinido');
+	}
+
+	var 
+
+	clickAceptar = function ( event ) {
+		event.preventDefault();
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		$( win.idDiv ).modal( 'hide' );
+		sigesop.query({
+			data: { id_equipo_aero: elem.id_equipo_aero },
+			class: 'equiposGenerador',
+			query: 'eliminarEquipoGenerador',
+			queryType: 'sendData',
+			OK: function ( msj, eventos ) {
+				$.unblockUI();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+		});	
+	},
+
+	win = sigesop.ventanaEmergente({	
+		idDiv: 'confirmar-eliminacion-',
+		titulo: 'Autorización requerida',
+		clickAceptar: clickAceptar,
+		showBsModal: function () {
+			document.getElementById( this.idBody ).innerHTML =
+			'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>'
 		}
 	});
 }
 
-function seleccionSistema( doc )
-{
-	var 
-		docS = sigesop.tablaSeleccion({
-				// tipo: 'checkbox',
-				// color_fila: 'success',
-				color_select: 'success',
-				head: 'ID SISTEMA, NOMBRE SISTEMA',
-				campo: 'id_sistema_aero, nombre_sistema_aero'				
-			}),
+function editarElemento( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function editarElemento: index fuera de rango' );
 
-		clickAceptar = function ()
-		{
-			// ---------- Guardamos el id del sistema y ponenos el nombre del sistema en la caja
-			
-			if ( !jQuery.isEmptyObject( docS.matrizInput ) )
-			{
-				var index = sigesop.getDataRadio( docS.matrizInput[ 0 ] ) ? // impedir que no sea seleccionado alguno
-					sigesop.getDataRadio( docS.matrizInput[ 0 ] ) : -1;
-
-				if ( index >= 0 ) 
-				{
-					doc.datos.idSistema.valor = window.sesion.matrizSistemas[ index ]['id_sistema_aero'];
-					$( doc.datos.idSistema.idHTML ).val( window.sesion.matrizSistemas[ index ]['nombre_sistema_aero'] );
-					$( win.idDiv ).modal( 'hide' );
-				}
-
-				else sigesop.msgBlockUI( 'Sistema no seleccionado', 'error', 'msgBlock', '#ventanaSeleccionSistema_modal' );
-			}
-
-			else console.log( '[docS.matrizInput] es nula' );
-		},
-
-		showBsModal = function ()
-		{
-			// ------------------------------------------------------
-
-			document.getElementById( this.idBody ).innerHTML = docS.html;			
-
-			// ------------------------------------------------------
-
-			if ( !jQuery.isEmptyObject( window.sesion.matrizSistemas ) )
-				docS.update_table( window.sesion.matrizSistemas );
-
-			else
-			{
-				sigesop.query({
-					class: 'sistemasGenerador',
-					query: 'obtenerSistemas',
-					success: function( data )
-					{
-						window.sesion.matrizSistemas = data;
-						docS.update_table( data );
-					}
-				});
-			}
-		},
-
-		win = sigesop.ventanaEmergente({
-			idDiv: 'ventanaSeleccionSistema',
-			titulo: 'Seleccione Sistema',
-			clickAceptar: clickAceptar,
-			showBsModal: showBsModal
-		});
-}
-
-function limpiarCampos( doc )
-{	
-	doc.datos.idEquipo.valor = null;
-	doc.datos.idSistema.valor = null;
-	doc.datos.nombreEquipo.valor = null;
-
-	$( doc.datos.idEquipo.idHTML ).val( '' );
-	$( doc.datos.idSistema.idHTML ).val( '' );
-	$( doc.datos.nombreEquipo.idHTML ).val( '' );
-}
-
-function eliminarElemento ( key, opt )
-{
-	var 
-		index = $( this ).index(),
-		elemento = window.sesion.matrizEquipos[ index ];
-
-	if( elemento )
-	{
-		var win = sigesop.ventanaEmergente({										
-			idDiv: 'confirmar_eliminacion',
-			titulo: 'Autorización requerida',
-			clickAceptar: function( event ) 
-			{
-				event.preventDefault();
-				$( win.idDiv ).modal( 'hide' );
-				sigesop.query({
-					data: { id_equipo_aero: elemento.id_equipo_aero },
-					class: 'equiposGenerador',
-					query: 'eliminarEquipoGenerador',
-					queryType: 'sendData',
-					OK: function ()
-					{
-						getData();
-						sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );
-					},
-					NA: function () { sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
-					DEFAULT: function ( data ) { sigesop.msgBlockUI( data, 'error' ) }
-				});					
-			},
-			showBsModal: function () 
-			{
-				$( '#' + this.idBody ).html( '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>' );
-			}
-		});		
+	var elem = window.sesion.matrizEquipos[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function editarElemento: elem es indefinido');
 	}
-	 
-	else sigesop.msgBlockUI( 'Seleccione un elemento para continuar'	, 'error' );
-}
 
-function editarElemento( key, opt )
-{
+	/* creamos documento para la edicion de el usuario en la ventana	
+	 */
 	var 
-		index = $( this ).index(),
-		elemento = window.sesion.matrizEquipos[ index ];
-
-	if( elemento )
-	{	
-		// ---------- creamos la estructura para la edicion de el usuario en la ventana
-
-		var _doc = sigesop.equipoGenerador.documentoEquipoGenerador ( elemento,  '_update' );
-
-		// ---------- guardamos la llave primaria para la actualizacion de datos
-
-		_doc.datos.idEquipo_update.valor = elemento.id_equipo_aero;
-
-		// ---------- insertamos los datos del equipo seleccionado en la ventana emergente de edicion
-		
-		var win = sigesop.ventanaEmergente({
-			idDiv: 'divEdicion_equipos',
-			titulo: 'Edicion de equipo',
-			clickAceptar: function ( event )
-			{
-				event.preventDefault();
-				$( win.idDiv ).modal( 'hide' );
-			},
-			showBsModal: function () 
-			{
-				// ---------- ejecutamos el HTML y el Javascript del formulario
-
-				document.getElementById( this.idBody ).innerHTML = _doc.html;
-				_doc.javascript();
-
-				// ---------- creamos el evento del boton GUARDAR 
-
-				$( _doc.IDS.botonSistema ).on( 'click', function ( event ) 
-				{
-					event.preventDefault();
-					seleccionSistema( _doc );
-				});				
-
-				$( _doc.IDS.botonGuardar ).on( 'click', function ( event ) 
-				{
-					event.preventDefault();
-					procesoElemento( _doc, _doc.IDS.botonGuardar, actualizarElemento );
-				});
-
-				$( _doc.IDS.botonLimpiar ).on( 'click', function ( event )
-				{
-					event.preventDefault();
-					limpiarCampos( _doc );
-				});
-			}
+		_doc = sigesop.equipoGenerador.document ({
+			obj: elem,  
+			suf: '_update',
+			error: sigesop.completeCampos,
+			success: actualizarElemento
 		});
-	} 
-	else sigesop.msgBlockUI( 'Seleccione un elemento para continuar', 'error' );
+
+	/* guardamos la llave primaria para la actualizacion de datos	
+	 */
+
+	_doc.datos.id_equipo_aero_update.valor = elem.id_equipo_aero;
+
+	/* insertamos los datos del equipo seleccionado en la
+	 * ventana emergente de edicion	
+	 */
+	var 
+
+	win = sigesop.ventanaEmergente({
+		idDiv: 'win-edicion-equipos-aero-',
+		titulo: 'Edicion de equipo',
+		clickAceptar: function ( event ) {
+			event.preventDefault();
+			$( win.idDiv ).modal( 'hide' );
+		},
+		showBsModal: function () {
+			document.getElementById( this.idBody )
+			.innerHTML = _doc.html;
+			_doc.javascript();
+		}
+	});
 }
 
-function actualizarElemento( doc, btn )
-{
-	sigesop.msgBlockUI('Enviando...', 'loading', 'block', '#divEdicion_equipos_modal' );
+function actualizarElemento( datos, IDS, limpiarCampos ) {
+	datos.nombre_equipo_aero.valor = $( datos.nombre_equipo_aero.idHTML ).val().trim();
+	datos.id_equipo_aero.valor = $( datos.id_equipo_aero.idHTML ).val().trim();
+	datos.id_sistema_aero.valor = $( datos.id_sistema_aero.idHTML ).val().trim();
+
+	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
 	sigesop.query({
-		data: doc.datos,
+		data: datos,
 		class: 'equiposGenerador',
 		query: 'actualizarEquipoGenerador',
 		queryType: 'sendData',
 		type: 'POST',
-		OK: function () 
-		{
+		OK: function ( msj, eventos ) {
+			$.unblockUI();
+			$( '#win-edicion-equipos-aero-' ).modal( 'hide' );
 			getData();
-			$( '#divEdicion_equipos' ).modal( 'hide' );
-			sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
-
-		NA: function () { sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#divEdicion_equipos_modal' ); },
-		DEFAULT: function (data) { sigesop.msgBlockUI( data, 'error', 'msgBlock', '#divEdicion_equipos_modal' ); }
+		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
 	}) ;
 }

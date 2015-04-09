@@ -3,43 +3,39 @@ include 'sigesop.class.php';
 
 class equiposGenerador extends sigesop 
 {
-    public function __construct( $usuario, $clave )
-    {
+    public function __construct( $usuario, $clave ) {
         parent::sigesop( $usuario, $clave );
     }
 
-    public function __destruct()
-    {
+    public function __destruct() {
         parent::__destruct();
     }
 
-	public  function solicitudAjax( $accion, $post, $get )
-	{
-		switch ($accion)
-		{
+	public  function solicitudAjax( $accion, $post, $get ) {
+		switch ( $accion ) {
             case 'actualizarEquipoGenerador':
-                $actualizarEquipoGenerador = $this->actualizarEquipoGenerador( $post );
-                echo json_encode($actualizarEquipoGenerador);
+                $query = $this->actualizarEquipoGenerador( $post );
+                echo json_encode( $query );
                 break;  
 
             case 'eliminarEquipoGenerador':
-                $eliminarEquipoGenerador = $this->eliminarEquipoGenerador( $get );
-                echo json_encode($eliminarEquipoGenerador);
+                $query = $this->eliminarEquipoGenerador( $get );
+                echo json_encode( $query );
               break;
 
 	        case 'nuevoEquipoGenerador':
-	            $nuevoEquipoGenerador = $this->nuevoEquipoGenerador( $post );
-	            echo json_encode($nuevoEquipoGenerador);
+	            $query = $this->nuevoEquipoGenerador( $post );
+	            echo json_encode( $query );
 	            break;
 
 	        case 'obtenerEquipoGenerador':
-	            $obtenerEquipoGenerador = $this->obtenerEquipoGenerador();
-	            echo json_encode($obtenerEquipoGenerador);
+	            $query = $this->obtenerEquipoGenerador();
+	            echo json_encode( $query );
 	            break;
 
             case 'obtenerEquipoGeneradorPorSistema':
                 $query = $this->obtenerEquipoGeneradorPorSistema( $get );
-                echo json_encode($query);
+                echo json_encode( $query );
                 break;
 
             default:
@@ -48,41 +44,45 @@ class equiposGenerador extends sigesop
         }		
 	}
 
-    // ---------- nuevoEquipoGenerador -----------------------------------------------------------------------------------
+    public function nuevoEquipoGenerador( $data ) {
+        $rsp = array();
 
-    private $datosNuevoEquipo = array( 'idEquipo', 'nombreEquipo', 'idSistema' );
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'nombre_equipo_aero', 'id_equipo_aero', 'id_sistema_aero'
+            ));
 
-    public function nuevoEquipoGenerador( $data )
-    {
-        $flag = $this->verificaDatosNulos( $data, $this->datosNuevoEquipo );
-        if( $flag === 'OK' )
-        {
-            $idEquipo = $data['idEquipo']['valor'];
-            $nombreEquipo = $data['nombreEquipo']['valor'];
-            $idSistema = $data['idSistema']['valor'];
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-            $sql = "insert into equipo_aero(id_equipo_aero, nombre_equipo_aero, id_sistema_aero) values('$idEquipo', '$nombreEquipo', '$idSistema')";               
-            $nuevoSistema = $this->insert_query( $sql );
-            if($nuevoSistema === 'OK') 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $nuevoSistema.'. Error al insertar equipo.';
-            }
+        $nombre_equipo_aero = $data[ 'nombre_equipo_aero' ][ 'valor' ];
+        $id_equipo_aero = $data[ 'id_equipo_aero' ][ 'valor' ];
+        $id_sistema_aero = $data[ 'id_sistema_aero' ][ 'valor' ];
+
+        $sql = 
+            "INSERT INTO equipo_aero ".
+            "(id_equipo_aero, nombre_equipo_aero, id_sistema_aero) ".
+            "VALUES('$id_equipo_aero', '$nombre_equipo_aero', '$id_sistema_aero')";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $nombre_equipo_aero, 'msj' => 'Correcto' );
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Equipo ingresado satisfactoriamente.' );
+            return $rsp;
         } 
-        else return 'NA';
-    }
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar nuevo equipo' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $nombre_equipo_aero, 'msj' => $query );
+            return $rsp;
+        }
+    }    
 
-    // --------------------------------------------------------------------------------------------------------------------
-
-    public function obtenerEquipoGenerador()
-    {
-        $conexion = $this->conexion;
-
+    public function obtenerEquipoGenerador() {
         $sql = "SELECT * FROM equipo_aero";
         $mtz = $this->array_query( $sql );
         $arr = array(); // matriz de retorno
@@ -102,8 +102,7 @@ class equiposGenerador extends sigesop
         return $arr;
     }
 
-    public function obtenerEquipoGeneradorPorSistema( $data ) 
-    {
+    public function obtenerEquipoGeneradorPorSistema( $data )  {
         $idSistema = $data['valor'];
         if ( !empty($idSistema) ) 
         {
@@ -114,54 +113,76 @@ class equiposGenerador extends sigesop
         else return null;
     }
 
-    public function eliminarEquipoGenerador( $data )
-    {
-        $id_equipo = $data['id_equipo_aero'];      
-        if ( !empty( $id_equipo ) )
-        {
-            $sql = "DELETE FROM equipo_aero WHERE id_equipo_aero = '$id_equipo'";
-            $query = $this->insert_query( $sql );
-            if( $query === 'OK' ) 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            }
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.". Error al eliminar Equipo";
-            }
+    public function eliminarEquipoGenerador( $data ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $data, array( 'id_equipo_aero' ) );
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $id_equipo_aero = $data[ 'id_equipo_aero' ];
+
+        $sql = "DELETE FROM equipo_aero WHERE id_equipo_aero = '$id_equipo_aero'";
+        
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $id_equipo_aero, 'msj' => 'Correcto' );
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Equipo eliminado satisfactoriamente.' );
+            return $rsp;
         } 
-        else return 'NA';
-    }
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al aliminar equipo' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $id_equipo_aero, 'msj' => $query );
+            return $rsp;
+        }
+    }    
 
-    // ---------- actualizarEquipoGenerador -----------------------------------------------------------------------------------
+    public function actualizarEquipoGenerador( $data ) {
+        $rsp = array();
 
-    private $datosActualizarEquipo = array( 'idEquipo_update', 'idEquipo', 'idSistema', 'nombreEquipo' );
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'nombre_equipo_aero', 'id_equipo_aero', 'id_sistema_aero',
+                'id_equipo_aero_update'
+            ));
 
-    public function actualizarEquipoGenerador( $data )
-    {
-        $flag = $this->verificaDatosNulos( $data, $this->datosActualizarEquipo );
-        if ( $flag === 'OK' )
-        {
-            $idEquipo_update = $data['idEquipo_update']['valor'];
-            $idEquipo = $data['idEquipo']['valor'];
-            $Sistema = $data['idSistema']['valor'];
-            $NombreEquipo = $data['nombreEquipo']['valor'];
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-            $sql = "UPDATE equipo_aero SET id_equipo_aero = '$idEquipo', nombre_equipo_aero='$NombreEquipo', id_sistema_aero='$Sistema' where id_equipo_aero='$idEquipo_update'";
-            $query = $this->insert_query( $sql );
-            if ($query === 'OK') 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            }
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.". Error al Actualizar Equipo";
-            }
+        $nombre_equipo_aero = $data[ 'nombre_equipo_aero' ][ 'valor' ];
+        $id_equipo_aero = $data[ 'id_equipo_aero' ][ 'valor' ];
+        $id_equipo_aero_update = $data[ 'id_equipo_aero_update' ][ 'valor' ];
+        $id_sistema_aero = $data[ 'id_sistema_aero' ][ 'valor' ];
+
+        $sql = 
+            "UPDATE equipo_aero ".
+            "SET id_equipo_aero = '$id_equipo_aero', ".
+            "nombre_equipo_aero='$nombre_equipo_aero', ".
+            "id_sistema_aero='$id_sistema_aero' ".
+            "WHERE id_equipo_aero='$id_equipo_aero_update'";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $nombre_equipo_aero, 'msj' => 'Correcto' );
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Equipo actualizado satisfactoriamente.' );
+            return $rsp;
         } 
-        else return 'NA'; 
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar equipo' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $nombre_equipo_aero, 'msj' => $query );
+            return $rsp;
+        }
     }
 }

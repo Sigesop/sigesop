@@ -424,27 +424,26 @@ window.sesion = {
 
 		cargandoDatos: 'CARGANDO DATOS...',
 
-		cerrarSesion: function ()
-		{
+		cerrarSesion: function () {
 			this.ventanaEmergente({
 			 	idDiv: '_cs',
 			 	titulo: 'Cierre de sesión',
 			 	clickAceptar: function ( event )
 			 	{
 			 		event.preventDefault();
+			 		sigesop.msgBlockUI( 'Cerrando sesion...', 'loading', 'blockUI' );
 					sigesop.query({
 						class: 'sistema',
 						query: 'requestCloseSesion',
 						success: function( data )
 						{
-							if ( data == 'OK' )
-							{
+							if ( data == 'OK' ) {
 								window.localStorage.removeItem( 'rpe' );
 								window.localStorage.removeItem( 'usuario' );
 								window.localStorage.removeItem( 'indexUsuario' );
 								document.location.href = "../index.php"
 							}
-							else console.log( data );
+							// else console.log( data );
 						}
 					});
 			 	},
@@ -1986,231 +1985,231 @@ window.sesion = {
 					console.log( "Funcion: verificaRoot()\n" + "Estado: " + estado + "\nError: " + error );
 				}
 			});
-		},
-
-		/*** DEPRECATED ***/ 
-		validacion: function ( array, opt )
-		{
-			if ( !jQuery.isEmptyObject( array ) )
-			{
-				var mtz = [],
-					i = 0,
-					lon = array.length;
-
-				for( i; i < lon; i++ )
-				{
-					var fila = array[ i ];		
-
-					// ---------- validacion cuando se trata de un objeto con propiedades
-
-					if ( jQuery.isPlainObject( fila ) )
-					{			
-						var propObj = Object.getOwnPropertyNames( fila );
-
-						// ---------- verificar que sea un objeto terminal
-
-						if 	( propObj.indexOf( 'valor' ) !== -1 )
-						{
-							if ( fila.valor ) 
-							{
-								if ( typeof fila.regexp !== 'undefined' )
-								{
-									// var regexp = fila.regexp;
-									if ( fila.regexp.test( fila.valor ) ) 
-									{
-										$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
-										sigesop.vaciarPopover( [ fila ] );
-										mtz [ i ] = true;
-									}
-									else
-									{
-										fila.idValidacion ? $( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ) : null;
-										mtz[ i ] = false;
-
-										// ---------- agrega un popover a la validacion
-
-										sigesop.agregarPopover( [ fila ] );
-										console.log( 'Expresion Regular no valida: ' + fila.idHTML );
-									}
-								}
-								else
-								{	
-									$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
-									sigesop.vaciarPopover( [ fila ] );
-									mtz [ i ] = true;
-								}
-							}
-							else
-							{
-								typeof opt.tipoValidacion !== 'undefined' ?
-									$( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ): null;
-
-								mtz[ i ] = false;
-
-								// ---------- agrega un popover a la validacion
-
-								sigesop.agregarPopover( [ fila ] );
-
-								console.log( 'Elemento no valido: ' + fila.idHTML );
-							} 					
-						}
-
-						// --------- inicia recursividad del objeto
-
-						else if ( fila ) // descartamos un objeto vacio
-						{				
-							// ---------- capturamos los objetos que contiene el objeto superior
-								
-							var m = [],
-								j = 0,
-								lon_j = propObj.length;
-
-							for ( j; j < lon_j; j++ ) m.push( fila[ propObj[ j ] ] ); 
-
-							mtz [ i ] = this.validacion( m , opt );					
-						} else console.log( 'Objeto [' + fila + '] esta vacio');
-					}
-
-					// ---------- validacion cuando se trata de un array
-
-					else if( jQuery.isArray( fila ) )
-					{
-						var estado = jQuery.isEmptyObject( fila );				
-						if ( estado ) 
-						{						
-							mtz[ i ] = false;
-							console.log( 'Matriz [' + fila + '] no valida' );
-						} 
-						else mtz [ i ] = true;
-					}
-
-					// ---------- si no corresponde a un objeto o a una matriz; es un elemento no valido y se descarta
-
-					// else
-					// {
-					// 	console.log( 'Elemento: [' + fila + '] ignorado' );
-					// 	mtz[ i ] = true;
-					// }
-				}
-
-				// ----------- si no verificó ningun elemento es falso
-
-				if ( jQuery.isEmptyObject( mtz ) ) return false;
-
-				// ----------------- verifica si el arreglo tiene algun false
-			
-				for ( var i = 0; i < mtz.length; i++ ) 
-					if ( mtz[ i ] === false ) return false;
-
-				return true;
-			}	
-
-			console.log( 'matriz por validar es nula' );
-			return false;
-		},
-
-		/*** DEPRECATED ***/ 
-		agregarPopover: function( array )
-		{
-			for ( var i = 0, lon = array.length; i < lon; i++ )
-			{
-				if ( typeof array[ i ].popover != 'undefined' ) 
-				{
-					$( array[ i ].idHTML ).popover({
-						title: array [ i ].popover.title,
-						content: array [ i ].popover.content,
-						placement: array [ i ].popover.placement,
-						html: true,
-						// template: '<div bgcolor="#FF0000" class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title">test</h3><div class="popover-content" ></div></div>'
-					});
-
-					$( array[ i ].idHTML ).popover( 'show' );
-				}
-			}
-		},
-
-		/*** DEPRECATED ***/ 
-		vaciarPopover: function( array )
-		{
-			for( var i in array )
-			{
-				if ( typeof array [ i ].popover != 'undefined' ) 
-				{
-					$( array [ i ].idHTML ).popover( 'destroy' );
-				}
-			}
-		},
-
-		/*** DEPRECATED ***/
-		solicitarDatosSistema: function ( opt ) 
-		{
-			// clase
-			// solicitud
-			// sincrono
-			// respuesta
-			// errorRespuesta
-			// ________________
-			var rutaSolicitud = this.raizServidor + opt.clase + '.php?action=' + opt.solicitud;
-
-			$.ajax({
-				type: opt.type || 'GET',
-				dataType: "json",
-				async: opt.sincrono,
-				url: rutaSolicitud,
-				success: opt.respuesta,
-				error: function(jpXHR, estado, error)
-				{
-					console.log( "Funcion: " + opt.solicitud +"()\n" + "Estado: " + estado + "\nError: " + error);
-					sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error' );
-					jQuery.isFunction( opt.errorRespuesta ) ? opt.errorRespuesta() : null;
-				}
-
-			});
-		},
-
-		/*** DEPRECATED ***/
-		insertarDatosSistema: function ( opt )
-		{
-			// Datos
-			// clase
-			// solicitud
-			// sincrono			
-			
-			// errorRespuesta
-			// ________________
-			var rutaSolicitud = this.raizServidor+opt.clase+'.php?action='+opt.solicitud;
-
-			$.ajax({
-				data: opt.Datos,
-				type: opt.type || 'GET',
-				dataType: "json",
-				async: opt.sincrono,
-				url: rutaSolicitud,
-				beforeSend: opt.antesEnviar,
-				success: function ( data )
-				{
-					switch( data )
-					{
-						case 'OK':
-							jQuery.isFunction( opt.OK ) ? opt.OK() : null;
-							break;
-						case 'NA':
-							jQuery.isFunction( opt.NA ) ? opt.NA() : null;
-							break;
-						default:
-							jQuery.isFunction( opt.DEFAULT ) ? opt.DEFAULT( data ) : null;
-							break;
-					}
-				},
-				error: function( jpXHR, estado, error )
-				{
-					sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error' );
-					console.log( "Funcion: " + opt.solicitud + "()\n" + "Estado: " + estado + "\nError: " + error);			
-					jQuery.isFunction( opt.errorRespuesta ) ? opt.errorRespuesta() : null;
-				}
-
-			});
 		}
+
+		// /*** DEPRECATED ***/ 
+		// validacion: function ( array, opt )
+		// {
+		// 	if ( !jQuery.isEmptyObject( array ) )
+		// 	{
+		// 		var mtz = [],
+		// 			i = 0,
+		// 			lon = array.length;
+
+		// 		for( i; i < lon; i++ )
+		// 		{
+		// 			var fila = array[ i ];		
+
+		// 			// ---------- validacion cuando se trata de un objeto con propiedades
+
+		// 			if ( jQuery.isPlainObject( fila ) )
+		// 			{			
+		// 				var propObj = Object.getOwnPropertyNames( fila );
+
+		// 				// ---------- verificar que sea un objeto terminal
+
+		// 				if 	( propObj.indexOf( 'valor' ) !== -1 )
+		// 				{
+		// 					if ( fila.valor ) 
+		// 					{
+		// 						if ( typeof fila.regexp !== 'undefined' )
+		// 						{
+		// 							// var regexp = fila.regexp;
+		// 							if ( fila.regexp.test( fila.valor ) ) 
+		// 							{
+		// 								$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
+		// 								sigesop.vaciarPopover( [ fila ] );
+		// 								mtz [ i ] = true;
+		// 							}
+		// 							else
+		// 							{
+		// 								fila.idValidacion ? $( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ) : null;
+		// 								mtz[ i ] = false;
+
+		// 								// ---------- agrega un popover a la validacion
+
+		// 								sigesop.agregarPopover( [ fila ] );
+		// 								console.log( 'Expresion Regular no valida: ' + fila.idHTML );
+		// 							}
+		// 						}
+		// 						else
+		// 						{	
+		// 							$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
+		// 							sigesop.vaciarPopover( [ fila ] );
+		// 							mtz [ i ] = true;
+		// 						}
+		// 					}
+		// 					else
+		// 					{
+		// 						typeof opt.tipoValidacion !== 'undefined' ?
+		// 							$( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ): null;
+
+		// 						mtz[ i ] = false;
+
+		// 						// ---------- agrega un popover a la validacion
+
+		// 						sigesop.agregarPopover( [ fila ] );
+
+		// 						console.log( 'Elemento no valido: ' + fila.idHTML );
+		// 					} 					
+		// 				}
+
+		// 				// --------- inicia recursividad del objeto
+
+		// 				else if ( fila ) // descartamos un objeto vacio
+		// 				{				
+		// 					// ---------- capturamos los objetos que contiene el objeto superior
+								
+		// 					var m = [],
+		// 						j = 0,
+		// 						lon_j = propObj.length;
+
+		// 					for ( j; j < lon_j; j++ ) m.push( fila[ propObj[ j ] ] ); 
+
+		// 					mtz [ i ] = this.validacion( m , opt );					
+		// 				} else console.log( 'Objeto [' + fila + '] esta vacio');
+		// 			}
+
+		// 			// ---------- validacion cuando se trata de un array
+
+		// 			else if( jQuery.isArray( fila ) )
+		// 			{
+		// 				var estado = jQuery.isEmptyObject( fila );				
+		// 				if ( estado ) 
+		// 				{						
+		// 					mtz[ i ] = false;
+		// 					console.log( 'Matriz [' + fila + '] no valida' );
+		// 				} 
+		// 				else mtz [ i ] = true;
+		// 			}
+
+		// 			// ---------- si no corresponde a un objeto o a una matriz; es un elemento no valido y se descarta
+
+		// 			// else
+		// 			// {
+		// 			// 	console.log( 'Elemento: [' + fila + '] ignorado' );
+		// 			// 	mtz[ i ] = true;
+		// 			// }
+		// 		}
+
+		// 		// ----------- si no verificó ningun elemento es falso
+
+		// 		if ( jQuery.isEmptyObject( mtz ) ) return false;
+
+		// 		// ----------------- verifica si el arreglo tiene algun false
+			
+		// 		for ( var i = 0; i < mtz.length; i++ ) 
+		// 			if ( mtz[ i ] === false ) return false;
+
+		// 		return true;
+		// 	}	
+
+		// 	console.log( 'matriz por validar es nula' );
+		// 	return false;
+		// },
+
+		// /*** DEPRECATED ***/ 
+		// agregarPopover: function( array )
+		// {
+		// 	for ( var i = 0, lon = array.length; i < lon; i++ )
+		// 	{
+		// 		if ( typeof array[ i ].popover != 'undefined' ) 
+		// 		{
+		// 			$( array[ i ].idHTML ).popover({
+		// 				title: array [ i ].popover.title,
+		// 				content: array [ i ].popover.content,
+		// 				placement: array [ i ].popover.placement,
+		// 				html: true,
+		// 				// template: '<div bgcolor="#FF0000" class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title">test</h3><div class="popover-content" ></div></div>'
+		// 			});
+
+		// 			$( array[ i ].idHTML ).popover( 'show' );
+		// 		}
+		// 	}
+		// },
+
+		// /*** DEPRECATED ***/ 
+		// vaciarPopover: function( array )
+		// {
+		// 	for( var i in array )
+		// 	{
+		// 		if ( typeof array [ i ].popover != 'undefined' ) 
+		// 		{
+		// 			$( array [ i ].idHTML ).popover( 'destroy' );
+		// 		}
+		// 	}
+		// },
+
+		// /*** DEPRECATED ***/
+		// solicitarDatosSistema: function ( opt ) 
+		// {
+		// 	// clase
+		// 	// solicitud
+		// 	// sincrono
+		// 	// respuesta
+		// 	// errorRespuesta
+		// 	// ________________
+		// 	var rutaSolicitud = this.raizServidor + opt.clase + '.php?action=' + opt.solicitud;
+
+		// 	$.ajax({
+		// 		type: opt.type || 'GET',
+		// 		dataType: "json",
+		// 		async: opt.sincrono,
+		// 		url: rutaSolicitud,
+		// 		success: opt.respuesta,
+		// 		error: function(jpXHR, estado, error)
+		// 		{
+		// 			console.log( "Funcion: " + opt.solicitud +"()\n" + "Estado: " + estado + "\nError: " + error);
+		// 			sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error' );
+		// 			jQuery.isFunction( opt.errorRespuesta ) ? opt.errorRespuesta() : null;
+		// 		}
+
+		// 	});
+		// },
+
+		// /*** DEPRECATED ***/
+		// insertarDatosSistema: function ( opt )
+		// {
+		// 	// Datos
+		// 	// clase
+		// 	// solicitud
+		// 	// sincrono			
+			
+		// 	// errorRespuesta
+		// 	// ________________
+		// 	var rutaSolicitud = this.raizServidor+opt.clase+'.php?action='+opt.solicitud;
+
+		// 	$.ajax({
+		// 		data: opt.Datos,
+		// 		type: opt.type || 'GET',
+		// 		dataType: "json",
+		// 		async: opt.sincrono,
+		// 		url: rutaSolicitud,
+		// 		beforeSend: opt.antesEnviar,
+		// 		success: function ( data )
+		// 		{
+		// 			switch( data )
+		// 			{
+		// 				case 'OK':
+		// 					jQuery.isFunction( opt.OK ) ? opt.OK() : null;
+		// 					break;
+		// 				case 'NA':
+		// 					jQuery.isFunction( opt.NA ) ? opt.NA() : null;
+		// 					break;
+		// 				default:
+		// 					jQuery.isFunction( opt.DEFAULT ) ? opt.DEFAULT( data ) : null;
+		// 					break;
+		// 			}
+		// 		},
+		// 		error: function( jpXHR, estado, error )
+		// 		{
+		// 			sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error' );
+		// 			console.log( "Funcion: " + opt.solicitud + "()\n" + "Estado: " + estado + "\nError: " + error);			
+		// 			jQuery.isFunction( opt.errorRespuesta ) ? opt.errorRespuesta() : null;
+		// 		}
+
+		// 	});
+		// }
 	}
 })();
 
