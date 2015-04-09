@@ -3,18 +3,15 @@ include 'sigesop.class.php';
 
 class sistemasGenerador extends sigesop
 {
-	public function __construct( $usuario, $clave )
-	{
+	public function __construct( $usuario, $clave ) {
 		parent::sigesop( $usuario, $clave );
 	}
 
-    public function __destruct()
-    {
+    public function __destruct() {
         parent::__destruct();
     }
 
-	function solicitudAjax( $accion, $post, $get )
-	{
+	function solicitudAjax( $accion, $post, $get ) {
 		switch ($accion)
 		{
             case 'actualizarSistema':
@@ -43,92 +40,116 @@ class sistemasGenerador extends sigesop
 		}
 	}
 
-    // ---------- nuevoSistema ------------------------------------------------------------------------------------------
+    function nuevoSistema( $data ) {
+        $rsp = array();
 
-    private $datosNuevoSistema = array( 'idSistema', 'nombreSistema' );
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'id_sistema_aero', 'nombre_sistema_aero'
+            ));
 
-    function nuevoSistema( $data )
-    {       
-        $flag = $this->verificaDatosNulos( $data, $this->datosNuevoSistema );    
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-        if( $flag === 'OK' )
-        {
-            $idSistemaAero = $data['idSistema']['valor'];
-            $nombreSistemaAero = $data['nombreSistema']['valor'];
+        $id_sistema_aero = $data['id_sistema_aero']['valor'];
+        $nombre_sistema_aero = $data['nombre_sistema_aero']['valor'];
 
-            $sql = "insert into sistema_aero(id_sistema_aero, nombre_sistema_aero) values('$idSistemaAero', '$nombreSistemaAero')";
-            $query = $this->insert_query( $sql );
-            if($query === 'OK') 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.'. Error al crear nuevo sistema';
-            }
+        $sql = 
+            "INSERT INTO sistema_aero(id_sistema_aero, nombre_sistema_aero) ".
+            "VALUES('$id_sistema_aero', '$nombre_sistema_aero')";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Sistema ingresado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $nombre_sistema_aero, 'msj' => 'Correcto' );            
+            return $rsp;
         } 
-        else return 'NA';
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar nuevo sistema' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $nombre_sistema_aero, 'msj' => $query );
+            return $rsp;
+        }
     }
 
-    // ------------------------------------------------------------------------------------------------------------------
+    function actualizarSistema( $data ) {
+        $rsp = array();
 
-    function obtenerSistemas()
-    {
-        $sql = "SELECT * FROM sistema_aero";
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'id_sistema_aero', 'nombre_sistema_aero', 'id_sistema_aero_update'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $id_sistema_aero = $data['id_sistema_aero']['valor'];
+        $nombre_sistema_aero = $data['nombre_sistema_aero']['valor'];
+        $id_sistema_aero_update = $data['id_sistema_aero_update']['valor']; 
+
+        $sql = 
+            "UPDATE sistema_aero ".
+            "SET id_sistema_aero = '$id_sistema_aero', ".
+            "nombre_sistema_aero='$nombre_sistema_aero' ".
+            "WHERE id_sistema_aero='$id_sistema_aero_update'";  
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Sistema actualizado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $nombre_sistema_aero, 'msj' => 'Correcto' );            
+            return $rsp;
+        } 
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar sistema' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $nombre_sistema_aero, 'msj' => $query );
+            return $rsp;
+        }     
+    }
+
+    function obtenerSistemas() {
+        $sql = "SELECT id_sistema_aero, nombre_sistema_aero FROM sistema_aero";
         $query = $this->array_query( $sql );
         return $query;  
     }
 
-    function eliminarSistema( $data )
-    {
-        $id_sistema_aero = $data['id_sistema_aero'];
-        if ( !empty( $id_sistema_aero ) )
-        {
-            $sql = "DELETE FROM sistema_aero WHERE id_sistema_aero = '$id_sistema_aero'";
-            $query = $this->insert_query( $sql );
-            if( $query === 'OK' ) 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            }
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.". Error al Eliminar Sistema";
-            }
-        } else return 'NA';        
-    }
+    function eliminarSistema( $data ) {
+        $rsp = array();
 
-    // ---------- actualizarSistema ------------------------------------------------------------------------------------------
+        $validar = 
+            $this->verificaDatosNulos( $data, array( 'id_sistema_aero' ));
 
-    private $datosActualizarSistema = array( 'nombreSistema', 'idSistema', 'idSistemaUpdate' );
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-    function actualizarSistema( $data )
-    {
-        $flag = $this->verificaDatosNulos( $data, $this->datosActualizarSistema );       
-        if ( $flag === 'OK' )
-        {
-            $nombreSistema = $data['nombreSistema']['valor'];
-            $idSistema = $data['idSistema']['valor'];
-            $idSistema_update = $data['idSistemaUpdate']['valor']; 
+        $id_sistema_aero = $data[ 'id_sistema_aero' ];
 
-            $sql = "UPDATE sistema_aero SET id_sistema_aero = '$idSistema', nombre_sistema_aero='$nombreSistema' where id_sistema_aero='$idSistema_update'";            
-            $query = $this->insert_query( $sql );
-            if ($query === 'OK') 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.'. Error al actualizar sistema';
-            }
+        $sql = 
+            "DELETE FROM sistema_aero WHERE id_sistema_aero = '$id_sistema_aero'";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Sistema eliminado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $id_sistema_aero, 'msj' => 'Correcto' );            
+            return $rsp;
         } 
-        else return 'NA';        
-    }    
-
-    // -----------------------------------------------------------------------------------------------------------------------
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar sistema' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $id_sistema_aero, 'msj' => $query );
+            return $rsp;
+        }      
+    }
 }

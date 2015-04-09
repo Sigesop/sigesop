@@ -1,224 +1,161 @@
 $( document ).on( 'ready', main );
 
-function main ()
-{
-	doc = sigesop.sistemaGenerador.documentoSistemaGenerador();
+function main () {
+	doc = sigesop.sistemaGenerador.document({
+		error: sigesop.completeCampos,
+		success: nuevoElemento
+	});
 	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
 	doc.javascript();
 
-	// ----------------------------------------------------------------------
-
-	docR = sigesop.tablaRegistro({
-		suf: '_',
-		head: 'ID DEL SISTEMA, NOMBRE DEL SISTEMA',
-		// body: data,
-		campo: 'id_sistema_aero, nombre_sistema_aero'
+	/* Registro de datos
+	 */
+	docR = sigesop.sistemaGenerador.registro({
+		table: {
+			actions: {
+				editar: editarElemento,
+				eliminar: eliminarElemento
+			}
+		}
 	});	
-	document.getElementById( 'sistemasRegistrados' ).innerHTML = '<br>' + docR.html;
+	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
+	docR.javascript();
 
-	$( docR.IDS.body ).contextMenu({
-        selector: 'tr', 
-        items: {
-            editar: 
-            {
-            	name: 'Editar', 
-            	icon: 'edit',
-        		callback: editarElemento
-            },
-            eliminar: 
-            {
-            	name: 'Eliminar', 
-            	icon: 'delete',
-        		callback: eliminarElemento
-            }
-        }
-	});
-
-	// ----------------------------------------------------------------------
-	
+	/* Descarga de datos
+	 */
 	$( 'header' ).barraHerramientas();
 	getData();
-
-	$( doc.IDS.botonGuardar ).click( function ( event ) 
-	{
-		event.preventDefault();		
-		procesoElemento ( doc, doc.IDS.botonGuardar, nuevoElemento );
-	});
-
-	$( doc.IDS.botonLimpiar ).click( function ( event ) 
-	{
-		event.preventDefault();
-		limpiarCampos( doc );
-	});
 }
 
-function procesoElemento ( doc, btn, callback )
-{	
-	// -------------- capturamos las cajas de datos restantes
-
-	doc.datos.idSistema.valor = $( doc.datos.idSistema.idHTML ).val().trim();
-	doc.datos.nombreSistema.valor = $( doc.datos.nombreSistema.idHTML ).val().trim();
-
-	// -------------- validamos los campos
-
-	var array = [ 
-		doc.datos.idSistema,
-		doc.datos.nombreSistema
-	]; 
-
-	// -------------- enviamos insercion a la base de datos
-
-	if ( sigesop.validacion( array, { tipoValidacion: 'error' } ) ) 
-		callback( doc, btn );
-	else sigesop.msgBlockUI( 'Complete los campos', 'error' );
-}
-
-function nuevoElemento( doc, btn )
-{
-	sigesop.query({
-		data: doc.datos,
-		class: 'sistemasGenerador',
-		query: 'nuevoSistema',
-		queryType: 'sendData',
-		type: 'POST',
-		OK: function()
-		{
-			limpiarCampos( doc );
-			getData();
-			sigesop.msgBlockUI( 'Elemento ingresado satisfactoriamente', 'success' );
-		},
-		NA: function()
-		{
-			sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' );						
-		},
-		DEFAULT: function( data )
-		{
-			sigesop.msgBlockUI( data, 'error' );
-		}
-	});
-}
-
-function getData()
-{
+function getData() {
 	sigesop.query({
 		class: 'sistemasGenerador',
 		query: 'obtenerSistemas',
-		success: function( data )
-		{
+		success: function( data ) {
 			window.sesion.matrizSistemas = data;
-			docR.update_table( data );
+			docR.table.update_table( data );
 			document.getElementById( 'badge_sistemas' ).innerHTML = 
 				!$.isEmptyObject( data ) ? data.length : '0';
 		}
 	});	
 }
 
-function limpiarCampos ( doc )
-{
-	doc.datos.idSistema.valor = null;
-	doc.datos.nombreSistema.valor = null;
+function nuevoElemento( datos, IDS, limpiarCampos ) {
+	datos.nombre_sistema_aero.valor = IDS.$nombre_sistema_aero.val().trim();
+	datos.id_sistema_aero.valor = IDS.$id_sistema_aero.val().trim();
 
-	$( doc.datos.idSistema.idHTML ).val('');
-	$( doc.datos.nombreSistema.idHTML ).val('');
+	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+	sigesop.query({
+		data: datos,
+		class: 'sistemasGenerador',
+		query: 'nuevoSistema',
+		queryType: 'sendData',
+		type: 'POST',
+		OK: function ( msj, eventos ) {
+			$.unblockUI();
+			limpiarCampos();
+			getData();
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+		},
+		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+	});
 }
 
-function eliminarElemento ( key, option )
-{
+function editarElemento ( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function eliminarElemento: index fuera de rango' );
+
+	var elem = window.sesion.matrizSistemas[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function eliminarElemento: elem es indefinido');
+	}	
+
 	var 
-		index = $( this ).index(),
-		elemento = window.sesion.matrizSistemas[ index ],
-		clickAceptar = function( event ) 
-		{
+
+	_doc = sigesop.sistemaGenerador.document({
+		suf: 'edicion',
+		obj: elem,
+		error: sigesop.completeCampos,
+		success: actualizarElemento
+	}),
+
+	win = sigesop.ventanaEmergente({
+		idDiv: 'win-edicion-sistema-',
+		titulo: 'Edición de sistema',
+		clickAceptar: function( event ) {
 			event.preventDefault();
 			$( win.idDiv ).modal( 'hide' );
-
-			sigesop.query({
-				data: { id_sistema_aero: elemento.id_sistema_aero },
-				class: 'sistemasGenerador',
-				query: 'eliminarSistema',
-				queryType: 'sendData',
-				OK: function()
-				{
-					getData();
-					sigesop.msgBlockUI( 'Elemento eliminado satisfactoriamente', 'success' );	
-				},
-				NA: function () { sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error' ) },
-				DEFAULT: function ( data ) { sigesop.msgBlockUI( data, 'error' ) }
-			});	
-		};
-
-	if ( elemento )
-	{
-		var win = sigesop.ventanaEmergente({										
-			idDiv: 'confirmarSolicitud',
-			titulo: 'Autorización requerida',			
-			clickAceptar: clickAceptar,
-			showBsModal: function () 
-			{
-				$( '#' + this.idBody ).html( '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento?</h4></div>' );
-			}
-		});						
-	} 
+		},
+		showBsModal: function () {
+			document.getElementById( this.idBody )
+			.innerHTML = _doc.html;
+			_doc.javascript();
+		}
+	});
 }
 
-function editarElemento ( key, option )
-{
-	var
-		index = $( this ).index(),
-		elemento = window.sesion.matrizSistemas[ index ],
-		docU = sigesop.sistemaGenerador.documentoSistemaGenerador( elemento, 'edicion' );
+function actualizarElemento( datos, IDS, limpiarCampos ) {
+	datos.nombre_sistema_aero.valor = IDS.$nombre_sistema_aero.val().trim();
+	datos.id_sistema_aero.valor = IDS.$id_sistema_aero.val().trim();
 
-	if ( elemento )
-	{
-		// guardamos el ID del sistema original antes de actualizar
-		docU.datos.idSistemaUpdate.valor = elemento.id_sistema_aero;
-
-		var win = sigesop.ventanaEmergente({
-			idDiv: 'ventanaEdicionSistema',
-			titulo: 'Edición de sistema de generador',
-			clickAceptar: function( event ) 
-			{
-				event.preventDefault();
-				$( win.idDiv ).modal( 'hide' );
-			},
-			showBsModal: function () 
-			{
-				$( '#' + this.idBody ).html( docU.html );
-				docU.javascript();
-				
-				$( docU.IDS.botonGuardar ).on( 'click', function ( event )
-				{
-					event.preventDefault();
-					procesoElemento ( docU, docU.IDS.botonGuardar, actualizarElemento );
-				});
-			}
-		});			
-	} 
-	else console.log( '[elemento] es nulo, funcion editarElemento' );
-}
-
-function actualizarElemento( doc, btn )
-{
-	sigesop.msgBlockUI('Enviando...', 'loading', 'block', '#ventanaEdicionSistema_modal' );
+	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
 	sigesop.query({
-		data: doc.datos,
+		data: datos,
 		class: 'sistemasGenerador',
 		query: 'actualizarSistema',
 		queryType: 'sendData',
 		type: 'POST',
-		OK: function()
-		{
+		OK: function( msj, eventos ) {
+			$.unblockUI();
+			$( '#win-edicion-sistema-' ).modal( 'hide' );
 			getData();
-			$( '#ventanaEdicionSistema' ).modal( 'hide' );
-			sigesop.msgBlockUI( 'Elemento actualizado satisfactoriamente', 'success' );			
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
-		NA: function()
-		{
-			sigesop.msgBlockUI( 'Un campo necesario se encuentra nulo o no es válido', 'error', 'msgBlock', '#ventanaEdicionSistema_modal' );							
-		},
-		DEFAULT: function( data )
-		{
-			sigesop.msgBlockUI( data, 'error', 'msgBlock', '#ventanaEdicionSistema_modal' );
+		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+	});
+}
+
+function eliminarElemento ( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function eliminarElemento: index fuera de rango' );
+
+	var elem = window.sesion.matrizSistemas[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function eliminarElemento: elem es indefinido');
+	}	
+	
+	var 
+
+	clickAceptar = function( event ) {
+		event.preventDefault();
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		$( win.idDiv ).modal( 'hide' );
+		sigesop.query({
+			data: { id_sistema_aero: elem.id_sistema_aero },
+			class: 'sistemasGenerador',
+			query: 'eliminarSistema',
+			queryType: 'sendData',
+			OK: function ( msj, eventos ) {
+				$.unblockUI();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+		});	
+	},
+
+	win = sigesop.ventanaEmergente({										
+		idDiv: 'confirmar-solicitud',
+		titulo: 'Autorización requerida',			
+		clickAceptar: clickAceptar,
+		showBsModal: function () {
+			document.getElementById( this.idBody ).innerHTML =
+			'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento?</h4></div>';
 		}
 	});
 }

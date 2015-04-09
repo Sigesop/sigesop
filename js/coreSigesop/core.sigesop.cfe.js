@@ -26,8 +26,7 @@ window.sesion = {
 
 (function () {
 	sigesop = {
-		alerta: function ( opt )
-		{
+		alerta: function ( opt ) {
 			// --- PROPIEDADES DEL opt ---
 			// titulo
 			// colorEstado
@@ -67,8 +66,7 @@ window.sesion = {
 			$( '#alerta' ).modal( { keyboard: true } );
 		},
 
-		alertaRoot: function ( opt )
-		{
+		alertaRoot: function ( opt ) {
 			// --- PROPIEDADES DEL JSON ---
 			// idDiv
 			// titulo
@@ -138,8 +136,7 @@ window.sesion = {
 			});
 		},
 
-		array_key_exists: function ( key, search )
-		{
+		array_key_exists: function ( key, search ) {
 		  //  discuss at: http://phpjs.org/functions/array_key_exists/
 		  // original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
 		  // improved by: Felix Geisendoerfer (http://www.debuggable.com/felix)
@@ -153,8 +150,7 @@ window.sesion = {
 			return key in search;
 		},
 
-		array_merge: function ()
-		{
+		array_merge: function () {
 			//  discuss at: http://phpjs.org/functions/array_merge/
 			// original by: Brett Zamir (http://brett-zamir.me)
 			// bugfixed by: Nate
@@ -224,8 +220,7 @@ window.sesion = {
 			return retObj;
 		},
 
-		array_search: function ( needle, haystack, argStrict )
-		{
+		array_search: function ( needle, haystack, argStrict ) {
 			//  discuss at: http://phpjs.org/functions/array_search/
 			// original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
 			//    input by: Brett Zamir (http://brett-zamir.me)
@@ -269,8 +264,7 @@ window.sesion = {
 			return false;
 		},
 
-		array_unique: function ( inputArr )
-		{
+		array_unique: function ( inputArr ) {
 			//  discuss at: http://phpjs.org/functions/array_unique/
 			// original by: Carlos R. L. Rodrigues (http://www.jsfromhell.com)
 			//    input by: duncan
@@ -316,8 +310,7 @@ window.sesion = {
 			return tmp_arr2;
 		},
 
-		barraHerramientas: function ()
-		{
+		barraHerramientas: function () {
 			// elem = elem || this;
 			var elem = this;
 			var
@@ -421,7 +414,6 @@ window.sesion = {
 			});
 		},
 
-
 		cargandoDatos: 'CARGANDO DATOS...',
 
 		cerrarSesion: function () {
@@ -456,8 +448,7 @@ window.sesion = {
 
 		completeCampos: function () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); },
 
-		eventoCambioEsNumero: function ( elem )
-		{
+		eventoCambioEsNumero: function ( elem ) {
 			$( elem ).change( function ( event )
 			{
 				var valor = $( this ).val();
@@ -465,8 +456,7 @@ window.sesion = {
 			});
 		},
 
-		eventoCambioMayuscula: function ( elem, callback )
-		{
+		eventoCambioMayuscula: function ( elem, callback ) {
 			elem = elem || this;
 			$( elem ).change( function(event)
 			{
@@ -476,15 +466,13 @@ window.sesion = {
 			});
 		},
 
-		flushData: function ( data )
-		{
+		flushData: function ( data ) {
 			var datos = jQuery.extend( true, {}, data );
 			this.__flushData( datos );
 			return datos;
 		},
 
-		__flushData: function ( data )
-		{
+		__flushData: function ( data ) {
 			if ( jQuery.isPlainObject( data ) )
 			{
 				var prop = Object.getOwnPropertyNames( data ),
@@ -522,8 +510,7 @@ window.sesion = {
 			}
 		},
 
-		matrizIndexOfObjeto: function ( data, campo, arr )
-		{
+		matrizIndexOfObjeto: function ( data, campo, arr ) {
 			/**
 			 * busca los indices de los elementos propuestos y retorna su posicion
 			 * @param {Object} data - objeto de datos donde se buscarán los elementos
@@ -548,8 +535,7 @@ window.sesion = {
 			else console.log( 'El parametro [campo] es indefinido' );
 		},
 
-		mtzValidacion: function ( arr )
-		{
+		mtzValidacion: function ( arr ) {
 			if ( jQuery.isArray( arr ) && !jQuery.isEmptyObject( arr ) )
 			{
 				var i = 0,
@@ -566,12 +552,9 @@ window.sesion = {
 				console.log( 'function [mtzValidacion]: matriz invalida' );
 				return false
 			}
-		},
+		},		
 
-		// --------------------------------------------------------------------------
-
-		getDataChecks: function ( arr )
-		{
+		getDataChecks: function ( arr ) {
 			/* Obtiene el valor de los checks seleccionados
 			 * @param {Array} array - Arreglo de ids html en formato [#idHTML]
 			 * @return {Array} select - retorna un arreglo de datos [dato1, dato2, ...]
@@ -592,8 +575,7 @@ window.sesion = {
 			return select;
 		},
 
-		getDataRadio: function ( elem )
-		{
+		getDataRadio: function ( elem ) {
 			var m = document.getElementsByName( elem ),
 				i = 0,
 				lon = m.length;
@@ -609,8 +591,7 @@ window.sesion = {
 		imgSuccess: '<img src="../css/images/check.png" height="40" width="40" />',
 		imgWarning: '<img src="../css/images/warning.png"  height="40" width="40" />',
 
-		indexOfObjeto: function ( data, campo, val )
-		{
+		indexOfObjeto: function ( data, campo, val ) {
 			for ( var i in data )
 			{
 				if ( data[ i ][ campo ] == val ) return i;
@@ -619,8 +600,7 @@ window.sesion = {
 			return -1;
 		},
 
-		combo: function ( opt )
-		{
+		combo: function ( opt ) {
 			/*
 			 * arr
 			 * elem
@@ -688,12 +668,9 @@ window.sesion = {
 					return this;
 				}
 			}
-		},
+		},		
 
-		// --------------------------------------------------------------------------
-
-		lecturaDeep: function ( obj, campo )
-		{
+		lecturaDeep: function ( obj, campo ) {
 			/*
 			 * Retorna el valor o matriz de valores de la propiedad de un objeto
 			 * permite obtener los valores de propiedades recursivas campo1.subcam1.subcam2.subcamN...
@@ -766,8 +743,7 @@ window.sesion = {
 			else console.log( 'function: lecturaDeep, [m] is empty' );
 		},
 
-		concatData: function ( obj, campo, del )
-		{
+		concatData: function ( obj, campo, del ) {
 			/*
 			 * Remplaza a la funcion [retornaValCampo]
 			 * Retorna una cadena con los datos concatenados de los campos pasados como parametros,
@@ -804,8 +780,7 @@ window.sesion = {
 			else return m + del + m;
 		},
 
-		msgBlockUI: function ( msg, tipo, blockElement, elem )
-		{
+		msgBlockUI: function ( msg, tipo, blockElement, elem ) {
 			switch( tipo )
 			{
 				case 'error': var img = sigesop.imgError;	break;
@@ -925,8 +900,7 @@ window.sesion = {
 			}
 		},
 
-		msg: function ( titulo, msg, tipo )
-		{
+		msg: function ( titulo, msg, tipo ) {
 			titulo = titulo || '';
 			msg = msg || '';
 			tipo = tipo || 'undefined';
@@ -960,8 +934,7 @@ window.sesion = {
 			new PNotify( options );
 		},
 
-		parseMsj: function ( arr, $form )
-		{
+		parseMsj: function ( arr, $form ) {
 			if ( jQuery.isEmptyObject( arr ) ) return '';
 			var
 				msj = '',
@@ -988,8 +961,7 @@ window.sesion = {
 			return msj;
 		},
 
-		query: function ( opt )
-		{
+		query: function ( opt ) {
 			/* type
 			 * data
 			 * class
@@ -1079,15 +1051,13 @@ window.sesion = {
 
 		raizServidor: '../ajax/sistema/',
 
-		retornaPosicionSplit: function ( data, posicion, delimitador )
-		{
+		retornaPosicionSplit: function ( data, posicion, delimitador ) {
 			var arregloValor = data.split( delimitador ),
 				valor = arregloValor[ posicion ];
 			return valor.trim();
 		},
 
-		tabla: function ( opt )
-		{
+		tabla: function ( opt ) {
 			/*
 			 * head.campo  	 			- {string} cadena de campos
 			 * ------------------------------------------------------------------
@@ -1366,8 +1336,7 @@ window.sesion = {
 			return doc;
 		},
 
-		tablaRegistro: function ( opt )
-		{
+		tablaRegistro: function ( opt ) {
 			/*
 			 * head
 			 * body
@@ -1523,8 +1492,7 @@ window.sesion = {
 			return doc;
 		},
 
-		tablaSeleccion: function ( opt )
-		{
+		tablaSeleccion: function ( opt ) {
 			/*
 			 * head  	 - {string} cadena de campos
 			 * ---------------------------------------------------------
@@ -1851,8 +1819,7 @@ window.sesion = {
 			return tmp_arr.join('');
 		},
 
-		ventanaEmergente: function ( opt )
-		{
+		ventanaEmergente: function ( opt ) {
 			/*
 			 * 	OPCIONES POSIBLES:
 			 *
@@ -1958,8 +1925,7 @@ window.sesion = {
 			}
 		},
 
-		verificaRoot: function ( data, jsonFunctions )
-		{
+		verificaRoot: function ( data, jsonFunctions ) {
 			var rutaSolicitud = sigesop.rutaServidor + 'verificaRoot';
 			$.ajax({
 				data: data,
