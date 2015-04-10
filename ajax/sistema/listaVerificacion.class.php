@@ -3,8 +3,6 @@ include 'sigesop.class.php';
 
 class listaVerificacion extends sigesop
 {
-    private $solo_lectura = array( 'N/A' );
-
     public function __construct( $usuario, $clave )
     {
         parent::sigesop( $usuario, $clave );
@@ -104,58 +102,141 @@ class listaVerificacion extends sigesop
         echo json_encode( $query );
     }
 
-    // ---------- nuevaUnidadMedida ------------------------------------------------------------------------
+    public function obtenerUnidadMedida() {
+        $sql = "SELECT * FROM catalogo_unidad_medida";
+        $query = $this->array_query( $sql );
+        return $query;
+    }
 
-    private $datosNuevaUnidadMedida = array( 'unidad_medida', 'descripcion_unidad_medida' );
+    public function nuevaUnidadMedida( $data ) {
+        $rsp = array();
 
-    public function nuevaUnidadMedida( $data )
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'unidad_medida', 'descripcion_unidad_medida'
+            ));
 
-        $flag = $this->verificaDatosNulos( $data, $this->datosNuevaUnidadMedida );
-        if ( $flag === 'OK' )
-        {
-            $unidad_medida = $data['unidad_medida']['valor'];
-            $descripcion_unidad_medida = $data['descripcion_unidad_medida']['valor'];
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-            $sql = "insert into catalogo_unidad_medida values('$unidad_medida','$descripcion_unidad_medida')";
-            $nuevaUnidadMedida = $this->insert_query( $sql );
-            if ($nuevaUnidadMedida == 'OK') 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $nuevaUnidadMedida.'. Error al insertar unidad de medida';
-            }
+        $unidad_medida = $data['unidad_medida']['valor'];
+        $descripcion_unidad_medida = $data['descripcion_unidad_medida']['valor'];
+
+        $sql = 
+            "INSERT INTO catalogo_unidad_medida ".
+            "VALUES('$unidad_medida','$descripcion_unidad_medida')";
+        
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Unidad de medida ingresada satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $unidad_medida, 'msj' => 'Correcto' );
+            return $rsp;
         } 
-        else return 'NA';
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar nueva unidad de medida' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $unidad_medida, 'msj' => $query );
+            return $rsp;
+        }
     }
 
-    // -----------------------------------------------------------------------------------------------------
-    
-    public function obtenerUnidadMedida() 
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
+    public function actualizarUnidadMedida( $data ) {       
+        $rsp = array();
 
-        $sql = "select * from catalogo_unidad_medida";
-        $unidadMedida = $this->array_query( $sql );
-        return $unidadMedida;
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'unidad_medida', 'descripcion_unidad_medida',
+                'unidad_medida_update'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $unidad_medida = $data['unidad_medida']['valor'];
+        $unidad_medida_update = $data['unidad_medida_update']['valor'];
+        $descripcion_unidad_medida = $data['descripcion_unidad_medida']['valor'];
+
+        # verificamos que no sea un elemente de solo lectura
+        if ( in_array( $unidad_medida, $this->solo_lectura ) ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Operación Imposible, elemento de solo lectura." );
+            return $rsp;
+        }
+
+        $sql = 
+            "UPDATE catalogo_unidad_medida ".
+            "SET unidad_medida = '$unidad_medida', ".
+            "descripcion_unidad_medida = '$descripcion_unidad_medida' ".
+            "WHERE unidad_medida = '$unidad_medida_update'";
+        
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Unidad de medida actualizada satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $unidad_medida, 'msj' => 'Correcto' );
+            return $rsp;
+        } 
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar unidad de medida' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $unidad_medida, 'msj' => $query );
+            return $rsp;
+        }
     }
 
-    // ---------- nuevoTipoMantenimiento -------------------------------------------------------------------
+    public function eliminarUnidadMedida ( $data ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $data, array( 'unidad_medida' ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+        
+        $unidad_medida = $data[ 'unidad_medida' ];
+
+        # verificamos que no sea un elemente de solo lectura
+        if ( in_array( $unidad_medida, $this->solo_lectura ) ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Operación Imposible, elemento de solo lectura." );
+            return $rsp;
+        }
+
+        $sql = 
+            "DELETE FROM catalogo_unidad_medida ".
+            "WHERE unidad_medida = '$unidad_medida'";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Unidad de medida eliminada satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $unidad_medida, 'msj' => 'Correcto' );
+            return $rsp;
+        } 
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar unidad de medida' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $unidad_medida, 'msj' => $query );
+            return $rsp;
+        }
+    }
+
+    # -----------------------------------------------
 
     private $datosNuevoTipoMantto = array(
         'numero_frecuencia', 'tipo_frecuencia',
         'id_mantenimiento', 'nombre_mantenimiento'
     );
 
-    public function nuevoTipoMantenimiento( $data )
-    {
+    public function nuevoTipoMantenimiento( $data ) {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
         if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
 
@@ -185,8 +266,7 @@ class listaVerificacion extends sigesop
 
     // -----------------------------------------------------------------------------------------------------
 
-    public function obtenerTipoMantenimiento() 
-    {
+    public function obtenerTipoMantenimiento() {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
         if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
 
@@ -197,8 +277,7 @@ class listaVerificacion extends sigesop
 
     // -----------------------------------------------------------------------------------------------------
 
-    public function eliminarTipoMantto ( $data )
-    {
+    public function eliminarTipoMantto ( $data ) {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
         if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
 
@@ -226,8 +305,7 @@ class listaVerificacion extends sigesop
 
     private $datosListaVerificacion = array( 'id_mantenimiento', 'descripcion_lista_verificacion', 'actividad_verificar' );
 
-    public function nuevaListaVerificacion ( $data ) 
-    {
+    public function nuevaListaVerificacion ( $data ) {
         $conexion = $this->conexion;
         $flag = $this->verificaDatosNulos( $data, $this->datosListaVerificacion );     
 
@@ -251,8 +329,7 @@ class listaVerificacion extends sigesop
     private $datosActividadLista = array( 'id_sistema_aero', 'actividad_verificar', 'parametro_actividad', 'lectura_actual', 
                                             'lectura_posterior' );
 
-    private function __insertarActividad ( $data, $id_mantenimiento, $descripcion_lista_verificacion, $conexion )
-    {
+    private function __insertarActividad ( $data, $id_mantenimiento, $descripcion_lista_verificacion, $conexion ) {
         // if ( $this->verificaDatosNulos( $data, $this->datosActividadLista ) ) return 'NA';
 
         $noAct = 1;
@@ -292,8 +369,7 @@ class listaVerificacion extends sigesop
         return 'OK';
     }
 
-    private function __insertarParametro ( $arr, $id, $conexion )
-    {
+    private function __insertarParametro ( $arr, $id, $conexion ) {
         $secuencia_datos = 1;
         foreach ( $arr as $param )
         {
@@ -314,8 +390,7 @@ class listaVerificacion extends sigesop
         return 'OK';
     }
 
-    private function __insertarLecturas ( $arrActual, $arrPost, $id, $conexion )
-    {   
+    private function __insertarLecturas ( $arrActual, $arrPost, $id, $conexion ) {   
         $secuenciaDatos = 1;
 
         foreach ( $arrActual as $dato ) 
@@ -353,8 +428,7 @@ class listaVerificacion extends sigesop
 
     // ----------------------------------------------------------------------------------------------------
 
-    public function obtenerListasVerificacion () 
-    {
+    public function obtenerListasVerificacion () {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
         if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
 
@@ -380,8 +454,7 @@ class listaVerificacion extends sigesop
         return $arr;
     }
 
-    public function obtenerListasVerificacionPorParametros ( $data ) 
-    {
+    public function obtenerListasVerificacionPorParametros ( $data ) {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
         if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
         
@@ -397,8 +470,7 @@ class listaVerificacion extends sigesop
 
     // ---------- obtenertTipoParamentroAceptacion ------------------------------------------------    
 
-    public function obtenerTipoParamentroAceptacion()
-    {
+    public function obtenerTipoParamentroAceptacion() {
         return $this->tipoParamentroAceptacion;
     }
 
@@ -410,73 +482,6 @@ class listaVerificacion extends sigesop
         'TOLERANCIA'
     );
 
-    // ----------------------------------------------------------------------------------------------------    
-
-    public function eliminarUnidadMedida ( $data )
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL";
-
-        $unidad_medida = $data[ 'unidad_medida' ];
-                
-        if ( !empty( $unidad_medida ) )
-        {        
-            if ( in_array( $unidad_medida, $this->solo_lectura ) ) // verificamos que no sea un elemente de solo lectura
-                    return "Operación Imposible, elemento de solo lectura.";
-
-            $sql = "delete from catalogo_unidad_medida where unidad_medida = '$unidad_medida'";
-            $query = $this->insert_query($sql );
-            if( $query === 'OK' ) 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            }
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.". Error al insertar Eliminar Aerogenerador";
-            }
-        }
-
-        else return 'NA';
-    }
-
-    // ---------- actualizarUnidadMedida ------------------------------------------------------------------
-
-    private $datosActualizarUnidadMedida = array( 'unidad_medida', 'unidad_medida_update', 'descripcion_unidad_medida' );
-
-    public function actualizarUnidadMedida( $data )
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
-
-        $flag = $this->verificaDatosNulos( $data, $this->datosActualizarUnidadMedida );
-        
-        if ( $flag === 'OK' )
-        {
-            $unidad_medida = $data['unidad_medida']['valor'];
-            $unidad_medida_update = $data['unidad_medida_update']['valor'];
-            $descripcion_unidad_medida = $data['descripcion_unidad_medida']['valor'];
-
-            if ( in_array( $unidad_medida, $this->solo_lectura ) ) // verificamos que no sea un elemente de solo lectura
-                    return "Operación Imposible, elemento de solo lectura.";
-
-            $sql = "update catalogo_unidad_medida set unidad_medida = '$unidad_medida', descripcion_unidad_medida = '$descripcion_unidad_medida' where unidad_medida = '$unidad_medida_update'";
-            $query = $this->insert_query( $sql );
-            if ($query == 'OK') 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.'. Error al insertar unidad de medida';
-            }
-        } 
-        else return 'NA';
-    }
-
     // ---------- actualizarTipoMantto -------------------------------------------------------------------------------------------
 
     private $datosActualizatTipoMantto = array(
@@ -484,8 +489,7 @@ class listaVerificacion extends sigesop
         'id_mantenimiento_update', 'numero_frecuencia', 'tipo_frecuencia'
     );
 
-    function actualizarTipoMantto( $data )
-    {
+    function actualizarTipoMantto( $data ) {
         $flag = $this->verificaDatosNulos( $data, $this->datosActualizatTipoMantto );
         if ( $flag )
         {

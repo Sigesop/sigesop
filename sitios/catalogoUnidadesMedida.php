@@ -23,6 +23,8 @@ if ( !$obj->accesoPagina( 'catalogoUnidadesMedida.php' ) ) {
 		<link rel="stylesheet" href="../css/bootstrap.css">
 		<link rel="stylesheet" href="../css/cfe/jquery.ui.all.css">
 		<link rel="stylesheet" href="../css/style.css">
+		<link rel="stylesheet" href="../js/pnotify/pnotify.custom.min.css">
+		<link rel="stylesheet" href="../js/formValidation/formValidation.min.css">
 		<link rel="stylesheet" href="../js/contextMenu/jquery.contextMenu.css" />
 	</head>
 
@@ -38,23 +40,20 @@ if ( !$obj->accesoPagina( 'catalogoUnidadesMedida.php' ) ) {
 
 			<div class="tab-content">
 				<div class="tab-pane fade in active" id="main"></div>
-				<div class="tab-pane fade" id="main2"><br>
-					<div class="alert alert-danger alert-dismissible fade in" role="alert">
-						<button class="close" aria-label="Close" data-dismiss="alert" type="button">
-							<span aria-hidden="true">×</span>
-						</button>
-						<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>				
-					</div>
-
-					<div id="unidadesRegistradas"></div>
-				</div>
+				<div class="tab-pane fade" id="main2"></div>
 			</div>
 		</div>
 
 		<script type="text/javascript" src="../js/jquery.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="../js/pnotify/pnotify.custom.min.js"></script>
+
+		<script type="text/javascript" src="../js/formValidation/formValidation.min.js"></script>
+		<script type="text/javascript" src="../js/formValidation/bootstrap.min.js"></script>
+
 		<script type="text/javascript" src="../js/contextMenu/jquery.contextMenu.js"></script>
 		<script type="text/javascript" src="../js/jquery.blockUI.js"></script>
+
 		<script type="text/javascript" src="../js/coreSigesop/core.sigesop.cfe.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/core.unidadMedida.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/main.unidadMedida.js"></script>

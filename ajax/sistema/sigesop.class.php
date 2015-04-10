@@ -7,6 +7,7 @@ class sigesop
     public $estadoConexion = false; // conexion satisfactoria para cualquier usuario registrado
     public $estadoConexionMysql = false;
     public $estadoConexionRoot = false; // conexion satisfactoria para usuario root de mysql
+    public $solo_lectura = array( 'N/A' ); // elementos de solo lectura
     
     # configuraciones del servidor
     public $serverRoot = 'http://laventa.cfe.local/';
