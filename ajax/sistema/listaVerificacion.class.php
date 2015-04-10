@@ -144,7 +144,7 @@ class listaVerificacion extends sigesop
         }
     }
 
-    public function actualizarUnidadMedida( $data ) {       
+    public function actualizarUnidadMedida( $data ) {
         $rsp = array();
 
         $validar = 
@@ -229,7 +229,7 @@ class listaVerificacion extends sigesop
         }
     }
 
-    # -----------------------------------------------
+    # Tipo de mantenimiento -------------------------
 
     private $datosNuevoTipoMantto = array(
         'numero_frecuencia', 'tipo_frecuencia',
@@ -264,8 +264,6 @@ class listaVerificacion extends sigesop
         else return 'NA';
     }
 
-    // -----------------------------------------------------------------------------------------------------
-
     public function obtenerTipoMantenimiento() {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
         if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
@@ -274,8 +272,6 @@ class listaVerificacion extends sigesop
         $obtenerTipoMantenimiento = $this->array_query( $sql );
         return $obtenerTipoMantenimiento;
     }
-
-    // -----------------------------------------------------------------------------------------------------
 
     public function eliminarTipoMantto ( $data ) {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
@@ -301,7 +297,7 @@ class listaVerificacion extends sigesop
         else return 'NA';
     }
 
-    // ---------- nuevaListaVerificacion ------------------------------------------------------------------
+    # Lista de verificacion --------------------------
 
     private $datosListaVerificacion = array( 'id_mantenimiento', 'descripcion_lista_verificacion', 'actividad_verificar' );
 
@@ -425,8 +421,6 @@ class listaVerificacion extends sigesop
 
         return 'OK';
     }
-
-    // ----------------------------------------------------------------------------------------------------
 
     public function obtenerListasVerificacion () {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;

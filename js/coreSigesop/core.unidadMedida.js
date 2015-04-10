@@ -39,13 +39,6 @@ sigesop.unidadMedida = {
 			$( datos.unidad_medida.idHTML ).val( '' );
 			$( datos.descripcion_unidad_medida.idHTML ).val( '' );			
 
-			vaciarDatos.call( this );
-		},
-
-		vaciarDatos = function () {
-			var datos = this.datos;
-			datos.unidad_medida.valor = null;			
-			datos.descripcion_unidad_medida.valor = null;
 			if( this.IDS.$form !== null )
 				this.IDS.$form.formValidation( 'resetForm' );
 		},
@@ -81,12 +74,17 @@ sigesop.unidadMedida = {
 
 		        fields: {
 		            unidad_medida: {
-	                	onError: function ( e, data ) {
-	                		datos.unidad_medida.valor = null;
-	                	},
-	                	onSuccess: function ( e, data ) {
-	                		datos.unidad_medida.valor = 
-	                		data.element.val().trim().toUpperCase();
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.unidad_medida.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.unidad_medida.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.unidad_medida.valor = null;
 	                	},
 		                validators: {
 		                    notEmpty: {
@@ -104,12 +102,17 @@ sigesop.unidadMedida = {
 		            },
 
 		            descripcion_unidad_medida: {
-	                	onError: function ( e, data ) {
-	                		datos.descripcion_unidad_medida.valor = null;
-	                	},
-	                	onSuccess: function ( e, data ) {
-	                		datos.descripcion_unidad_medida.valor = 
-	                		data.element.val().trim().toUpperCase();
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.descripcion_unidad_medida.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.descripcion_unidad_medida.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.descripcion_unidad_medida.valor = null;
 	                	},
 		                validators: {
 		                    notEmpty: {
@@ -131,21 +134,21 @@ sigesop.unidadMedida = {
 				data.fv.disableSubmitButtons( false );
 			});
 
+			/* Enlazar publicamente instancias jQuery de los campos
+			 */		
 			doc.IDS.$form = $form;
 			doc.IDS.$botonGuardar = $botonGuardar;
 			doc.IDS.$unidad_medida = $unidad_medida;
 			doc.IDS.$descripcion_unidad_medida = $descripcion_unidad_medida;
 
 			$botonGuardar.on( 'click', function ( event ) {
-				vaciarDatos.call( doc );
+				if( doc.IDS.$form !== null )
+					doc.IDS.$form.formValidation( 'resetForm' );
 			});
-
-			$( '.evtCambioMay' ).eventoCambioMayuscula();
 
 			/* Si el documento es para edicion, rellenar los datos
 			 * pasados en la variable [opt.obj]
 			 */
-			
 			if ( !$.isEmptyObject( opt.obj ) ) {
 				var obj = opt.obj;
 

@@ -41,9 +41,6 @@ function getData() {
 }
 
 function nuevoElemento( datos, IDS, limpiarCampos ) {
-	datos.nombre_sistema_aero.valor = IDS.$nombre_sistema_aero.val().trim();
-	datos.id_sistema_aero.valor = IDS.$id_sistema_aero.val().trim();
-
 	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
 	sigesop.query({
 		data: datos,
@@ -64,12 +61,12 @@ function nuevoElemento( datos, IDS, limpiarCampos ) {
 
 function editarElemento ( index ) {
 	if ( index < 0 ) 
-		throw new Error( 'function eliminarElemento: index fuera de rango' );
+		throw new Error( 'function editarElemento: index fuera de rango' );
 
 	var elem = window.sesion.matrizSistemas[ index ];
 	if( !elem ) {
 		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
-		throw new Error('function eliminarElemento: elem es indefinido');
+		throw new Error('function editarElemento: elem es indefinido');
 	}	
 
 	var 
@@ -97,9 +94,6 @@ function editarElemento ( index ) {
 }
 
 function actualizarElemento( datos, IDS, limpiarCampos ) {
-	datos.nombre_sistema_aero.valor = IDS.$nombre_sistema_aero.val().trim();
-	datos.id_sistema_aero.valor = IDS.$id_sistema_aero.val().trim();
-
 	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
 	sigesop.query({
 		data: datos,

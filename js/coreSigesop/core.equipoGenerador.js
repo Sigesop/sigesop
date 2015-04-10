@@ -124,15 +124,6 @@ sigesop.equipoGenerador = {
 			$( datos.id_equipo_aero.idHTML ).val( '' );
 			$( datos.id_sistema_aero.idHTML ).val( '' );			
 
-			vaciarDatos.call( this );
-		},
-
-		vaciarDatos = function () {
-			var datos = this.datos;
-			datos.nombre_equipo_aero.valor = null;			
-			datos.id_equipo_aero.valor = null;
-			// datos.id_equipo_aero_update.valor = null;
-			datos.id_sistema_aero.valor = null;
 			if( this.IDS.$form !== null )
 				this.IDS.$form.formValidation( 'resetForm' );
 		},
@@ -140,9 +131,13 @@ sigesop.equipoGenerador = {
 		javascript = function () {
 			var
 			doc = this,
+			datos = this.datos,
 			form = doc.IDS.form,
-			$botonSistema = $( doc.datos.id_sistema_aero.boton ),			
 			$botonLimpiar = $( doc.IDS.botonLimpiar ),
+			$nombre_equipo_aero = $( doc.datos.nombre_equipo_aero.idHTML ),
+			$id_equipo_aero = $( doc.datos.id_equipo_aero.idHTML ),
+			$id_sistema_aero = $( doc.datos.id_sistema_aero.idHTML ),
+			$botonSistema = $( doc.datos.id_sistema_aero.boton ),			
 			$form = $( form )
 			.formValidation({
 		        icon: {
@@ -166,6 +161,18 @@ sigesop.equipoGenerador = {
 
 		        fields: {
 		            nombre_equipo_aero: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.nombre_equipo_aero.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.nombre_equipo_aero.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.nombre_equipo_aero.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -182,6 +189,18 @@ sigesop.equipoGenerador = {
 		            },
 
 		            id_equipo_aero: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.id_equipo_aero.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.id_equipo_aero.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.id_equipo_aero.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -198,6 +217,18 @@ sigesop.equipoGenerador = {
 		            },
 
 		            id_sistema_aero: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.id_sistema_aero.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.id_sistema_aero.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.id_sistema_aero.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -218,7 +249,14 @@ sigesop.equipoGenerador = {
 				data.fv.disableSubmitButtons( false );
 			});
 
+			/* Enlazar publicamente instancias jQuery de los campos
+			 */
 			doc.IDS.$form = $form;
+			doc.IDS.$botonLimpiar = $botonLimpiar;
+			doc.IDS.$nombre_equipo_aero = $nombre_equipo_aero;
+			doc.IDS.$id_equipo_aero = $id_equipo_aero;
+			doc.IDS.$id_sistema_aero = $id_sistema_aero;
+			doc.IDS.$botonSistema = $botonSistema;
 
 			$botonSistema.on( 'click', function(event) {
 				event.preventDefault();
@@ -226,21 +264,19 @@ sigesop.equipoGenerador = {
 			});
 
 			$botonLimpiar.on( 'click', function(event) {
-				vaciarDatos.call( doc );
+				if( doc.IDS.$form !== null )
+					doc.IDS.$form.formValidation( 'resetForm' );
 			});
-
-			sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
 
 			/* Si el documento es para edicion, rellenar los datos
 			 * pasados en la variable [opt.obj]
 			 */
-			
 			if ( !$.isEmptyObject( opt.obj ) ) {
 				var obj = opt.obj;
 
-				$( doc.datos.nombre_equipo_aero.idHTML ).val( obj.nombre_equipo_aero );
-				$( doc.datos.id_equipo_aero.idHTML ).val( obj.id_equipo_aero );
-				$( doc.datos.id_sistema_aero.idHTML ).val( obj.id_sistema_aero );
+				$nombre_equipo_aero.val( obj.nombre_equipo_aero );
+				$id_equipo_aero.val( obj.id_equipo_aero );
+				$id_sistema_aero.val( obj.id_sistema_aero );
 
 				/* Guardamos el ID del equipo que se actualizará				
 				 */
@@ -255,8 +291,7 @@ sigesop.equipoGenerador = {
 			},
 			id_equipo_aero: {
 				valor : null,
-				idHTML: '#id-equipo-' + suf,				
-				regexp: /^[-_.\w\s]{1,4}$/i
+				idHTML: '#id-equipo-' + suf
 			},
 			id_equipo_aero_update: { valor: null },
 			id_sistema_aero: {
@@ -270,7 +305,12 @@ sigesop.equipoGenerador = {
 			botonGuardar: '#btn-guardar-nuevo-equipo-' + suf,
 			botonLimpiar: '#btn-limpiar-nuevo-equipo-' + suf,
 			form: '#form-equipo-generador-' + suf,
-			$form: null
+			$form: null,
+			$botonLimpiar: null,
+			$nombre_equipo_aero: null,
+			$id_equipo_aero: null,
+			$id_sistema_aero: null,
+			$botonSistema: null
 		},
 
 		doc = {

@@ -46,10 +46,6 @@ function getData() {
 }
 
 function nuevoElemento ( datos, IDS, limpiarCampos ) {
-	datos.nombre_equipo_aero.valor = $( datos.nombre_equipo_aero.idHTML ).val().trim();
-	datos.id_equipo_aero.valor = $( datos.id_equipo_aero.idHTML ).val().trim();
-	datos.id_sistema_aero.valor = $( datos.id_sistema_aero.idHTML ).val().trim();
-
 	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
 	sigesop.query({
 		data: datos,
@@ -156,10 +152,6 @@ function editarElemento( index ) {
 }
 
 function actualizarElemento( datos, IDS, limpiarCampos ) {
-	datos.nombre_equipo_aero.valor = $( datos.nombre_equipo_aero.idHTML ).val().trim();
-	datos.id_equipo_aero.valor = $( datos.id_equipo_aero.idHTML ).val().trim();
-	datos.id_sistema_aero.valor = $( datos.id_sistema_aero.idHTML ).val().trim();
-
 	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
 	sigesop.query({
 		data: datos,

@@ -39,18 +39,13 @@ sigesop.sistemaGenerador = {
 			'</form>',
 
 		limpiarCampos = function () {
-			var datos = this.datos;
-			$( datos.nombre_sistema_aero.idHTML ).val( '' );
-			$( datos.id_sistema_aero.idHTML ).val( '' );		
+			var 
+				datos = this.datos,
+				IDS = this.IDS;
 
-			vaciarDatos.call( this );
-		},
+			IDS.$nombre_sistema_aero.val( '' );
+			IDS.$id_sistema_aero.val( '' );		
 
-		vaciarDatos = function () {
-			var datos = this.datos;
-			datos.nombre_sistema_aero.valor = null;			
-			datos.id_sistema_aero.valor = null;
-			// datos.id_sistema_aero_update.valor = null;
 			if( this.IDS.$form !== null )
 				this.IDS.$form.formValidation( 'resetForm' );
 		},
@@ -59,6 +54,7 @@ sigesop.sistemaGenerador = {
 			var
 			doc = this,
 			form = doc.IDS.form,
+			datos = doc.datos,
 			$botonLimpiar = $( doc.IDS.botonLimpiar ),
 			$nombre_sistema_aero = $( doc.datos.nombre_sistema_aero.idHTML ),
 			$id_sistema_aero = $( doc.datos.id_sistema_aero.idHTML ),
@@ -85,6 +81,18 @@ sigesop.sistemaGenerador = {
 
 		        fields: {
 		            nombre_sistema_aero: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.nombre_sistema_aero.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.nombre_sistema_aero.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.nombre_sistema_aero.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -101,6 +109,18 @@ sigesop.sistemaGenerador = {
 		            },
 
 		            id_sistema_aero: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.id_sistema_aero.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.id_sistema_aero.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.id_sistema_aero.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -121,16 +141,17 @@ sigesop.sistemaGenerador = {
 				data.fv.disableSubmitButtons( false );
 			});
 			
+			/* Enlazar publicamente instancias jQuery de los campos
+			 */
+			doc.IDS.$form = $form;
 			doc.IDS.$botonLimpiar = $botonLimpiar;
 			doc.IDS.$nombre_sistema_aero = $nombre_sistema_aero;
 			doc.IDS.$id_sistema_aero = $id_sistema_aero;
-			doc.IDS.$form = $form;
 
 			$botonLimpiar.on( 'click', function(event) {
-				vaciarDatos.call( doc );
+				if( doc.IDS.$form !== null )
+					doc.IDS.$form.formValidation( 'resetForm' );
 			});
-
-			sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
 			
 			/* Si el documento es para edicion, rellenar los datos
 			 * pasados en la variable [opt.obj]
