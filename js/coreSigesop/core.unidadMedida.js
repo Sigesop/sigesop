@@ -54,6 +54,7 @@ sigesop.unidadMedida = {
 			var
 			doc = this,
 			form = doc.IDS.form,
+			datos = doc.datos,
 			$botonGuardar = $( doc.IDS.botonLimpiar ),
 			$unidad_medida = $( doc.datos.unidad_medida.idHTML ),
 			$descripcion_unidad_medida = $( doc.datos.descripcion_unidad_medida.idHTML ),
@@ -80,6 +81,13 @@ sigesop.unidadMedida = {
 
 		        fields: {
 		            unidad_medida: {
+	                	onError: function ( e, data ) {
+	                		datos.unidad_medida.valor = null;
+	                	},
+	                	onSuccess: function ( e, data ) {
+	                		datos.unidad_medida.valor = 
+	                		data.element.val().trim().toUpperCase();
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -96,6 +104,13 @@ sigesop.unidadMedida = {
 		            },
 
 		            descripcion_unidad_medida: {
+	                	onError: function ( e, data ) {
+	                		datos.descripcion_unidad_medida.valor = null;
+	                	},
+	                	onSuccess: function ( e, data ) {
+	                		datos.descripcion_unidad_medida.valor = 
+	                		data.element.val().trim().toUpperCase();
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'

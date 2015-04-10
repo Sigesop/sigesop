@@ -41,9 +41,6 @@ function getData() {
 }
 
 function nuevoElemento( datos, IDS, limpiarCampos ) {
-	datos.unidad_medida.valor = IDS.$unidad_medida.val().trim();
-	datos.descripcion_unidad_medida.valor = IDS.$descripcion_unidad_medida.val().trim();
-
 	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
 	sigesop.query({
 		data: datos,
@@ -96,9 +93,6 @@ function editarElemento( index ) {
 }
 
 function actualizarElemento( datos, IDS, limpiarCampos ) {
-	datos.unidad_medida.valor = IDS.$unidad_medida.val().trim();
-	datos.descripcion_unidad_medida.valor = IDS.$descripcion_unidad_medida.val().trim();
-
 	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
 	sigesop.query({
 		data: datos,
