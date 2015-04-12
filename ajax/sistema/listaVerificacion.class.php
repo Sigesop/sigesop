@@ -102,6 +102,8 @@ class listaVerificacion extends sigesop
         echo json_encode( $query );
     }
 
+    # Unidad de medida ------------------------------
+    
     public function obtenerUnidadMedida() {
         $sql = "SELECT * FROM catalogo_unidad_medida";
         $query = $this->array_query( $sql );
@@ -231,37 +233,88 @@ class listaVerificacion extends sigesop
 
     # Tipo de mantenimiento -------------------------
 
-    private $datosNuevoTipoMantto = array(
-        'numero_frecuencia', 'tipo_frecuencia',
-        'id_mantenimiento', 'nombre_mantenimiento'
-    );
-
     public function nuevoTipoMantenimiento( $data ) {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
+        $rsp = array();
 
-        $flag = $this->verificaDatosNulos( $data, $this->datosNuevoTipoMantto );
-        if ( $flag === 'OK' ) 
-        {
-            $numero_frecuencia = $data['numero_frecuencia']['valor'];
-            $tipo_frecuencia = $data['tipo_frecuencia']['valor'];
-            $id_mantenimiento = $data['id_mantenimiento']['valor'];
-            $nombre_mantenimiento = $data['nombre_mantenimiento']['valor'];
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'numero_frecuencia', 'tipo_frecuencia',
+                'id_mantenimiento', 'nombre_mantenimiento'
+            ));
 
-            $sql = "insert into tipo_mantenimiento values ('$id_mantenimiento', '$nombre_mantenimiento', $numero_frecuencia, '$tipo_frecuencia')";
-            $insertarTipoMantto = $this->insert_query( $sql );
-            if( $insertarTipoMantto === 'OK' )
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $insertarTipoMantto.'. Error al insertar tipo de mantenimiento';
-            }
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $numero_frecuencia = $data['numero_frecuencia']['valor'];
+        $tipo_frecuencia = $data['tipo_frecuencia']['valor'];
+        $id_mantenimiento = $data['id_mantenimiento']['valor'];
+        $nombre_mantenimiento = $data['nombre_mantenimiento']['valor'];
+
+        $sql = 
+            "INSERT INTO tipo_mantenimiento ".
+            "VALUES ('$id_mantenimiento', '$nombre_mantenimiento', ".
+            "$numero_frecuencia, '$tipo_frecuencia')";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Tipo de mantenimiento ingresado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $id_mantenimiento, 'msj' => 'Correcto' );
+            return $rsp;
         } 
-        else return 'NA';
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar tipo de mantenimiento' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $id_mantenimiento, 'msj' => $query );
+            return $rsp;
+        }
+    }
+
+    function actualizarTipoMantto( $data ) {
+        $rsp = array();
+
+        $validar =
+            $this->verificaDatosNulos( $data, array(
+                'nombre_mantenimiento', 'id_mantenimiento', 'tipo_frecuencia',
+                'id_mantenimiento_update', 'numero_frecuencia'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $nombre_mantenimiento = $data[ 'nombre_mantenimiento' ][ 'valor' ];
+        $id_mantenimiento = $data[ 'id_mantenimiento' ] [ 'valor' ];
+        $id_mantenimiento_update = $data[ 'id_mantenimiento_update' ] [ 'valor' ];
+        $numero_frecuencia = $data[ 'numero_frecuencia' ] [ 'valor' ];
+        $tipo_frecuencia = $data[ 'tipo_frecuencia' ] [ 'valor' ];
+        
+        $sql =  
+            "UPDATE tipo_mantenimiento ".
+            "SET nombre_mantenimiento = '$nombre_mantenimiento', ".
+            "id_mantenimiento = '$id_mantenimiento', ".
+            "numero_frecuencia = $numero_frecuencia, ".
+            "tipo_frecuencia = '$tipo_frecuencia' ".
+            "WHERE id_mantenimiento = '$id_mantenimiento_update'";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Tipo de mantenimiento actualizado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $id_mantenimiento, 'msj' => 'Correcto' );
+            return $rsp;
+        } 
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar tipo de mantenimiento' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $id_mantenimiento, 'msj' => $query );
+            return $rsp;
+        }
     }
 
     public function obtenerTipoMantenimiento() {
@@ -274,27 +327,36 @@ class listaVerificacion extends sigesop
     }
 
     public function eliminarTipoMantto ( $data ) {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
+        $rsp = array();
+
+        $validar =
+            $this->verificaDatosNulos( $data, array( 'id_mantenimiento' ) );
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
         $id_mantenimiento = $data['id_mantenimiento'];
 
-        if ( !empty( $id_mantenimiento ) )
-        {
-            $sql = "delete from tipo_mantenimiento where id_mantenimiento = '$id_mantenimiento'";
-            $query = $this->insert_query( $sql );
-            if( $query === 'OK' ) 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            }
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.". Error al insertar Eliminar Tipo de Mantenimiento";
-            }
+        $sql = 
+            "DELETE FROM tipo_mantenimiento ".
+            "WHERE id_mantenimiento = '$id_mantenimiento'";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Tipo de mantenimiento eliminado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $id_mantenimiento, 'msj' => 'Correcto' );
+            return $rsp;
         } 
-        else return 'NA';
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar tipo de mantenimiento' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $id_mantenimiento, 'msj' => $query );
+            return $rsp;
+        }
     }
 
     # Lista de verificacion --------------------------
@@ -460,9 +522,7 @@ class listaVerificacion extends sigesop
             return $obtenerListaVerificacion;
         } 
         else return null;
-    }
-
-    // ---------- obtenertTipoParamentroAceptacion ------------------------------------------------    
+    }    
 
     public function obtenerTipoParamentroAceptacion() {
         return $this->tipoParamentroAceptacion;
@@ -475,44 +535,6 @@ class listaVerificacion extends sigesop
         'RANGO',
         'TOLERANCIA'
     );
-
-    // ---------- actualizarTipoMantto -------------------------------------------------------------------------------------------
-
-    private $datosActualizatTipoMantto = array(
-        'nombre_mantenimiento', 'numero_aero', 'id_mantenimiento', 
-        'id_mantenimiento_update', 'numero_frecuencia', 'tipo_frecuencia'
-    );
-
-    function actualizarTipoMantto( $data ) {
-        $flag = $this->verificaDatosNulos( $data, $this->datosActualizatTipoMantto );
-        if ( $flag )
-        {
-            $nombre_mantenimiento = $data[ 'nombre_mantenimiento' ][ 'valor' ];
-            $id_mantenimiento = $data[ 'id_mantenimiento' ] [ 'valor' ];
-            $id_mantenimiento_update = $data[ 'id_mantenimiento_update' ] [ 'valor' ];
-            $numero_frecuencia = $data[ 'numero_frecuencia' ] [ 'valor' ];
-            $tipo_frecuencia = $data[ 'tipo_frecuencia' ] [ 'valor' ];
-            
-            $sql =  "update tipo_mantenimiento set nombre_mantenimiento = '$nombre_mantenimiento', ".
-                    "id_mantenimiento = '$id_mantenimiento', numero_frecuencia = $numero_frecuencia, ".
-                    "tipo_frecuencia = '$tipo_frecuencia' where id_mantenimiento = '$id_mantenimiento_update'";
-
-            // return $sql;
-
-            $query = $this->insert_query( $sql );
-            if ( $query === 'OK' ) 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.'. Error al actualizar Tipo de mantenimiento';
-            }
-        } 
-        else return 'NA';
-    }
 
     # ------------------------------------
 

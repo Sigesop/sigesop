@@ -23,6 +23,8 @@ if ( !$obj->accesoPagina( 'catalogoTipoMantenimiento.php' ) ) {
 		<link rel="stylesheet" href="../css/bootstrap.css">
 		<link rel="stylesheet" href="../css/cfe/jquery.ui.all.css">
 		<link rel="stylesheet" href="../css/style.css">
+		<link rel="stylesheet" href="../js/pnotify/pnotify.custom.min.css">
+		<link rel="stylesheet" href="../js/formValidation/formValidation.min.css">
 		<link rel="stylesheet" href="../js/contextMenu/jquery.contextMenu.css" />
 	</head>
 
@@ -38,25 +40,21 @@ if ( !$obj->accesoPagina( 'catalogoTipoMantenimiento.php' ) ) {
 
 			<div class="tab-content">			
 				<div class="tab-pane fade in active" id="main"></div>
-				<div class="tab-pane fade" id = "main2"><br>
-					<div class="alert alert-danger alert-dismissible fade in" role="alert">
-						<button class="close" aria-label="Close" data-dismiss="alert" type="button">
-							<span aria-hidden="true">×</span>
-						</button>
-						<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>				
-					</div>
-
-					<div id="tipoMantenimientoRegistrados"></div>
-				</div>
+				<div class="tab-pane fade" id = "main2"></div>
 			</div>
 		</div>
 
 		<script type="text/javascript" src="../js/jquery.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script>
-		<script type="text/javascript" src="../js/ui/jquery.ui.widget.js"></script>
-		<script type="text/javascript" src="../js/ui/jquery.ui.spinner.js"></script>
+		<script type="text/javascript" src="../js/ui/jquery-ui.custom.min.js"></script>
+		<script type="text/javascript" src="../js/pnotify/pnotify.custom.min.js"></script>
+
+		<script type="text/javascript" src="../js/formValidation/formValidation.min.js"></script>
+		<script type="text/javascript" src="../js/formValidation/bootstrap.min.js"></script>
+
 		<script type="text/javascript" src="../js/contextMenu/jquery.contextMenu.js"></script>
 		<script type="text/javascript" src="../js/jquery.blockUI.js"></script>
+		
 		<script type="text/javascript" src="../js/coreSigesop/core.sigesop.cfe.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/core.tipoMantenimiento.js"></script>
 		<script type="text/javascript" src="../js/coreSigesop/main.tipoMantenimiento.js"></script>

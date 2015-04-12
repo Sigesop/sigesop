@@ -213,16 +213,18 @@ sigesop.unidadMedida = {
 			'</form>',
 
 		javascript = function () {
+			var
+			doc = this,
 			table = 
 				sigesop.tablaRegistro({
 					head: 'UNIDAD DE MEDIDA, DESCRIPCIÓN',
 					campo: 'unidad_medida, descripcion_unidad_medida'
 				});
 
-				doc.table.update_table = table.update_table; // enlazamos a vista publica
-				doc.table.body = table.IDS.body;
-				document.getElementById( doc.IDS.idTabla.flushChar('#') )
-				.innerHTML = '<br>' + table.html;
+			doc.table.update_table = table.update_table; // enlazamos a vista publica
+			doc.table.body = table.IDS.body;
+			document.getElementById( doc.IDS.idTabla.flushChar('#') )
+			.innerHTML = '<br>' + table.html;
 
 			$( table.IDS.body ).contextMenu({
 				selector: 'tr',
