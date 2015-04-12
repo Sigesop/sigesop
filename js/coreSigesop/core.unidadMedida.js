@@ -7,6 +7,7 @@ sigesop.unidadMedida = {
 	document: function ( opt )
 	{		
 		var 
+		
 		suf = opt.suf || '',
 
 		html = 

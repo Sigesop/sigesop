@@ -5,18 +5,15 @@ class generadores extends sigesop
 {
     private $estadoLicencia = array('C.A.', 'FALLA', 'MTTO', 'F.A.');
 
-    public function __construct( $usuario, $clave )
-    {
+    public function __construct( $usuario, $clave ) {
         parent::sigesop( $usuario, $clave );
     }
 
-    public function __destruct()
-    {
+    public function __destruct() {
         parent::__destruct();
     }  
 
-	function solicitudAjax( $accion, $post, $get )
-	{
+	function solicitudAjax( $accion, $post, $get ) {
         switch ( $accion )
         {
             case 'actualizarGenerador':
@@ -57,50 +54,7 @@ class generadores extends sigesop
 
     function obtenerEstadoLicencia() { return $this->estadoLicencia; } 
 
-    // ---------- nuevoGenerador ------------------------------------------------------------------------------------------------
-
-    private $datosNuevoGenerador = array(
-        'numero_unidad', 'numero_aero', 'capacidad_efectiva_aero'
-    );
-
-    function nuevoGenerador( $data )
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
-
-        $flag = $this->verificaDatosNulos( $data, $this->datosNuevoGenerador );
-
-        if ( $flag === 'OK' )
-        {
-            $numero_unidad = $data[ 'numero_unidad' ][ 'valor' ];
-            $numero_aero = $data[ 'numero_aero' ][ 'valor' ];
-            $capacidad_efectiva_aero = $data[ 'capacidad_efectiva_aero' ][ 'valor' ];
-            // $estado_licencia = $data[ 'estado_licencia' ][ 'valor' ];
-
-            // $sql = "insert into aeros(numero_unidad, numero_aero, capacidad_efectiva_aero, estado_licencia) values('$numero_unidad', '$numero_aero', $capacidad_efectiva_aero, '$estado_licencia')";
-            $sql = "insert into aeros(numero_unidad, numero_aero, capacidad_efectiva_aero) values('$numero_unidad', '$numero_aero', $capacidad_efectiva_aero)";
-            $insertaGenerador = $this->insert_query( $sql );
-            if ( $insertaGenerador === 'OK' ) 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else
-            {
-                $this->conexion->rollback();
-                return $insertaGenerador.'. Error al ingresar generador al sistema';
-            } 
-        } 
-        else return 'NA';
-    }
-
-    // --------------------------------------------------------------------------------------------------------------------------
-
-    function obtenerGeneradores( $get )
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
-
+    function obtenerGeneradores( $get ) {
         $numero_unidad = $get[ 'numero_unidad' ];
         $numero_aero = $get[ 'numero_aero' ];
 
@@ -145,8 +99,7 @@ class generadores extends sigesop
         return $query;
     }
 
-    function obtenerGeneradoresPorUnidad( $data )
-    {
+    function obtenerGeneradoresPorUnidad( $data ) {
         if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
         if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
 
@@ -156,58 +109,112 @@ class generadores extends sigesop
         return $query;
     }
 
-    function eliminarGenerador( $data )
-    {
-        $numero_aero = $data['numero_aero'];
+    function nuevoGenerador( $data ) {
+        $rsp = array();
 
-        if ( !empty( $numero_aero ) )
-        {
-            $sql = "DELETE FROM aeros WHERE numero_aero = '$numero_aero'";
-            $query = $this->insert_query( $sql );
-            if( $query === 'OK' ) 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            }
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.". Error al Eliminar Aerogenerador";
-            }
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'numero_unidad', 'numero_aero', 'capacidad_efectiva_aero'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $numero_unidad = $data[ 'numero_unidad' ][ 'valor' ];
+        $numero_aero = $data[ 'numero_aero' ][ 'valor' ];
+        $capacidad_efectiva_aero = $data[ 'capacidad_efectiva_aero' ][ 'valor' ];
+        
+        $sql = 
+            "INSERT INTO aeros(numero_unidad, numero_aero, capacidad_efectiva_aero) ".
+            "VALUES('$numero_unidad', '$numero_aero', $capacidad_efectiva_aero)";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Aerogenerador ingresado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+            return $rsp;
         } 
-        else return 'NA';
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar nueva Aerogenerador' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+            return $rsp;
+        }
     }
 
-    // ---------- actualizarGenerador -------------------------------------------------------------------------------------------
+    function actualizarGenerador( $data ) {
+        $rsp = array();
 
-    private $datosActualizarGenerador = array(
-        'numero_unidad', 'numero_aero', 'capacidad_efectiva_aero', 'numero_aero_update'
-    );
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'numero_unidad', 'numero_aero', 
+                'capacidad_efectiva_aero', 'numero_aero_update'
+            ));
 
-    function actualizarGenerador( $data )
-    {
-        $flag = $this->verificaDatosNulos( $data, $this->datosActualizarGenerador );
-        if ( $flag )
-        {
-            $numero_unidad = $data[ 'numero_unidad' ][ 'valor' ];
-            $numero_aero = $data[ 'numero_aero' ][ 'valor' ];
-            $capacidad_efectiva_aero = $data[ 'capacidad_efectiva_aero' ] [ 'valor' ];
-            $numeroAero_update = $data[ 'numero_aero_update' ] [ 'valor' ];
-            
-            $sql = "update aeros set numero_unidad = $numero_unidad, numero_aero = '$numero_aero', capacidad_efectiva_aero = $capacidad_efectiva_aero where numero_aero = '$numeroAero_update'";
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-            $query = $this->insert_query( $sql );
-            if ($query === 'OK') 
-            {
-                $this->conexion->commit();
-                return 'OK';
-            } 
-            else 
-            {
-                $this->conexion->rollback();
-                return $query.'. Error al actualizar generador';
-            }
+        $numero_unidad = $data[ 'numero_unidad' ][ 'valor' ];
+        $numero_aero = $data[ 'numero_aero' ][ 'valor' ];
+        $capacidad_efectiva_aero = $data[ 'capacidad_efectiva_aero' ] [ 'valor' ];
+        $numero_aero_update = $data[ 'numero_aero_update' ] [ 'valor' ];
+        
+        $sql = 
+            "UPDATE aeros ".
+            "SET numero_unidad = $numero_unidad, ".
+            "numero_aero = '$numero_aero', ".
+            "capacidad_efectiva_aero = $capacidad_efectiva_aero ".
+            "WHERE numero_aero = '$numero_aero_update'";
+
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Aerogenerador actualizado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+            return $rsp;
         } 
-        else return 'NA';
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar Aerogenerador' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+            return $rsp;
+        }
+    }
+
+    function eliminarGenerador( $data ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $data, array( 'numero_aero' ) );
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $numero_aero = $data['numero_aero'];
+
+        $sql = "DELETE FROM aeros WHERE numero_aero = '$numero_aero'";
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Aerogenerador eliminado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+            return $rsp;
+        } 
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar Aerogenerador' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+            return $rsp;
+        }
     }
 }
