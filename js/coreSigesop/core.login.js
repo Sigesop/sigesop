@@ -98,8 +98,8 @@ sigesop.login = {
 					dialogClass: "no-close",
 					autoOpen: true,
 					resizable: false,
-					height: 400,
-					width: 350,
+					height: 450,
+					width: 400,
 					modal: true,
 					show: {
 						// effect: "blind",

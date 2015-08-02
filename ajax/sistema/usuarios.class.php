@@ -81,6 +81,23 @@ class usuarios extends sigesop
                 $obtenerUsuarios = $this->obtenerUsuarios();
                 echo json_encode( $obtenerUsuarios );
                 break;
+
+            # Funciones para imprimir
+            case 'imprimirR':
+                $query = $this->imprimirR();
+                echo json_encode( $query );
+                break; 
+
+            case 'imprimir':
+                $query = $this->imprimir( $get );
+                echo json_encode( $query );
+                break; 
+
+            case 'imprimirAT':
+                $query = $this->imprimirAT( );
+                echo json_encode( $query );
+                break; 
+
             default:
                 echo json_encode('Funcion no registrada en la clase usuarios');
                 break;
@@ -968,11 +985,216 @@ class usuarios extends sigesop
 
     public function obtenerPermisoAcceso () { return $this->matrizPermisoAcceso; }
 
-    public function obtenerUsuarios() 
-    {
+    public function obtenerUsuarios() {
         $sql =  'SELECT RDE_trabajador, nombre_usuario, nombre_trabajador, '.
                 'apellidos_trabajador, clave_areaTrabajo, clave_rol FROM personal';
         $query = $this->array_query( $sql );
         return $query;  
+    }
+    
+    public function imprimir ( $get ) {
+        require_once('../tcpdf/tcpdf.php');
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de Usuarios' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        $datos = $this->obtenerUsuarios(  );
+      
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'RDE', 'campo'=> 'RDE_trabajador', 'x'=>50 ),
+                    array( 'titulo' => 'Nombre de Usuario', 'campo'=> 'nombre_usuario',  ),
+                    array( 'titulo' => 'Nombre del Trabajador', 'campo'=> 'nombre_trabajador', ),
+                    array( 'titulo' => 'Apellido', 'campo'=> 'apellidos_trabajador', ),
+                    array( 'titulo' => 'Clave de Area del Trabajo', 'campo'=> 'clave_areaTrabajo', 'x'=>175 ),
+                    array( 'titulo' => 'Clave del rol', 'campo'=> 'clave_rol'  )
+                ), 
+
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_Usuario.pdf', 'I');
+    }
+
+    public function imprimirAT (  ) {
+        require_once('../tcpdf/tcpdf.php');
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de Area de trabajo' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        $datos = $this->obtenerAreaTrabajo(  );
+      
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'clave de area de trabajo', 'campo'=> 'clave_areaTrabajo', 'x'=>200 ),
+                    array( 'titulo' => 'descripcion ', 'campo'=> 'descripcion_areaTrabajo',  )
+                ), 
+
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_AreaTrabajo.pdf', 'I');
+    }
+
+    public function imprimirR (  ) {
+        require_once('../tcpdf/tcpdf.php');
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de tipo de rol' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+       $datos = $this->obtenerTipoRolUsuario( $get );
+      
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'Clave de rol', 'campo'=> 'clave_rol', 'x'=>200 ),
+                   
+                    array( 'titulo' => 'Descripcion', 'campo'=> 'descripcion_areaTrabajo', )
+                   
+                ),
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte tipos de rol de usuario.pdf', 'I');
     }
 }

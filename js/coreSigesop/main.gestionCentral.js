@@ -1,7 +1,6 @@
 $( document ).on( 'ready', main );
 
-function main ()
-{
+function main () {
 	doc = sigesop.gestionCentral.document({
 		error: error,
 		success: actualizarElemento

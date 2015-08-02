@@ -1,6 +1,5 @@
 <?php
-class sigesop 
-{
+class sigesop {
     public $conexion; 
     public $conexionMySQL; // conexion a la base de datos mysql    
     public $errnoRoot;
@@ -15,84 +14,87 @@ class sigesop
     public $db = 'laventa_cfe';
     public $root = 'root'; # superusuario con clave encriptada con algoritmo SHA1
     public $usuario, $clave;
+
     public $matrizAreaAcceso = array(
-        0 => array(
+        array(
             'nivelBarra' => 1, 'idAcceso' => 'status', 'paginaAcceso' => 'status.php', 'nombrePagina' => 'Estatus'
         ),
 
-        1 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoRolUsuario', 'paginaAcceso' => 'catalogoRolUsuario.php', 'nombrePagina' => 'Catálogo de Roles de Usuario'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoRolUsuario', 'paginaAcceso' => 'catalogoRolUsuario.php', 'nombrePagina' => 'Roles de Usuario'
         ),
 
-        2 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoAreaTrabajo', 'paginaAcceso' => 'catalogoAreaTrabajo.php', 'nombrePagina' => 'Catálogo de Áreas de Trabajo'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoAreaTrabajo', 'paginaAcceso' => 'catalogoAreaTrabajo.php', 'nombrePagina' => 'Áreas de Trabajo'
         ), 
 
-        3 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoUsuarios', 'paginaAcceso' => 'catalogoUsuarios.php', 'nombrePagina' => 'Catálogo de Usuarios'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoUsuarios', 'paginaAcceso' => 'catalogoUsuarios.php', 'nombrePagina' => 'Usuarios'
         ),
 
-        4 => array(
+        array(
             'nivelBarra' => 2, 'idAcceso' => 'gestionCentral', 'paginaAcceso' => 'gestionCentral.php', 'nombrePagina' => 'Gestión de la Central'
         ),
 
-        5 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoUnidades', 'paginaAcceso' => 'catalogoUnidades.php', 'nombrePagina' => 'Catálogo de Unidades'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoUnidades', 'paginaAcceso' => 'catalogoUnidades.php', 'nombrePagina' => 'Unidades'
         ),
 
-        6 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoAeros', 'paginaAcceso' => 'catalogoAeros.php', 'nombrePagina' => 'Catálogo de Aéros'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoAeros', 'paginaAcceso' => 'catalogoAeros.php', 'nombrePagina' => 'Aerogeneradores'
         ),
 
-        7 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoSistemas', 'paginaAcceso' => 'catalogoSistemas.php', 'nombrePagina' => 'Catálogo de Sistemas'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoSistemas', 'paginaAcceso' => 'catalogoSistemas.php', 'nombrePagina' => 'Sistemas'
         ),
 
-        8 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoEquipos', 'paginaAcceso' => 'catalogoEquipos.php', 'nombrePagina' => 'Catálogo de Equipos'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoEquipos', 'paginaAcceso' => 'catalogoEquipos.php', 'nombrePagina' => 'Equipos'
         ),
 
-        9 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoUnidadesMedida', 'paginaAcceso' => 'catalogoUnidadesMedida.php', 'nombrePagina' => 'Catálogo de Unidades de Medida'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoMateriales', 'paginaAcceso' => 'materiales.php', 'nombrePagina' => 'Materiales'
         ),
 
-        10 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoTipoMantenimiento', 'paginaAcceso' => 'catalogoTipoMantenimiento.php', 'nombrePagina' => 'Catálogo de Tipos de Mantenimiento'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoUnidadesMedida', 'paginaAcceso' => 'catalogoUnidadesMedida.php', 'nombrePagina' => 'Unidades de Medida'
         ),
 
-        11 => array(
-            'nivelBarra' => 2, 'idAcceso' => 'catalogoListas', 'paginaAcceso' => 'catalogoListas.php', 'nombrePagina' => 'Catálogo de Listas de Verificación'
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoTipoMantenimiento', 'paginaAcceso' => 'catalogoTipoMantenimiento.php', 'nombrePagina' => 'Tipos de Mantenimiento'
         ),
 
-        12 => array(
+        array(
+            'nivelBarra' => 2, 'idAcceso' => 'catalogoListas', 'paginaAcceso' => 'catalogoListas.php', 'nombrePagina' => 'Listas de Verificación'
+        ),
+
+        array(
             'nivelBarra' => 3, 'idAcceso' => 'creacionOrdenTrabajo', 'paginaAcceso' => 'creacionOrdenTrabajo.php', 'nombrePagina' => 'Creación de Orden de Trabajo'
         ),
 
-        13 => array(
+        array(
             'nivelBarra' => 3, 'idAcceso' => 'capturaOrdenTrabajo', 'paginaAcceso' => 'capturaOrdenTrabajo.php', 'nombrePagina' => 'Captura de Orden de Trabajo'
         ),
 
-        14 => array(
+        array(
             'nivelBarra' => 4, 'idAcceso' => 'consecutivoLicencia', 'paginaAcceso' => 'consecutivoLicencia.php', 'nombrePagina' => 'Consecutivo de Licencias'
         ),
 
-        15 => array(
+        array(
             'nivelBarra' => 4, 'idAcceso' => 'libroRelatorio', 'paginaAcceso' => 'libroRelatorio.php', 'nombrePagina' => 'Libro Relatorio'
         )
     );
 
     /***************************************************FUNCIONES INTERNAS***************************************************/ 
     
-    function sigesop ( $usuario, $clave )
-    {
+    function sigesop ( $usuario, $clave ) {
         // Guardamos las variables para uso interno
         $this->usuario = $usuario;
         $this->clave = $clave;        
         $this->checkUsuario( $usuario, $clave );
     }
 
-    function __destruct()
-    {
+    function __destruct() {
         $this->estadoConexion ? $this->conexionMySQL->close(): null;
         $this->estadoConexionMysql ? $this->conexion->close(): null;
     }    
@@ -101,8 +103,7 @@ class sigesop
      * retorna una matriz numerica, a partir de una matriz cualquiera, es decir; elimina
      * los indices 
      */
-    protected function array_numerico( $array )
-    {
+    protected function array_numerico( $array ) {
         $m = array();
 
         foreach ( $array as $val ) 
@@ -114,15 +115,19 @@ class sigesop
     }
 
     // simula un autoincremento
-    protected function autoincrement( $sql, $fetch_assoc ) 
-    {
-            $obtenerID = $this->array_query( $sql, $fetch_assoc, 0 );
-            $indice = $obtenerID[ sizeof( $obtenerID ) - 1 ] + 1;
-            return $indice;
-    }    
+    protected function autoincrement( $sql, $fetch_assoc ) {
+        $arr = $this->array_query( $sql, $fetch_assoc, 0 );
+        return $arr[ sizeof( $arr ) - 1 ] + 1;
+    }
 
-    protected function checkRoot( $password_check, $root )
-    {
+    protected function auto_increment( $table, $key ) {
+        if ( empty( $table ) || empty( $key ) ) return NULL;
+        $sql = "SELECT ".$key." FROM ".$table." ORDER BY ".$key." DESC LIMIT 1";
+        $query = $this->query( $sql, $key, NULL );
+        return $query + 1;
+    }
+
+    protected function checkRoot( $password_check, $root ) {
         $this->conexionMySQL = 
             new mysqli( $this->host, $root, $password_check, 'mysql');
 
@@ -154,8 +159,7 @@ class sigesop
      * y verifica si es superusuario o usuario comun
      */ 
 
-    protected function checkUsuario( $usuario, $clave )
-    {
+    protected function checkUsuario( $usuario, $clave ) {
         if ( $usuario != $this->root )
         {        
             $this->conexion = 
@@ -196,15 +200,13 @@ class sigesop
         else $this->checkRoot( $clave, $usuario );
     } 
 
-    protected function checkUserInsideMysql( $usuario )
-    {
+    protected function checkUserInsideMysql( $usuario ) {
         $sql = "SELECT user FROM user WHERE user = '$usuario'";
         $user = $this->array_query( $sql, 'user', null, true );
         return $user[0] == $usuario ? true : false;
     } 
     
-    protected function checkUserInsideLaVenta( $usuario )
-    {
+    protected function checkUserInsideLaVenta( $usuario ) {
         $sql = "SELECT nombre_usuario FROM personal WHERE nombre_usuario = '$usuario'";        
         $user = $this->query( $sql, 'nombre_usuario' );
         return $user != null ?
@@ -212,8 +214,7 @@ class sigesop
         // return $user;
     }
 
-    public function accesoPagina( $nombrePagina )
-    {
+    public function accesoPagina( $nombrePagina ) {
         # verificamos que tenga acceso root
         if ( $this->usuario == $this->root && $this->estadoConexionRoot ) 
             return true;
@@ -250,8 +251,7 @@ class sigesop
 
     # retorna un unico dato de la primera fila
 
-    protected function query( $sql, $fetch_assoc = false, $valorNulo = null, $type = false )
-    {
+    protected function query( $sql, $fetch_assoc = false, $valorNulo = null, $type = false ) {
         # por defecto: conexion de usuario normal
         # verdadero: conexion a tablas mysql
         $conexion = $type === false ? $this->conexion : $this->conexionMySQL;
@@ -267,8 +267,7 @@ class sigesop
 
     # obtiene todos los datos de una o varias columnas
 
-    protected function array_query( $sql, $fetch_assoc = false, $valorNulo = null, $type = false )
-    {
+    protected function array_query( $sql, $fetch_assoc = false, $valorNulo = null, $type = false ) {
         # por defecto: conexion de usuario normal
         # verdadero: conexion a tablas mysql
         $conexion = $type === false ? $this->conexion : $this->conexionMySQL;
@@ -288,8 +287,7 @@ class sigesop
 
     # realiza una consulta del tipo insertar dato
 
-    protected function insert_query( $sql, $type = false )
-    {
+    protected function insert_query( $sql, $type = false ) {
         # por defecto: conexion de usuario normal
         # verdadero: conexion a tablas mysql
         $conexion = $type === false ? $this->conexion : $this->conexionMySQL;
@@ -298,8 +296,7 @@ class sigesop
         else return $this->returnError( $conexion->errno, $this->conexion->error );
     }
 
-    protected function verificaDatosNulos( $data, $keys ) 
-    {
+    protected function verificaDatosNulos( $data, $keys )  {
         $rsp = 
         array( 'msj' => 'Los siguientes campos se encuentran nulos:', 
                 'eventos' => array() );
@@ -485,5 +482,79 @@ class sigesop
         $target = doubleval( $target );
 
         return ( $target >= $min && $target <= $max );
+    }
+
+    protected function indexof( $arr, $target, $field = NULL ) {
+        if ( !is_array( $arr ) ) return -1;
+
+        $i = 0;
+        $lon = sizeof( $arr );
+
+        # arreglo con asociativo
+        if ( $field !== NULL ) { 
+            for( $i; $i < $lon; $i++ ) {
+                $row = $arr[ $i ];
+                if ( $target == $row[ $field ] ) return $i;
+            }
+            return -1;
+        }
+
+        # arreglo numerico
+        else { 
+            for( $i; $i < $lon; $i++ ) {
+                $row = $arr[ $i ];
+                if ( $target == $row ) return $i;
+            }
+            return -1;
+        }
+    }
+
+    protected function struct_tabla ( $head, $data ) {
+        $html = 
+            '<table cellspacing="0" cellpadding="1" border="1" >'.
+                '<thead>'.
+                '<tr style="background-color:#009300;color:#000000;">';
+            foreach ( $head as $row ) {
+                $width = empty( $row[ 'x' ] ) ? '' : ' width="'.$row[ 'x' ].'" ';
+                $titulo = $row[ 'titulo' ];
+                $html .= 
+                    '<th '.$width.'>'.$titulo.'</th>';
+            }
+        $html .=
+                '</tr>'.
+                '</thead>'.
+                '<tbody>';
+
+        if ( empty( $data ) ) return $html." <tbody></tbody></table>";
+
+        foreach( $data as $fila ) 
+        {
+            $html .=
+                '<tr>';
+            foreach ( $head as $row ) {
+                $campo = $row[ 'campo' ];
+                $texto = $fila[ $campo ];
+                $width = empty( $row[ 'x' ] ) ? '' : ' width="'.$row[ 'x' ].'" ';
+                $html .= 
+                    '<td '.$width.'>'.$texto.'</td>';
+            }
+            $html .=
+                '</tr>';
+        }
+
+        $html .=
+                '</tbody>'.
+            '</table>';
+        return $html;
+    }
+
+    protected function __retorna_id_orden_trabajo_original( $id_orden_trabajo ) {
+        # verificamos si la orden esta reprogramada
+        # si lo esta utilizamos el ID original
+        $sql =
+        "SELECT id_orden_reprog FROM programacion_mtto ".
+        "WHERE id_orden_trabajo = $id_orden_trabajo";
+        $query = $this->query( $sql, 'id_orden_reprog', NULL ); 
+        return !empty( $query ) ? $query : $id_orden_trabajo;
     }
 }

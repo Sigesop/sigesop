@@ -4,14 +4,12 @@ function main()
 {
 	doc = sigesop.login.document({
 		success: login,
-		error: error
+		error: sigesop.completeCampos
 	});
 
 	document.getElementsByTagName( 'body' )[0].innerHTML = doc.html;
 	doc.javascript();
 }
-
-function error () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); };
 
 function login ( datos )
 {
@@ -28,20 +26,20 @@ function login ( datos )
 		queryType: 'sendGetData',
 		success: function ( data ) 
 		{
-			if ( jQuery.isEmptyObject( data ) )
-			{
+			if ( jQuery.isEmptyObject( data ) ) {
 				console.log('Valor retornado del servidor es null');
 				$.unblockUI();
 				return -1;		
 			} 
 	
-			if ( data.estado ) 
-			{
+			if ( data.estado ) {
 				sigesop.msg( '<br><center>Acceso Autorizado</center>', '', 'success' );
+				
+				var usuario = datos.usuario.valor;
 
-				$.unblockUI();
-				localStorage.rpe = data.rpe;
-				localStorage.usuario = datos.usuario.valor;
+				localStorage.rpe = usuario !== sigesop.root ? 
+					data.rpe : usuario;
+				localStorage.usuario = usuario;
 				localStorage.indexUsuario = "sitios/" + data.indexUsuario;
 				// $( datos.usuario.idValidacion ).removeClass( "has-error" )
 				// $( datos.clave.idValidacion ).removeClass( "has-error" )								

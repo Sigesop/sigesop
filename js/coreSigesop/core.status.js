@@ -1,8 +1,5 @@
 sigesop.status = {
-	// ---------- comprobarDatosPrincipalesNulos --------------------
-
-	comprobarDatosPrincipalesNulos: function () 
-	{
+	comprobarDatosPrincipalesNulos: function () {
 		sigesop.query({
 			class: 'status',
 			query: 'comprobarDatosPrincipalesNulos',
@@ -10,8 +7,7 @@ sigesop.status = {
 		});			
 	},
 
-	__datosPrincipalesNulos: function ( data )
-	{		
+	__datosPrincipalesNulos: function ( data ) {
 		// ---------- Declaracion de estructuras y variables					
 
 		window.sesion.recorridoArray = 0,									
@@ -488,305 +484,352 @@ sigesop.status = {
 		// } );
 	},
 
-	// --------------------------------------------------------------
+	barraCapacidad: function ( opt ) {
+		/* arr
+		 * elem
+		 */ 
+		
+		var 
 
-	graficaPastel: function ( data, elem ) {
-    	if ( data !== null ) 
-    	{
-    		try 
-    		{
-		    	// Radialize the colors
-				Highcharts.getOptions().colors = Highcharts.map(Highcharts.getOptions().colors, function(color) {
-				    return {
-				        radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 },
-				        stops: [
-				            [0, color],
-				            [1, Highcharts.Color(color).brighten(-0.3).get('rgb')] // darken
-				        ]
-				    };
-				});
-
-				var	html = '';
-				for ( var i = 0, lon = data.length; i < lon; i++ )
-					html += '<div id="unidad_' + i + '" class="graficaPastel"></div>';
-
-				$( elem ).html( html );			
-
-				for ( var i = 0, lon = data.length; i < lon; i++ )
-				{
-					if ( data[ i ].capacidad_instalada != 0 )
-					{	
-						// si la capacidad instala no es nula realizamos los calculos adecuados para determinar los porcentajes, asi como
-						// guardar datos para graficar en la barra
-						var 								
-							porcentDisponible = ( data[ i ].capacidad_efectiva_unidad * 100 ) / data[ i ].capacidad_instalada,
-							porcentMantto = ( data[ i ].MWMantto * 100 ) / data[ i ].capacidad_instalada,
-							porcentCA = ( data[ i ].MWca * 100 ) / data[ i ].capacidad_instalada,
-							porcentFalla = (data[ i ].MWFalla * 100 ) / data[ i ].capacidad_instalada,
-
-							generadoresDispo = data[ i ].numGenAct,
-							generadoresMantto = data[ i ].numGenMantto,
-							generadoresCausaAjen = data[ i ].numGenCA,
-							generadoresFalla = data[ i ].numGenFalla;
-					} 
-
-					else
-					{
-						// definimos todos los valores a 0 pues no hay datos, de esta manera dejara la barras vacias y sin errores
-						var 
-							porcentDisponible = 0,
-							generadoresDispo = 0, 
-							generadoresMantto = 0, 
-							porcentMantto = 0,
-
-							generadoresCausaAjen = 0, 
-							generadoresFalla = 0, 
-							porcentCA = 0, 
-							porcentFalla = 0;
-					}	
-
-				    $( '#unidad_' + i ).highcharts(
-				    {
-				        chart: {
-				            plotBackgroundColor: null,
-				            plotBorderWidth: null,
-				            plotShadow: false
-				        },
-				        title: {
-				            text: 'Unidad ' + data[ i ].numero_unidad
-				        },
-				        tooltip: {
-				    	    pointFormat: '<b>Megawatts: </b>{point.MG:.2f} <br> <b>{point.name}:</b> {point.percentage:.1f} %'
-				        },
-				        plotOptions: {
-				            pie: {
-				            	size: '100%',
-				                allowPointSelect: true,
-				                cursor: 'pointer',
-				                dataLabels: {
-				                    enabled: false,
-				                    color: '#000000',
-				                    connectorColor: '#000000',
-				                    format: '<b>{point.name}</b>: {point.percentage:.1f} %'
-				                },
-				                showInLegend: true
-				            }
-				        },
-				        series: [{
-				            type: 'pie',
-				            name: 'Porcentaje',			            
-				            data: [
-				                {
-				                    name: 'Disponible',
-				                    y: parseFloat(porcentDisponible.toFixed(2)),
-				                    sliced: true,
-				                    selected: true,
-				                    color: '#5CB85C',
-				                    MG: data[ i ].capacidad_efectiva_unidad
-				                },
-				                {
-				                    name: 'Mantenimiento',
-				                    y: parseFloat( porcentMantto.toFixed(2) ),
-				                    color: '#5bc0de',
-				                    MG: data[ i ].MWMantto
-				                },
-				                {
-				                    name: 'Causa ajena',
-				                    y: parseFloat( porcentCA.toFixed(2) ),
-				                    color: '#f0ad4e',
-				                    MG: data[ i ].MWca
-				                },
-				                {
-				                    name: 'Falla',
-				                    y: parseFloat( porcentFalla.toFixed(2) ),
-				                    color: '#d9534f',
-				                    MG: data[ i ].MWFalla
-				                }
-				            ]
-				        }]
-				    });
-				}
+		update_barra = function ( data ) {
+			if ( $.isEmptyObject( data ) ||
+			 	 $.isEmptyObject( data.capacidad_instalada_central ) ) {				
+				return -1;
 			} 
 
-			catch (e) 
-			{
-				alert('Es necesario importar la libreria de graficación');
-			}
-		}
+			var 
+			IDS = this.IDS,
+			instalado = $.isEmptyObject( data.capacidad_instalada_central ) ? 0 : 100,
+			c_efectiva = data.capacidad_efectiva_central || 0,
+			c_instalada = data.capacidad_instalada_central || 0,
+			p_falta_aire = data.falta_aire.mw || 0,
+			p_disponible = ( ( parseFloat( data.disponible.mw ) + parseFloat( p_falta_aire ) ) * 100 ) / c_instalada || 0,
+			p_falla = ( data.falla.mw * 100 ) / c_instalada || 0,
+			p_mantto = ( data.mtto.mw * 100 ) / c_instalada || 0,
+			p_ca = ( data.causa_ajena.mw * 100 ) / c_instalada || 0,
+			html =			
+				'<h4>Capacidad instalada central: ' + parseFloat( c_instalada ).toFixed(2) + ' MW</h4>' +
+				'<div class="progress">' +
+					'<div class="progress-bar progress-bar-success progress-bar-striped active" ' +
+					'role="progressbar" aria-valuenow="45" aria-valuemin="0" ' +
+					'style="width:' + instalado + '%" aria-valuemax="100">' +
+						'<span>' + instalado.toFixed( 2 ) + '%</span>' +
+					'</div>' +
+				'</div>' +
 
-		else console.log( 'function: graficaPastel, [data] es nulo' );
+
+				'<h4>Capacidad efectiva central: ' + parseFloat( c_efectiva ).toFixed(2) + ' MW</h4>' +
+				'<div class="progress">' +
+					'<div class="progress-bar progress-bar-success progress-bar-striped active" ' +
+					'role="progressbar" aria-valuenow="45" aria-valuemin="0" ' +
+					'style="width:' + p_disponible + '%" aria-valuemax="100">' +
+						'<span>' + p_disponible.toFixed( 2 ) + '%</span>' +
+					'</div>' +
+
+					'<div class="progress-bar progress-bar-info progress-bar-striped active" ' +
+					'role="progressbar" aria-valuenow="45" aria-valuemin="0" ' +
+					'style="width:' + p_mantto + '%" aria-valuemax="100">' +
+						'<span>' + p_mantto.toFixed( 2 ) + '%</span>' +
+					'</div>' +
+
+					'<div class="progress-bar progress-bar-warning progress-bar-striped active" ' +
+					'role="progressbar" aria-valuenow="45" aria-valuemin="0" ' +
+					'style="width:' + p_ca + '%" aria-valuemax="100">' +
+						'<span>' + p_ca.toFixed( 2 ) + '%</span>' +
+					'</div>' +
+
+					'<div class="progress-bar progress-bar-danger progress-bar-striped active" ' +
+					'role="progressbar" aria-valuenow="45" aria-valuemin="0" ' +
+					'style="width:' + p_falla + '%" aria-valuemax="100">' +
+						'<span>' + p_falla.toFixed( 2 ) + '%</span>' +
+					'</div>' +
+				'</div>';
+
+			return html;
+		};
+
+		document.getElementById( opt.elem.flushChar('#') )
+		.innerHTML = update_barra( opt.arr );
 	},
 
-	tablaCapacidades: function ( data, suf ) {
-		if ( jQuery.isEmptyObject( data ) )
-		{
+	graficaPastel: function ( opt ) {
+		if ( typeof Highcharts === 'undefined' )
+		throw new Error( 'Libreria Highcharts es indefinida' );
+
+		/* data
+		 * elem
+		 */ 
+    	if ( $.isEmptyObject( opt.arr ) ) {
+    		console.log( 'function: graficaPastel, [data] es nulo' );
+    		return -1;
+    	}
+
+    	var data = opt.arr;
+
+    	// Radialize the colors
+		Highcharts.getOptions().colors = Highcharts.map(Highcharts.getOptions().colors, function(color) {
+		    return {
+		        radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 },
+		        stops: [
+		            [0, color],
+		            [1, Highcharts.Color(color).brighten(-0.3).get('rgb')] // darken
+		        ]
+		    };
+		});
+
+		var	html = '';
+		for ( var i = 0, lon = data.length; i < lon; i++ )
+			html += '<div id="unidad_' + i + '" class="graficaPastel"></div>';
+
+		document.getElementById( opt.elem.flushChar('#') )
+		.innerHTML = html;
+		// $( elem ).html( html );		
+
+		for ( var i = 0, lon = data.length; i < lon; i++ ) {
+			var 
+			capacidad_instalada = data[ i ].capacidad_instalada,
+			mw_disp = parseFloat( data[ i ].disponible.mw ) || 0,
+			mw_fa = parseFloat( data[ i ].falta_aire.mw ) || 0,
+			mw_mtto = parseFloat( data[ i ].mtto.mw ) || 0,
+			mw_ca = parseFloat( data[ i ].causa_ajena.mw ) || 0,
+			mw_falla = parseFloat( data[ i ].falla.mw ) || 0,			
+			
+			capacidad_efectiva_unidad = mw_disp + mw_fa,
+			p_disponible = ( capacidad_efectiva_unidad * 100 ) / capacidad_instalada || 0,
+			p_mantto = ( mw_mtto * 100 ) / capacidad_instalada || 0,
+			p_ca = ( mw_ca * 100 ) / capacidad_instalada || 0,
+			p_falla = ( mw_falla * 100 ) / capacidad_instalada || 0;
+
+
+		    $( '#unidad_' + i ).highcharts({
+		        chart: {
+		            plotBackgroundColor: null,
+		            plotBorderWidth: null,
+		            plotShadow: false
+		        },
+		        title: {
+		            text: 'Unidad ' + data[ i ].numero_unidad
+		        },
+		        tooltip: {
+		    	    pointFormat: '<b>Megawatts: </b>{point.MG:.2f} <br> <b>{point.name}:</b> {point.percentage:.1f} %'
+		        },
+		        plotOptions: {
+		            pie: {
+		            	size: '100%',
+		                allowPointSelect: true,
+		                cursor: 'pointer',
+		                dataLabels: {
+		                    enabled: false,
+		                    color: '#000000',
+		                    connectorColor: '#000000',
+		                    format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+		                },
+		                showInLegend: true
+		            }
+		        },
+		        series: [{
+		            type: 'pie',
+		            name: 'Porcentaje',			            
+		            data: [
+		                {
+		                    name: 'Disponible',
+		                    y: parseFloat(p_disponible.toFixed(2)),
+		                    sliced: true,
+		                    selected: true,
+		                    color: '#5CB85C',
+		                    MG: capacidad_efectiva_unidad
+		                },
+		                {
+		                    name: 'Mantenimiento',
+		                    y: parseFloat( p_mantto.toFixed(2) ),
+		                    color: '#5bc0de',
+		                    MG: mw_mtto
+		                },
+		                {
+		                    name: 'Causa ajena',
+		                    y: parseFloat( p_ca.toFixed(2) ),
+		                    color: '#f0ad4e',
+		                    MG: mw_ca
+		                },
+		                {
+		                    name: 'Falla',
+		                    y: parseFloat( p_falla.toFixed(2) ),
+		                    color: '#d9534f',
+		                    MG: mw_falla
+		                }
+		            ]
+		        }]
+		    });
+		}
+	},
+
+	tablaCapacidades: function ( opt ) {
+		/* data
+		 * suf
+		 */ 
+		
+		if ( $.isEmptyObject( opt.data ) ) {
 			console.log( 'function: tablaCapacidades, [data] es nulo ' );
 			return null
 		}
-
-		suf = suf || '';
 		
 		var 
-			struct_seccion = function( arr )
-			{
+
+		suf = opt.suf || '',
+
+		struct_seccion = function( arr ) {
+			var 
+			html = '<div class="row"><div class="col-sm-1"></div><div id="acordEstadoCapac' + 
+					suf + '" class="col-sm-10">',
+			i = 0,
+			lon = arr.length;
+
+			for( i ; i < lon; i++ ) {
 				var 
-					html = '<div class="row"><div class="col-sm-1"></div><div id="acordEstadoCapac' + 
-							suf + '" class="col-sm-10">',
-					i = 0,
-					lon = arr.length;
+				obj = arr[ i ],
+				capacidad_instalada = parseFloat( obj.capacidad_instalada ) || 0,				
+				mw_disp = parseFloat( obj.disponible.mw ) || 0,
+				mw_fa = parseFloat( obj.falta_aire.mw ) || 0,
+				mw_mtto = parseFloat( obj.mtto.mw ) || 0,
+				mw_ca = parseFloat( obj.causa_ajena.mw ) || 0,
+				mw_falla = parseFloat( obj.falla.mw ) || 0,
 
-				for( i ; i < lon; i++ )
-				{
-					var obj = arr[ i ];
+				capacidad_efectiva_unidad = mw_disp + mw_fa,
+				p_instalado = capacidad_instalada ? 100 : 0,
+				p_disponible = ( capacidad_efectiva_unidad * 100 ) / capacidad_instalada || 0,
+				p_mantto = ( mw_mtto * 100) / capacidad_instalada || 0,
+				p_ca = ( mw_ca * 100 ) / capacidad_instalada || 0,
+				p_falla = ( mw_falla * 100 ) / capacidad_instalada || 0;
+		
+				html += 
+					'<h2>Unidad ' + obj.numero_unidad + '</h2>'+
+					'<div>'+
+						'<h4>Capacidad instalada Unidad: ' + capacidad_instalada.toFixed( 2 ) + ' MW</h4>'+
+						'<div class="progress progress-striped active">' +
+							'<div class="progress-bar progress-bar-success" style="width:' + p_instalado + '%">'+
+								'<span>' + p_instalado.toFixed( 2 ) + '%</span>' +
+							'</div>'+
+						'</div>'+
 
-					obj.capacidad_instalada = obj.capacidad_instalada || 0;
-					obj.capacidad_efectiva_unidad = obj.capacidad_efectiva_unidad || 0;
+					'<h4>Capacidad Efectiva Unidad: ' + capacidad_efectiva_unidad.toFixed( 2 ) + ' MW</h4>'+
+					'<div class="progress progress-striped active">'+
+						'<div class="progress-bar progress-bar-success" style="width:' + p_disponible + '%">' +
+							'<span>' + p_disponible.toFixed( 2 ) + '%</span>'+
+						'</div>'+
+						'<div class="progress-bar progress-bar-info" style="width:' + p_mantto + '%">' +
+							'<span>' + p_mantto.toFixed( 2 ) + '%</span>'+
+						'</div>'+
+						'<div class="progress-bar progress-bar-warning" style="width:' + p_ca + '%">' +
+							'<span>' + p_ca.toFixed( 2 ) + '%</span>'+
+						'</div>'+
+						'<div class="progress-bar progress-bar-danger" style="width:' + p_falla + '%">'+
+							'<span>' + p_falla.toFixed( 2 ) + '%</span>'+
+						'</div>'+
+					'</div>'+
 
-					obj.numGen = obj.numGen || 0;
-					obj.numGenAct = obj.numGenAct || 0;
-					obj.numGenMantto = obj.numGenMantto || 0;
-					obj.numGenCA = obj.numGenCA || 0;
-					obj.numGenFalla = obj.numGenFalla || 0;
+					'<label>Nomenclatura:</label> &nbsp;'+
+					'<span class="label label-success">Disponibles</span>&nbsp;' +
+					'<span class="label label-info">Mantenimiento</span>&nbsp;' +
+					'<span class="label label-warning">Causas ajenas</span>&nbsp;' +
+					'<span class="label label-danger">Falla</span><br><br>' +
 
-					if( obj.capacidad_instalada != 0 )
-					{
-						var
-							porcentDisponible = ( obj.capacidad_efectiva_unidad * 100 ) / obj.capacidad_instalada,
-							porcentMantto = ( obj.MWMantto * 100) / obj.capacidad_instalada,
-							porcentCA = ( obj.MWca * 100 ) / obj.capacidad_instalada,
-							porcentFalla = ( obj.MWFalla * 100 ) / obj.capacidad_instalada,
-							instalado = 100;
+					'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">' +
+						'Aerogeneradores instalados: ' + obj.numero_generadores_unidad + 
+					'</span><br>' +
+
+					'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">' +
+						'Aerogeneradores en disponibilidad: ' + 
+						( parseInt( obj.disponible.generadores ) + parseInt( obj.falta_aire.generadores ) ) + 
+					'</span><br>' +
+
+					'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">' +
+						'Aerogeneradores en mantenimiento: ' + obj.mtto.generadores + 
+					'</span><br>' +
+
+					'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">' +
+						'Aerogeneradores en causa ajena: ' + obj.causa_ajena.generadores + 
+					'</span><br>' +
+
+					'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">' +
+						'Aerogeneradores en falla: ' + obj.falla.generadores + 
+					'</span><br><br>' +
+
+					'<div class="panel panel-success">' + struct_tabla( obj.generadores ) + '</div>'+
+					'</div>';
+			}
+
+			html += '</div><div class="col-sm-1"></div></div><br>';
+
+			return html;
+		},
+
+		struct_tabla = function ( arr ) {
+			if ( jQuery.isEmptyObject( arr ) )	return '';
+							
+			var
+				html =
+				'<div class="panel-heading">Tabla desglosada</div>' +
+				'<div class="table-responsive"><table class="table table-hover">' +												
+					'<thead><tr><th>Aerogenerador</th><th>Capacidad efectiva</th><th>' +
+					'Fecha de operación</th><th>Estado</th></tr></thead>' +
+					'<tbody>';
+
+				// iteramos las filas de la tabla
+				for ( var i = 0, lon = arr.length; i < lon; i++ ) {
+					// verificamos el estado en que se encuentra el aerogenerador para definir el color y la descripcion adecuada
+					var mensajeEstado, estadoColor;
+					switch( arr[ i ].estado_licencia ) {
+						case 'DISPONIBLE':							
+							mensajeEstado = 'Disponible';
+							estadoColor = 'success';
+							break;
+						case 'FALLA':
+							mensajeEstado = 'Falla';
+							estadoColor = 'danger';
+							break;
+						case 'MTTO':
+							mensajeEstado = 'Mantenimiento';
+							estadoColor = 'info';
+							break;
+						case 'C.A.':
+							mensajeEstado = 'Causa ajena';
+							estadoColor = 'warning';
+							break;
+						case 'F.A.':							
+							mensajeEstado = 'Falta de Aire';
+							estadoColor = 'success';
+							break;
 					}
 
-					else
-					{
-						var
-							porcentDisponible = 0,
-							porcentMantto = 0,
-							porcentCA = 0,
-							porcentFalla = 0,
-							instalado = 0;
-					}
-			
-					html += 
-						'<h2>Unidad ' + obj.numero_unidad + '</h2>'+
-						'<div>'+
-						'	<h4>Capacidad instalada Unidad: ' + parseFloat( obj.capacidad_instalada ).toFixed( 2 ) + ' MW</h4>'+
-						'	<div class="progress progress-striped active">' +
-						'		<div class="progress-bar progress-bar-success" style="width:' + instalado + '%">'+
-						'	  	  <span>' + instalado.toFixed( 2 ) + '%</span>' +
-						'		</div>'+
-						'	</div>'+
-
-						'	<h4>Capacidad Efectiva Unidad: ' + parseFloat( obj.capacidad_efectiva_unidad ).toFixed( 2 ) + ' MW</h4>'+
-						'	<div class="progress progress-striped active">'+
-						'		<div class="progress-bar progress-bar-success" style="width:' + porcentDisponible + '%">' +
-						'			<span>' + porcentDisponible.toFixed( 2 ) + '%</span>'+
-						'		</div>'+
-						'		<div class="progress-bar progress-bar-info" style="width:' + porcentMantto + '%">' +
-						'			<span>' + porcentMantto.toFixed( 2 ) + '%</span>'+
-						'		</div>'+
-						'		<div class="progress-bar progress-bar-warning" style="width:' + porcentCA + '%">' +
-						'			<span>' + porcentCA.toFixed( 2 ) + '%</span>'+
-						'		</div>'+
-						'		<div class="progress-bar progress-bar-danger" style="width:' + porcentFalla + '%">'+
-						'			<span>' + porcentFalla.toFixed( 2 ) + '%</span>'+
-						'		</div>'+
-						'	</div>'+
-
-						'<label>Nomenclatura:</label> &nbsp;'+
-						'<span class="label label-success">Disponibles</span>&nbsp;' +
-						'<span class="label label-info">Mantenimiento</span>&nbsp;' +
-						'<span class="label label-warning">Causas ajenas</span>&nbsp;' +
-						'<span class="label label-danger">Falla</span><br><br>' +
-
-						'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">Aerogeneradores instalados: ' + obj.numGen + '</span><br>' +
-						'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">Aerogeneradores en disponibilidad: ' + obj.numGenAct + '</span><br>' +
-						'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">Aerogeneradores en mantenimiento: ' + obj.numGenMantto + '</span><br>' +
-						'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">Aerogeneradores en causa ajena: ' + obj.numGenCA + '</span><br>' +
-						'<span style="font-weight:bold; padding-top: 12px; padding-bottom: 12px; color: #f00">Aerogeneradores en falla: ' + obj.numGenFalla + '</span><br><br>' +
-
-						'<div class="panel panel-success">' + struct_tabla( obj.generadores ) + '</div>'+
-						'</div>';
+					// insertamos las filas de la tabla
+					html +=
+					'<tr class="'+ estadoColor +'">' +
+						'<td>' + arr[ i ].numero_aero + '</td>' +
+						'<td>' + arr[ i ].capacidad_efectiva_aero + '</td>' +
+						'<td>' + arr[ i ].fecha_operacion + '</td>' +
+						'<td>' + mensajeEstado + '</td>' +
+					'</tr>';
 				}
+				
+				html += '</tbody></table></div>'
+				return html;					
+		},
 
-				html += '</div><div class="col-sm-1"></div></div><br>';
+		javascript = function () {
+			$( this.IDS.acordion ).accordion({
+				collapsible: true,
+				heightStyle: "content"
+			});
+		},
 
-				return html;
-			},
-
-			struct_tabla = function ( arr )
-			{
-				if ( jQuery.isEmptyObject( arr ) )	return '';
-								
-				var
-					html =
-					'<div class="panel-heading">Tabla desglosada</div>' +
-					'<div class="table-responsive"><table class="table table-hover">' +												
-						'<thead><tr><th>Aerogenerador</th><th>Capacidad efectiva</th><th>' +
-						'Fecha de operación</th><th>Estado</th></tr></thead>' +
-						'<tbody>';
-
-					// iteramos las filas de la tabla
-					for ( var i = 0, lon = arr.length; i < lon; i++ ) 
-					{
-						// verificamos el estado en que se encuentra el aerogenerador para definir el color y la descripcion adecuada
-						var mensajeEstado, estadoColor;
-						switch( arr[ i ].estado_licencia )
-						{
-							case 'DISPONIBLE':							
-								mensajeEstado = 'Disponible';
-								estadoColor = 'success';
-								break;
-							case 'FALLA':
-								mensajeEstado = 'Falla';
-								estadoColor = 'danger';
-								break;
-							case 'MTTO':
-								mensajeEstado = 'Mantenimiento';
-								estadoColor = 'info';
-								break;
-							case 'C.A.':
-								mensajeEstado = 'Causa ajena';
-								estadoColor = 'warning';
-								break;
-							case 'F.A.':							
-								mensajeEstado = 'Falta de Aire';
-								estadoColor = 'success';
-								break;
-						}
-
-						// insertamos las filas de la tabla
-						html +=
-						'<tr class="'+ estadoColor +'">' +
-							'<td>' + arr[ i ].numero_aero + '</td>' +
-							'<td>' + arr[ i ].capacidad_efectiva_aero + '</td>' +
-							'<td>' + arr[ i ].fecha_operacion + '</td>' +
-							'<td>' + mensajeEstado + '</td>' +
-						'</tr>';
-					}
-					
-					html += '</tbody></table></div>'
-					return html;					
-			},
-
-			javascript = function ()
-			{
-				$( this.IDS.acordion ).accordion({
-					collapsible: true,
-					heightStyle: "content"
-				});
-			},
-
-			doc = {
-				html: struct_seccion( data ),
-				javascript: javascript,
-				IDS:
-				{
-					acordion: '#acordEstadoCapac' + suf
-				}
-			};
+		doc = {
+			html: struct_seccion( opt.data ),
+			javascript: javascript,
+			IDS: {
+				acordion: '#acordEstadoCapac' + suf
+			}
+		};
 
 		return doc;
-	}	
+	}
 };

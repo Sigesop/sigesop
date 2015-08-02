@@ -26,6 +26,11 @@ class generadores extends sigesop
                 echo json_encode($eliminarGenerador);
                 break;
 
+            case 'imprimir':
+                $query = $this->imprimir( $get );
+                echo json_encode( $query );
+                break; 
+
             case 'nuevoGenerador':
                 $nuevoGenerador = $this->nuevoGenerador( $post );
                 echo json_encode( $nuevoGenerador );
@@ -55,10 +60,12 @@ class generadores extends sigesop
     function obtenerEstadoLicencia() { return $this->estadoLicencia; } 
 
     function obtenerGeneradores( $get ) {
+        
         $numero_unidad = $get[ 'numero_unidad' ];
         $numero_aero = $get[ 'numero_aero' ];
 
         $option = $get[ 'option' ];
+       // $option2 = $get[ 'option2' ];
 
         if ( !empty( $numero_unidad ) ) $opt = 'numero_unidad';
         else if ( !empty( $numero_aero ) ) $opt = 'numero_aero';
@@ -69,40 +76,37 @@ class generadores extends sigesop
             case 'numero_unidad':
                 switch ( $option ) {
                     case 'libro_relatorio':
-                        // $sql =  "select * from aeros where numero_unidad = '$numero_unidad' and ".
-                        //         "numero_aero not in( select numero_aero from libro_relatorio )";
-                        $sql =  "select * from aeros where numero_unidad = '$numero_unidad' and ".
-                                "numero_aero not in( select numero_aero from libro_relatorio where estado_evento = TRUE )";
+                        $sql =  
+                        "SELECT * FROM aeros where numero_unidad = '$numero_unidad' ".
+                        "AND numero_aero NOT IN( SELECT numero_aero FROM libro_relatorio WHERE estado_evento = TRUE )";
                         break;
                     
-                    default:
-                        $sql = "select * from aeros where numero_unidad = '$numero_unidad'";
+                    case 'unidad':
+                        if( $numero_unidad=="TODAS" ) $sql = "select * from aeros";
+                        else $sql = "select * from aeros where numero_unidad = '$numero_unidad'";
+                        break;
+
+                    default: 
+                        $sql = "SELECT * FROM aeros WHERE numero_unidad = '$numero_unidad'";
                         break;
                 }
-                // if ( !empty( $libro_relatorio ) )
-                //     $sql =  "select * from aeros where numero_unidad = '$numero_unidad' and ".
-                //             "numero_aero not in( select numero_aero from libro_relatorio )";
-                // else $sql = "select * from aeros where numero_unidad = '$numero_unidad'";
-                break;
+           
+            break;
 
             case 'numero_aero':
                 $sql = "select * from aeros where numero_aero = '$numero_aero'";
                 break;
             
             default:
+           
                 $sql = "select * from aeros";
                 break;
         }
-
-        
         $query = $this->array_query( $sql );
         return $query;
     }
 
     function obtenerGeneradoresPorUnidad( $data ) {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
-
         $unidad = $data['unidad'];
         $sql = "SELECT * FROM aeros WHERE numero_unidad = ".$unidad;
         $query = $this->array_query( $sql );
@@ -216,5 +220,76 @@ class generadores extends sigesop
             $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
             return $rsp;
         }
+    }
+
+    public function imprimir ( $get ) {
+        require_once('../tcpdf/tcpdf.php');
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de Generadores' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        $datos = $this->obtenerGeneradores( $get);
+       
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'Numero Areo', 'campo'=> 'numero_aero', ),
+                    array( 'titulo' => 'Numero unidad', 'campo'=> 'numero_unidad', ),
+                    array( 'titulo' => 'Estado de licencia', 'campo'=> 'estado_licencia', ),
+                    array( 'titulo' => 'capacidad efectiva', 'campo'=> 'capacidad_efectiva_aero', ),
+                    array( 'titulo' => 'fecha de operacion', 'campo'=> 'fecha_operacion', )
+                   
+                     ), 
+
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_equiposGenerador.pdf', 'I');
     }
 }

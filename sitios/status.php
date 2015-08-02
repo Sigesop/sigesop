@@ -21,54 +21,21 @@ if ( !$obj->accesoPagina( 'status.php' ) ) {
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-		<link rel="stylesheet" href="../css/bootstrap.css">
+		<link rel="stylesheet" href="../css/bootstrap.min.css">
 		<link rel="stylesheet" href="../css/base/jquery.ui.all.css">
 		<link rel="stylesheet" href="../css/style.css">
 		<link rel="stylesheet" href="../js/formValidation/formValidation.min.css">
 		<link rel="stylesheet" href="../js/pnotify/pnotify.custom.min.css">
+		<link rel="stylesheet" href="../js/bootstrap-dialog/bootstrap-dialog.min.css">
 	</head>
 
 	<body>
 		<header class="navbar navbar-static-top" role="banner"></header>
 		
 		<div class="panel container-fluid">
-			<br>
-			<div class="panel panel-danger">
-				<div class="row">
-					<div class="col-sm-1"></div>
-					<div class="col-sm-10">
-						<h4 id="infoCapInstalada"></h4>
-						<div id="barraCentralInstal" class="progress progress-striped active">
-							<div class="progress-bar progress-bar-success">
-							    <span id="spanBarraCentralInstal"></span>
-							</div>
-						</div>
-					</div>
-					<div class="col-sm-1"></div>
-				</div>				
+			<div id="barras"></div>
 
-				<div class="row">
-					<div class="col-sm-1"></div>
-					<div class="col-sm-10">
-						<h4 id="infoCapEfec">Capacidad Efectiva central: </h4>
-						<div id="barraCentralEfectiva" class="progress progress-striped active">						
-							<div id="barDisponible" class="progress-bar progress-bar-success">
-								<span></span>
-							</div>
-							<div id="barMantto" class="progress-bar progress-bar-info">
-								<span></span>
-							</div>									
-							<div id="barCausaAjena" class="progress-bar progress-bar-warning">
-								<span></span>
-							</div>
-							<div id="barFalla" class="progress-bar progress-bar-danger">
-								<span></span>
-							</div>
-						</div>
-					</div>
-					<div class="col-sm-1"></div>
-				</div>			
-			</div> <!-- termina de barras -->
+			<br>
 
 			<div class= "panel panel-success">
 				<div class="row" id="resumenUnidades"></div>
@@ -77,8 +44,9 @@ if ( !$obj->accesoPagina( 'status.php' ) ) {
 			<div id="tablaDesglosada" class="panel panel-warning"></div> <!-- termina seccion de acordeon -->	
 		</div>
 
-		<script type="text/javascript" src="../js/jquery.js"></script>
+		<script type="text/javascript" src="../js/jquery.min.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="../js/bootstrap-dialog/bootstrap-dialog.min.js"></script>
 		<script type="text/javascript" src="../js/pnotify/pnotify.custom.min.js"></script>
 		
 		<script type="text/javascript" src="../js/ui/jquery.ui.core.js"></script> 

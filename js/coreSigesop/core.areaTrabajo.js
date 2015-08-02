@@ -1,6 +1,5 @@
 sigesop.areaTrabajo = {
-	document: function ( opt ) 
-	{
+	document: function ( opt ) {
 		/* suf
 		 * obj
 		 * success
@@ -151,8 +150,7 @@ sigesop.areaTrabajo = {
 		return doc;
 	},
 
-	documentRegistro: function ( opt ) 
-	{
+	documentRegistro: function ( opt ) {
 		/* suf
 		 * obj
 		 * success
@@ -175,6 +173,13 @@ sigesop.areaTrabajo = {
 						'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 					'</div>' +
 
+					'<div class="form-group">'+
+						'<div class="col-sm-5 control-label"></div>'+
+						'<p class="col-sm-7">'+
+							'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de Areas de Trabajo</button>'+					
+						'</p>'+
+					'</div>'+
+
 					'<div class="form-group">' +					
 						'<div class="col-sm-12 col-md-12" id="tabla_registro_areas' + suf + '"></div>' +
 					'</div>' +
@@ -185,7 +190,9 @@ sigesop.areaTrabajo = {
 				tabla_areas = sigesop.tablaRegistro({
 					head: 'CLAVE DE ÁREA DE TRABAJO, DESCRIPCIÓN',
 					campo: 'clave_areaTrabajo, descripcion_areaTrabajo'
-				});
+				}),
+
+				$botonImprimir = $( doc.IDS.botonImprimir );
 				
 				this.table.update_table = tabla_areas.update_table; // enlazamos a vista publica
 				this.table.body = tabla_areas.IDS.body;
@@ -200,7 +207,7 @@ sigesop.areaTrabajo = {
 			            	name: 'Editar', 
 			            	icon: 'edit',
 			        		callback: function ( key, _opt ) {
-			        			var index = $( this ).index();
+			        			var index = $( this ).attr( 'table-index' );
 			        			typeof opt.table.actions.editar == 'function' ?
 			        				opt.table.actions.editar( index ):
 			        				console.log( 'function editar is null' );
@@ -211,7 +218,7 @@ sigesop.areaTrabajo = {
 			            	name: 'Eliminar', 
 			            	icon: 'delete',
 			        		callback: function ( key, _opt ) {
-			        			var index = $( this ).index();
+			        			var index = $( this ).attr( 'table-index' );
 			        			typeof opt.table.actions.eliminar == 'function' ?
 			        				opt.table.actions.eliminar( index ):
 			        				console.log( 'function eliminar is null' );
@@ -219,9 +226,19 @@ sigesop.areaTrabajo = {
 			            }
 					}
 				});
+
+				$botonImprimir.on( 'click', function ( event ) { 
+					var 
+					url = sigesop.raizServidor + 'ajax.php?class=usuarios' +
+						'&action=imprimirAT',
+						win = window.open( url );
+
+					win.focus();
+				});
 			},
 
 			IDS = {
+				botonImprimir: '#btn-imprimir-reporte-' + suf,
 				idTabla: '#tabla_registro_areas' + suf,
 				form: '#formRegistroAreas' + suf
 			},

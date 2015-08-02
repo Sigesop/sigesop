@@ -1,22 +1,20 @@
 <?php
-require 'sigesop.class.php';
+require_once 'sigesop.class.php';
+require_once '../Carbon/Carbon.php';
+use Carbon\Carbon;
 
 class mantenimiento extends sigesop
 {	
-	public function __construct( $usuario, $clave )
-	{
+	public function __construct( $usuario, $clave ) {
 		parent::sigesop( $usuario, $clave );
 	}
 
-    public function __destruct()
-    {
+    public function __destruct() {
         parent::__destruct();
     }
 
-	public function solicitudAjax( $accion, $post, $get )
-	{
-		switch ( $accion)
-		{
+	public function solicitudAjax( $accion, $post, $get ) {
+		switch ( $accion) {
             case 'actividadesOrdenTrabajo':
                 $query = $this->actividadesOrdenTrabajo( $get );
                 echo json_encode( $query );
@@ -29,6 +27,11 @@ class mantenimiento extends sigesop
 
             case 'asignarUsuariosOrdenTrabajo':
                 $query = $this->asignarUsuariosOrdenTrabajo( $post );
+                echo json_encode( $query );
+                break;
+
+            case 'eliminar_programacion_mtto':
+                $query = $this->eliminar_programacion_mtto( $get );
                 echo json_encode( $query );
                 break;
 
@@ -88,161 +91,225 @@ class mantenimiento extends sigesop
 		}
 	}
 
-    // ---------- nuevaOrdenTrabajo ---------------------------------------------------------
-
-    private $__datosOrdenTrabajo = array(
-        'numero_unidad', 'numero_aero', 'id_mantenimiento', 'duracion', 'magnitud_duracion', 
-        'fecha_inicial', 'trabajo_solicitado'
-    );
-
-    public function nuevaOrdenTrabajo ( $data ) 
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL";
-
+    # nuevaOrdenTrabajo -------------------------
+    public function nuevaOrdenTrabajo ( $data ) {
         // echo var_dump( $_REQUEST );
-        $i = 1;
-        foreach ( $data[ 'ordenTrabajo' ] as $orden )
-        {
-            $flag = $this->verificaDatosNulos( $orden, $this->__datosOrdenTrabajo );
-            if ( $flag ) 
-            {
-                $numero_unidad =  $orden[ 'numero_unidad' ][ 'valor' ];
-                $numero_aero = $orden[ 'numero_aero' ][ 'valor' ];
-                $id_mantenimiento = $orden[ 'id_mantenimiento' ][ 'valor' ];
-                $duracion = $orden[ 'duracion'][ 'valor' ];
-                $magnitud_duracion = $orden[ 'magnitud_duracion' ][ 'valor' ];
-                $fecha_inicial = $orden[ 'fecha_inicial' ][ 'valor' ];     
-                $trabajo_solicitado = $orden[ 'trabajo_solicitado' ][ 'valor' ];                
-                $numeroOrden = $numero_unidad . $numero_aero . $id_mantenimiento;
+        $rsp = array();
 
-                $estado_asignado = $i == 1 ? 1 : 0;
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'numero_unidad', 'numero_aero', 'id_mantenimiento', 'duracion', 'magnitud_duracion', 
+                'fecha_inicial', 'trabajo_solicitado', 'programacion_mtto'
+            ));
 
-                // ----------------------------------------------------------------------------------------
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-                $id_orden_trabajo = $this->autoincrement( "select id_orden_trabajo from orden_trabajo order by id_orden_trabajo asc", 'id_orden_trabajo', $this->conexion );
+        $id_prog_mtto = $this->autoincrement( "SELECT id_prog_mtto FROM orden_trabajo ORDER BY id_prog_mtto ASC", 'id_prog_mtto' );
+        $numero_unidad =  $data[ 'numero_unidad' ][ 'valor' ];
+        $numero_aero = $data[ 'numero_aero' ][ 'valor' ];
+        $id_mantenimiento = $data[ 'id_mantenimiento' ][ 'valor' ];
+        $duracion = $data[ 'duracion'][ 'valor' ];
+        $magnitud_duracion = $data[ 'magnitud_duracion' ][ 'valor' ];
+        $fecha_inicial = $data[ 'fecha_inicial' ][ 'valor' ];
+        $fecha_final = $data[ 'fecha_final' ][ 'valor' ];    
+        $trabajo_solicitado = $data[ 'trabajo_solicitado' ][ 'valor' ];                
+        $numero_orden = $numero_unidad . $numero_aero . $id_mantenimiento;
 
-                $sql =  "insert into orden_trabajo(id_orden_trabajo, numero_orden, id_aero, id_mantenimiento, duracion, magnitud_duracion, fecha_programada, trabajo_solicitado, estado_asignado) ".
-                        "values( $id_orden_trabajo ,'$numeroOrden', '$numero_aero', '$id_mantenimiento', $duracion, '$magnitud_duracion', STR_TO_DATE( '$fecha_inicial', '%d-%m-%Y' ), '$trabajo_solicitado', $estado_asignado)";
-                // return $sql; 
-                         
-                // ---------- insertamos la orden de trabajo
+        $sql =  
+            "INSERT INTO ".
+            "orden_trabajo( id_prog_mtto, numero_orden, ".
+            "id_aero, id_mantenimiento, duracion, magnitud_duracion, ".
+            "fecha_inicial, fecha_final, trabajo_solicitado ) ".
+            "VALUES( $id_prog_mtto ,'$numero_orden', '$numero_aero', ".
+            "'$id_mantenimiento', $duracion, '$magnitud_duracion', ".
+            "STR_TO_DATE( '$fecha_inicial', '%d-%m-%Y' ), ".
+            "STR_TO_DATE( '$fecha_final', '%d-%m-%Y' ), ".
+            "'$trabajo_solicitado' )";
 
-                $ordenTrabajo = $this->insert_query( $sql );
-                if ( $ordenTrabajo == 'OK' ) 
-                {
-                    // ---------- insertamos las listas de verificacion agragadas
+        // return $sql;
 
-                    // $ordenLista = $this->__insertaOrdenTrabajoLista( $id_orden_trabajo, $id_mantenimiento, $this->conexion );
-                    // if( $ordenLista !== 'OK' )
-                    // {
-                    //     $this->conexion->rollback();
-                    //     return $ordenLista;
-                    // }
-                } 
-                else 
-                {
-                    $this->conexion->rollback();
-                    return $ordenTrabajo.'. Error al insertar orden de trabajo';
+        $query = $this->insert_query( $sql );
+        if( $query === 'OK' ) {
+            # insertamos las fechas de programacion de mantenimiento
+            $isValid = true;
+            $i = 0;
+            foreach( $data[ 'programacion_mtto' ] as $row ) {
+                $id_orden_trabajo = $this->autoincrement( "SELECT id_orden_trabajo FROM programacion_mtto ORDER BY id_orden_trabajo ASC", 'id_orden_trabajo' );
+                $fecha_inicial = $row[ 'from' ];
+                $fecha_final = $row[ 'to' ];
+
+                if ( $i !== 0 ) {
+                    $sql =
+                        "INSERT INTO programacion_mtto ".
+                        "(id_orden_trabajo, id_prog_mtto, fecha_inicial, fecha_final) ".
+                        "VALUES ( $id_orden_trabajo, $id_prog_mtto, ".
+                        "STR_TO_DATE( '$fecha_inicial', '%d-%m-%Y' ), ".
+                        "STR_TO_DATE( '$fecha_final', '%d-%m-%Y' ) )";
+                } else {
+                    # la primer fecha programada se inicializa como una
+                    # orden ACTIVA
+                    $sql =
+                        "INSERT INTO programacion_mtto ".
+                        "(id_orden_trabajo, id_prog_mtto, fecha_inicial, ".
+                        "fecha_final, estado_asignado ) ".
+                        "VALUES ( $id_orden_trabajo, $id_prog_mtto, ".
+                        "STR_TO_DATE( '$fecha_inicial', '%d-%m-%Y' ), ".
+                        "STR_TO_DATE( '$fecha_final', '%d-%m-%Y' ), 'ACTIVO' )";
+                }
+
+                $query = $this->insert_query( $sql );
+                if ( $query !== 'OK' ) {
+                    $isValid = false;
+                    $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $fecha_inicial, 'msj' => $query );
                 }
 
                 $i++;
-            } 
-            else return 'NA';
+            }
+
+            # validando que todas las fechas hayan sido insertadas y retornando respuesta
+            if ( $isValid ) {
+                $this->conexion->commit();
+                $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Orden de trabajo creada satisfactoriamente.' );
+                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+                return $rsp;
+            } else {
+                $this->conexion->rollback();
+                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al crear orden de trabajo' );                
+                return $rsp;
+            }
+        } 
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al crear orden de trabajo' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+            return $rsp;
+        }
+    }
+
+    public function eliminar_programacion_mtto ( $get ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $get, array(
+                'id_prog_mtto'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
         }
 
-        $this->conexion->commit();
-        return 'OK';    
+        $id_prog_mtto = $get[ 'id_prog_mtto' ];
+
+        $sql =
+        "DELETE FROM programacion_mtto ".
+        "WHERE id_prog_mtto = $id_prog_mtto";
+
+        $query = $this->insert_query( $sql );
+        if ( $query !== 'OK' ) {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar programación' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'key' => 'id_prog_mtto', 'msj' => $query );
+            return $rsp;
+        }
+
+        $sql =
+        "DELETE FROM orden_trabajo ".
+        "WHERE id_prog_mtto = $id_prog_mtto";
+
+        $query = $this->insert_query( $sql );
+        if ( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Programación eliminado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'msj' => 'Correcto' );
+            return $rsp;
+        }
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar programación' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'key' => 'id_prog_mtto', 'msj' => $query );
+            return $rsp;
+        }
     }
 
     # asignarUsuariosOrdenTrabajo -----------------------
 
-    public function asignarUsuariosOrdenTrabajo ( $data )
-    {
-        $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
-            return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
-        if ( !$this->estadoConexionMysql )
-            return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );
+    public function asignarUsuariosOrdenTrabajo ( $data ) {
+        $rsp = array();
 
         $validar = $this->verificaDatosNulos( $data, array( 
             'supervisor', 'responsable', 'id_orden_trabajo', 'auxiliar'
         ));
-      
-        if ( $validar === 'OK' ) 
-        {
-            $id_orden_trabajo = $data[ 'id_orden_trabajo' ][ 'valor' ];
-            $supervisor = $data[ 'supervisor' ][ 'valor' ];
-            $responsable = $data[ 'responsable' ][ 'valor' ]; 
-            $auxiliar = $data[ 'auxiliar' ];
-            $conexion = $this->conexion;
 
-            $query = $this->__insertaUsuarioSupervisor( $id_orden_trabajo, $supervisor, $conexion );
-            if ( $query != 'OK' )
-            {
-                $conexion->rollback();
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar usuario supervisor' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $supervisor, 'key' => 'supervisor', 'msj' => $query );
-                return $rsp;
-            }
-
-            $query = $this->__insertaUsuarioResponsable( $id_orden_trabajo, $responsable );
-            if ( $query != 'OK' ) 
-            {
-                $conexion->rollback();
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar usuario responsable' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $responsable, 'key' => 'responsable', 'msj' => $query );
-                return $rsp;
-            }
-
-            $query = $this->__insertaUsuarioAuxiliar( $id_orden_trabajo, $auxiliar );
-            if ( $query != 'OK' ) 
-            {
-                $conexion->rollback();
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar auxiliar responsable' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => 'auxiliar', 'msj' => $query );
-                return $rsp;
-            } 
-
-            $sql =  "update. orden_trabajo set estado_asignado = true ".
-                    "where id_orden_trabajo = $id_orden_trabajo";
-            $query = $this->insert_query( $sql );
-            if ( $query === 'OK' ) 
-            {
-                $conexion->commit();
-                $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Usuarios agregados satisfactoriamente' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => 'status', 'msj' => 'Correcto' );
-                return $rsp;
-            }
-            else
-            {
-                $conexion->rollback();
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al activar orden de trabajo' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => 'orden de trabajo', 'msj' => $query );
-            }
-
-            
-            return $rsp;
-        }
-        else {
+        if( $validar !== 'OK' ) {
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
             $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+    
+        $id_orden_trabajo = $data[ 'id_orden_trabajo' ][ 'valor' ];
+        $supervisor = $data[ 'supervisor' ][ 'valor' ];
+        $responsable = $data[ 'responsable' ][ 'valor' ]; 
+        $auxiliar = $data[ 'auxiliar' ];
+
+        # verificamos si la orden esta reprogramada
+        # si lo esta utilizamos el ID original
+        $id_orden_trabajo = 
+            $this->__retorna_id_orden_trabajo_original( $id_orden_trabajo );
+
+        $query = $this->__insertaUsuarioSupervisor( $id_orden_trabajo, $supervisor );
+        if ( $query != 'OK' ) {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar usuario supervisor' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $supervisor, 'key' => 'supervisor', 'msj' => $query );
+            return $rsp;
         }
 
-        return $rsp; 
+        $query = $this->__insertaUsuarioResponsable( $id_orden_trabajo, $responsable );
+        if ( $query != 'OK' ) {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar usuario responsable' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $responsable, 'key' => 'responsable', 'msj' => $query );
+            return $rsp;
+        }
+
+        $query = $this->__insertaUsuarioAuxiliar( $id_orden_trabajo, $auxiliar );
+        if ( $query != 'OK' ) {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar auxiliar responsable' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => 'auxiliar', 'msj' => $query );
+            return $rsp;
+        } 
+
+        if ( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Usuarios agregados satisfactoriamente' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => 'status', 'msj' => 'Correcto' );
+            return $rsp;
+        }
+        else
+        {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al activar orden de trabajo' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => 'orden de trabajo', 'msj' => $query );
+        }
     }
 
-    private function __insertaUsuarioResponsable ( $id_orden_trabajo, $usuario )
-    {
+    private function __insertaUsuarioResponsable ( $id_orden_trabajo, $usuario ) {
         // ---------- verificamos que no existan usuarios previamente insertados
 
-        $sql = "select usuario from orden_trabajo_personal where id_orden_trabajo = '$id_orden_trabajo' and tipo_usuario = 'RESPONSABLE'";
+        $sql = "SELECT usuario FROM orden_trabajo_personal WHERE id_orden_trabajo = '$id_orden_trabajo' AND tipo_usuario = 'RESPONSABLE'";
         $query = $this->array_query( $sql, 'usuario', null );
 
-        if ( $query == null )
-        {
-            $sql =  "insert into orden_trabajo_personal values".
-                    "( $id_orden_trabajo, '$usuario', 'RESPONSABLE' )";
+        if ( $query == null ) {
+            $sql =  
+                "INSERT INTO orden_trabajo_personal VALUES".
+                "( $id_orden_trabajo, '$usuario', 'RESPONSABLE' )";
             // return $sql;
             $query = $this->insert_query( $sql );
             if ( $query !== 'OK' ) return $query.'. Error al insertar usuario responsable';
@@ -252,17 +319,16 @@ class mantenimiento extends sigesop
         else return "Usuario responsable asignado previamente";
     }
 
-    private function __insertaUsuarioSupervisor ( $id_orden_trabajo, $usuario )
-    {
+    private function __insertaUsuarioSupervisor ( $id_orden_trabajo, $usuario ) {
         # verificamos que no existan usuarios previamente insertados
 
-        $sql = "select usuario from orden_trabajo_personal where id_orden_trabajo = '$id_orden_trabajo' and tipo_usuario = 'SUPERVISOR'";
+        $sql = "SELECT usuario FROM orden_trabajo_personal WHERE id_orden_trabajo = '$id_orden_trabajo' AND tipo_usuario = 'SUPERVISOR'";
         $query = $this->array_query( $sql, 'usuario', null );
 
-        if ( $query == null )
-        {
-            $sql =  "insert into orden_trabajo_personal values".
-                    "( $id_orden_trabajo, '$usuario', 'SUPERVISOR' )";
+        if ( $query == null ) {
+            $sql =  
+                "INSERT INTO orden_trabajo_personal VALUES".
+                "( $id_orden_trabajo, '$usuario', 'SUPERVISOR' )";
             $query = $this->insert_query( $sql );
             return $query;
         }
@@ -270,8 +336,7 @@ class mantenimiento extends sigesop
         else return "Usuario supervisor asignado previamente";
     }
 
-    private function __insertaUsuarioAuxiliar ( $id_orden_trabajo, $arr )
-    {
+    private function __insertaUsuarioAuxiliar ( $id_orden_trabajo, $arr ) {
         # verificamos que no existan usuarios previamente insertados
 
         $sql = "select usuario from orden_trabajo_personal where id_orden_trabajo = '$id_orden_trabajo' and tipo_usuario = 'AUXILIAR'";
@@ -295,8 +360,7 @@ class mantenimiento extends sigesop
 
     # ---------------------------------------------------
 
-    public function obtenerDatosGraficaMantenimiento () 
-    {
+    public function obtenerDatosGraficaMantenimiento () {
         $objetoRetorno = array();
         
         // ------------------------ consultando numero de unidades
@@ -370,21 +434,13 @@ class mantenimiento extends sigesop
         return $objetoRetorno;
     }
 
-    // ---------- obtenerOrdenTrabajo -------------------------------------------------------
-
-    public function obtenerOrdenTrabajo ( $get )   
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL";
-        $conexion = $this->conexion;
-
+    public function obtenerOrdenTrabajo ( $get ) {
         if ( !empty( $get[ 'numero_unidad' ] ) ) $tipo_query = 'numero_unidad';
         else if ( !empty( $get[ 'numero_aero' ] ) ) $tipo_query = 'numero_aero';
         else if ( !empty( $get[ 'usuario' ] ) ) $tipo_query = 'usuario';
         else $tipo_query = 'default';
 
-        switch ( $tipo_query ) 
-        {
+        switch ( $tipo_query ) {
             case 'numero_unidad': # devuelve todas las ordenes de trabajo por unidad de generador
                 $numero_unidad = $get[ 'numero_unidad' ];
                 $sql =  
@@ -400,8 +456,7 @@ class mantenimiento extends sigesop
                 $numero_aero = $get[ 'numero_aero' ];
                 $option = $get[ 'option' ];
     
-                switch ( $option ) 
-                {
+                switch ( $option ) {
                     # retorna la siguiente orden de trabajo no asignada, 
                     # del generador solicitado
                     case 'case_sin_asignar':
@@ -414,16 +469,26 @@ class mantenimiento extends sigesop
 
                     # retorna la ultima orden de trabajo programada,
                     # del generador solicitado
-                    case 'ultima_orden': return $this->__ultima_orden( $numero_aero ); break;
+                    case 'ultima_orden': 
+                        $id_mantenimiento = $get[ 'id_mantenimiento' ];
+                        return $this->__ultima_orden( $numero_aero, $id_mantenimiento ); 
+                        break;
                     
                     # retorna la orden de trabajo activa,
                     # del generador solicitado
                     default:
                         $sql =  
-                            "select id_orden_trabajo, numero_orden, id_aero, id_mantenimiento, duracion, magnitud_duracion, ".
-                            "DATE_FORMAT(fecha_programada, '%d-%m-%Y' ) as fecha_programada, DATE_FORMAT(fecha_reprogramada, '%d-%m-%Y' ) as fecha_reprogramada, ".
-                            "DATE_FORMAT(fecha_realizada, '%d-%m-%Y' ) as fecha_realizada, trabajo_solicitado from orden_trabajo ".
-                            "where estado_asignado = true and fecha_realizada is null && id_aero = '$numero_aero' order by fecha_programada asc";
+                        "SELECT t_ot.id_prog_mtto, numero_orden, id_aero, ".
+                        "id_mantenimiento, duracion, magnitud_duracion, ".
+                        "DATE_FORMAT(t_pm.fecha_inicial, '%d-%m-%Y' ) as fecha_programada, ".                        
+                        "trabajo_solicitado, t_pm.id_orden_reprog, t_pm.id_orden_trabajo ".
+                        "FROM orden_trabajo t_ot ".
+                        "INNER JOIN programacion_mtto t_pm ".
+                        "ON t_ot.id_prog_mtto = t_pm.id_prog_mtto ".
+                        "WHERE t_ot.estado_asignado IS NULL ".                        
+                        "AND t_pm.estado_asignado = 'ACTIVO' ".
+                        "AND t_ot.id_aero = '$numero_aero' ".
+                        "ORDER BY t_ot.numero_orden ASC";
                         break;
                 }
                 break;
@@ -431,40 +496,81 @@ class mantenimiento extends sigesop
             case 'usuario': # devuelve todas las ordenes de trabajo por usuario
                 $usuario = $get[ 'usuario' ];
                 $sql =  
-                    "select id_orden_trabajo, numero_orden, id_aero, id_mantenimiento, duracion, magnitud_duracion, ".
-                    "DATE_FORMAT(fecha_programada, '%d-%m-%Y' ) as fecha_programada, DATE_FORMAT(fecha_reprogramada, '%d-%m-%Y' ) as fecha_reprogramada, ".
-                    "DATE_FORMAT(fecha_realizada, '%d-%m-%Y' ) as fecha_realizada, trabajo_solicitado from orden_trabajo ".
-                    "where estado_asignado = true and fecha_realizada is null and id_orden_trabajo in( ".
-                        "select id_orden_trabajo from  orden_trabajo_personal where usuario = '$usuario' && tipo_usuario = 'RESPONSABLE'".
-                    " ) order by fecha_programada asc";
+                "SELECT t_ot.id_prog_mtto, numero_orden, id_aero, ".
+                "id_mantenimiento, duracion, magnitud_duracion, ".
+                "t_ot.fecha_inicial, t_ot.fecha_final, ".
+                "DATE_FORMAT(t_pm.fecha_inicial, '%d-%m-%Y' ) as fecha_programada, ".                
+                "trabajo_solicitado, t_pm.id_orden_reprog, t_pm.id_orden_trabajo ".
+                "FROM orden_trabajo t_ot ".
+                "INNER JOIN programacion_mtto t_pm ".
+                "ON t_ot.id_prog_mtto = t_pm.id_prog_mtto ".
+                "WHERE t_ot.estado_asignado IS NULL ".
+                "AND t_pm.estado_asignado = 'ACTIVO' ".                
+                "AND ( ".
+                    "t_pm.id_orden_trabajo in( ".
+                        "SELECT id_orden_trabajo ".
+                        "FROM orden_trabajo_personal ".
+                        "WHERE usuario = '$usuario' ".
+                        "AND tipo_usuario = 'RESPONSABLE'".
+                    " ) ".
+                    "OR t_pm.id_orden_reprog in( ".
+                        "SELECT id_orden_trabajo ".
+                        "FROM orden_trabajo_personal ".
+                        "WHERE usuario = '$usuario' ".
+                        "AND tipo_usuario = 'RESPONSABLE'".
+                    " )".
+                " )".
+                "ORDER BY t_ot.numero_orden ASC";
                 break;
             
             # retorna las ordenes de trabajo más proximas
             default: // devuelve todas las ordenes de trabajo no realizadas
                 $sql =  
-                    "select id_orden_trabajo, numero_orden, id_aero, id_mantenimiento, duracion, magnitud_duracion, ".
-                    "DATE_FORMAT(fecha_programada, '%d-%m-%Y' ) as fecha_programada, DATE_FORMAT(fecha_reprogramada, '%d-%m-%Y' ) as fecha_reprogramada, ".
-                    "DATE_FORMAT(fecha_realizada, '%d-%m-%Y' ) as fecha_realizada, trabajo_solicitado from orden_trabajo ".
-                    // "where fecha_realizada is null group by numero_orden order by fecha_programada asc";
-                    "where estado_asignado = true and fecha_realizada is null order by fecha_programada asc";
+                "SELECT t_ot.id_prog_mtto, numero_orden, id_aero, ".
+                "id_mantenimiento, duracion, magnitud_duracion, ".
+                "DATE_FORMAT(t_pm.fecha_inicial, '%d-%m-%Y' ) as fecha_programada, ".
+                // "DATE_FORMAT(t_pm.fecha_final, '%d-%m-%Y' ) as fecha_final, ".
+                "trabajo_solicitado, t_pm.id_orden_reprog, t_pm.id_orden_trabajo ".
+                "FROM orden_trabajo t_ot ".
+                "INNER JOIN programacion_mtto t_pm ".
+                "ON t_ot.id_prog_mtto = t_pm.id_prog_mtto ".
+                "WHERE t_ot.estado_asignado IS NULL ".
+                "AND t_pm.estado_asignado = 'ACTIVO' ".
+                "ORDER BY t_ot.numero_orden ASC";
                 break;
         }
 
         // return $sql;
         
+        // return $this->__reprogramacion_fecha();
+        $this->__reprogramacion_fecha();
+
         $query = $this->array_query( $sql );
         $arr = array();
-        // $temp = $this->multi_array_unique( $query, 'numero_orden' ); // filtramos las ordenes
 
-        foreach ( $query as $orden ) // añadimos campos
-        {
-            $id_mantenimiento = $orden[ 'id_mantenimiento' ];
-            $sql = "select nombre_mantenimiento from tipo_mantenimiento where id_mantenimiento = '$id_mantenimiento'";
-            $nombre_mantenimiento = $this->array_query( $sql, 'nombre_mantenimiento', null );
-            $orden[ 'nombre_mantenimiento' ] = $nombre_mantenimiento[0];
+        foreach ( $query as $orden ) {
+            $id_orden_trabajo = empty( $orden[ 'id_orden_reprog' ] ) ?
+                $orden[ 'id_orden_trabajo' ] : $orden[ 'id_orden_reprog' ];
 
-            $id_orden_trabajo = $orden[ 'id_orden_trabajo' ];
-            $orden[ 'orden_trabajo_personal' ] = $this->__orden_trabajo_personal( $id_orden_trabajo, $conexion );
+            # reasignando nomenclatura de las fechas por
+            # reprogramacion de orden de trabajo
+            $sql = 
+                "SELECT DATE_FORMAT(fecha_inicial, '%d-%m-%Y' ) as fecha_programada ".
+                "FROM programacion_mtto ".
+                "WHERE id_orden_trabajo = $id_orden_trabajo";
+
+            $query = $this->query( $sql, 'fecha_programada' );
+            $orden[ 'fecha_reprogramada' ] = $orden[ 'fecha_programada' ];
+            $orden[ 'fecha_programada' ] = $query;                
+
+            # buscando nombre de [id_mantenimiento]
+            $id_mantenimiento = $orden[ 'id_mantenimiento' ];            
+            $sql = "SELECT nombre_mantenimiento FROM tipo_mantenimiento WHERE id_mantenimiento = '$id_mantenimiento'";
+            $_query = $this->query( $sql, 'nombre_mantenimiento', null );
+            $orden[ 'nombre_mantenimiento' ] = $_query;
+
+            # buscando a los usuarios asociados a la orden de trabajo
+            $orden[ 'orden_trabajo_personal' ] = $this->__orden_trabajo_personal( $id_orden_trabajo );            
 
             $arr[] = $orden;
         }
@@ -472,73 +578,163 @@ class mantenimiento extends sigesop
         return $arr;
     }
 
-    # __ultima_orden -------------------
+    public function __ultima_orden ( $numero_aero, $id_mantenimiento ) {
+        if ( empty( $numero_aero ) && empty( $id_mantenimiento ) )  
+            return NULL;
 
-    public function __ultima_orden ( $numero_aero )
-    {
-        if ( !empty( $numero_aero ) ) 
-        {            
-            $IDS = $this->__getMatrizIdMantto( $numero_aero, $this->conexion );
-            // return $IDS;
+        $sql = 
+        "SELECT DATE_FORMAT(fecha_final, '%d-%m-%Y' ) AS fecha_final ".
+        "FROM orden_trabajo ".
+        "WHERE id_aero = '$numero_aero' ".
+        "AND id_mantenimiento = '$id_mantenimiento'";
 
-            if ( $IDS != null )
-            {
-                // ---------- creamos el arreglo de retorno
+        // return $sql;
 
-                $datos = array();
-
-                foreach ( $IDS as $id ) 
-                {
-                    $sql = "select fecha_programada from orden_trabajo where id_aero = '$numero_aero' and id_mantenimiento = '$id' order by fecha_programada desc";
-                    $array = $this->array_query( $sql, 'fecha_programada', null );
-                    
-                    if ( $array != null ) 
-                    {
-                        $datos[] = array( 'id_mantenimiento' => $id, 'fecha_programada' => $array[0] );
-                    }
-                }
-
-                return $datos;             
-            }
-            else return $IDS;
-        } 
-        else return 'NA';
+        return $this->query( $sql, 'fecha_final', NULL );    
     }
 
-    private function __getMatrizIdMantto( $numero_aero, $conexion )
-    {
-        $sql = "select id_mantenimiento from orden_trabajo where id_aero = '$numero_aero' order by id_mantenimiento asc";
-        
-        $matrizIDS = $this->array_query( $sql, 'id_mantenimiento', null );
+    public function __reprogramacion_fecha () {
+        # obtenemos todas las ordenes que estan activas
+        $sql = 
+        "SELECT t_ot.id_prog_mtto, t_pm.id_orden_trabajo ".
+        "FROM orden_trabajo t_ot ".
+        "INNER JOIN programacion_mtto t_pm ".
+        "ON t_ot.id_prog_mtto = t_pm.id_prog_mtto ".
+        "WHERE t_ot.estado_asignado IS NULL ".
+        "AND t_pm.estado_asignado = 'ACTIVO'";
 
-        if ( $matrizIDS != null ) 
-        {
-            $IDS = array_unique( $matrizIDS );
-            return $this->array_numerico( $IDS );
-        }
+        $today = Carbon::now( 'America/Mexico_City' )->timestamp;
+        $arr_ordenes = $this->array_query( $sql );
         
-        else return $matrizIDS;
+        # recorriendo ordenes activas
+        foreach ( $arr_ordenes as $orden_activa ) {
+            $id_prog_mtto = $orden_activa[ 'id_prog_mtto' ];
+            $id_orden_trabajo_origin = $orden_activa[ 'id_orden_trabajo' ];
+
+            # obtenemos todas las fechas que estan programadas
+            # asi obtener la fecha más proxima en relacion a la fecha actual
+            $sql = 
+            "SELECT fecha_final, estado_asignado, ".
+            "id_orden_trabajo, id_orden_reprog ".
+            "FROM programacion_mtto ".            
+            "WHERE id_prog_mtto = $id_prog_mtto ".
+            "ORDER BY fecha_inicial ASC";
+            
+            $arr_repro = $this->array_query( $sql );
+
+            // return $arr_repro;
+
+            # recorremos las fechas programadas
+            $i = 0;
+            $lon = sizeof( $arr_repro );
+            for( $i ; $i < $lon; $i++ ) { 
+                $id_orden_trabajo = $arr_repro[ $i ][ 'id_orden_trabajo' ];
+                $id_orden_reprog = $arr_repro[ $i ][ 'id_orden_reprog' ];
+                $estado_asignado = $arr_repro[ $i ][ 'estado_asignado' ];
+                $fecha_1 = $arr_repro[ $i ][ 'fecha_final' ];
+                $reprog_1 = Carbon::parse( $fecha_1, 'America/Mexico_City' )->timestamp;
+
+                # mientras no sea la ultima orden               
+                if ( $i < ( $lon - 1 ) ) {
+                    # Activamos la reprogramacion
+                    if  ( 
+                          ($reprog_1 < $today) &&
+                          ($estado_asignado == NULL || $estado_asignado == 'ACTIVO')
+                        ) {
+                        # Cambiamos el estado a [REPROGRAMADO] y 
+                        # guardamos el [id_orden_trabajo]
+                        $sql =
+                        "UPDATE programacion_mtto ".
+                        "SET id_orden_reprog = $id_orden_trabajo_origin, ".
+                        "estado_asignado = 'REPROGRAMADO' ".
+                        "WHERE id_orden_trabajo = $id_orden_trabajo";
+                        
+                        $query = $this->insert_query( $sql );                       
+                    }
+
+                    # Activamos la nueva orden
+                    else if ( 
+                            ($reprog_1 >= $today) &&
+                            ($estado_asignado == NULL || $estado_asignado == 'ACTIVO')                            
+                        ) {
+                        # verificamos si la orden no ha sido asignada
+                        # previamente
+                        if ( empty( $id_orden_reprog ) ) {
+                            $sql =
+                            "UPDATE programacion_mtto ".
+                            "SET id_orden_reprog = $id_orden_trabajo_origin, ".
+                            "estado_asignado = 'ACTIVO' ".
+                            "WHERE id_orden_trabajo = $id_orden_trabajo";
+
+                            $query = $this->insert_query( $sql );                            
+                        }
+
+                        if ( $query === 'OK' ) $this->conexion->commit();
+                        else $this->conexion->rollback();
+
+                        break;
+                    }
+                } 
+
+                # extremo, orden final programada
+                # aunque la fecha se vaya aplazando y ya no existan
+                # mas fechas programadas, la orden se mantendrá
+                # activa hasta que sea cerrada
+                else {
+                    # Activamos la nueva orden verificando que no
+                    # se desborde de las fechas programadas
+                    # Activamos la nueva orden
+                    if  ( 
+                            // ($reprog_1 >= $today || $today > $reprog_1) &&
+                            ($estado_asignado == NULL || $estado_asignado == 'ACTIVO')
+                        ) {
+                        # verificamos si la orden no ha sido asignada
+                        # previamente
+                        if ( empty( $id_orden_reprog ) ) {
+                            $sql =
+                            "UPDATE programacion_mtto ".
+                            "SET id_orden_reprog = $id_orden_trabajo_origin, ".
+                            "estado_asignado = 'ACTIVO' ".
+                            "WHERE id_orden_trabajo = $id_orden_trabajo";
+
+                            $query = $this->insert_query( $sql );                            
+                        }
+
+                        if ( $query === 'OK' ) $this->conexion->commit();
+                        else $this->conexion->rollback();
+
+                        break;
+                    }
+                }
+            }
+        }        
     }
 
     #------------------------------------------------------------------------
 
-    private function __orden_trabajo_personal( $id_orden_trabajo, $conexion )
-    {
-        // ---------- buscar supervisor
+    private function __orden_trabajo_personal( $id_orden_trabajo ) {
+        # buscar supervisor
+        $sql =  
+        "SELECT usuario FROM orden_trabajo_personal ".
+        "WHERE tipo_usuario = 'SUPERVISOR' ".
+        "AND id_orden_trabajo = '$id_orden_trabajo'";
+        $query = $this->query( $sql, 'usuario', null );
+        $arr[ 'supervisor' ] = $query;
 
-        $sql =  "select usuario from orden_trabajo_personal where tipo_usuario = 'SUPERVISOR' and id_orden_trabajo = '$id_orden_trabajo'";
-        $query = $this->array_query( $sql, 'usuario', null );
-        $arr[ 'supervisor' ] = $query[ 0 ];
+        # buscar responsable
+        $sql =  
+        "SELECT usuario FROM orden_trabajo_personal ".
+        "WHERE tipo_usuario = 'RESPONSABLE' ".
+        "AND id_orden_trabajo = '$id_orden_trabajo'";
 
-        // ---------- buscar responsable
-
-        $sql =  "select usuario from orden_trabajo_personal where tipo_usuario = 'RESPONSABLE' and id_orden_trabajo = '$id_orden_trabajo'";
         $query = $this->array_query( $sql, 'usuario', null );
         $arr[ 'responsable' ] = $query[ 0 ];
 
-        // ---------- buscar auxiliar
-
-        $sql =  "select usuario from orden_trabajo_personal where tipo_usuario = 'AUXILIAR' and id_orden_trabajo = '$id_orden_trabajo'";
+        # buscar auxiliar
+        $sql =  
+        "SELECT usuario FROM orden_trabajo_personal ".
+        "WHERE tipo_usuario = 'AUXILIAR' ".
+        "AND id_orden_trabajo = '$id_orden_trabajo'";
         $query = $this->array_query( $sql, 'usuario', null );
         $arr[ 'auxiliar' ] = $query;
 
@@ -550,12 +746,8 @@ class mantenimiento extends sigesop
      * [numero_generador, numero_unidad]
      * retorna los generadores sin una orden de trabajo planificada
      */ 
-    public function verifica_orden_trabajo ( $get )
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL";
-        $conexion = $this->conexion;
-
+    
+    public function verifica_orden_trabajo ( $get ) {
         if ( !empty( $get[ 'numero_unidad' ] ) ) $tipo_query = 'numero_unidad';
         else if ( !empty( $get[ 'numero_aero' ] ) ) $tipo_query = 'numero_aero';
         else return null;
@@ -608,135 +800,135 @@ class mantenimiento extends sigesop
 
     // ---------- actividadesOrdenTrabajo -----------------------------------------------
 
-    public function actividadesOrdenTrabajo ( $data )
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL";
-        $conexion = $this->conexion;
+    // public function actividadesOrdenTrabajo ( $data ) {
+    //     $id_orden_trabajo = $data[ 'id_orden_trabajo' ];
 
-        $id_orden_trabajo = $data[ 'id_orden_trabajo' ];
+    //     if ( !empty( $id_orden_trabajo ) )
+    //     {
+    //         $data = $this->__datos_por_ordenTrabajo( $id_orden_trabajo, $conexion );
+    //         // return $data;
 
-        if ( !empty( $id_orden_trabajo ) )
-        {
-            $data = $this->__datos_por_ordenTrabajo( $id_orden_trabajo, $conexion );
-            // return $data;
+    //         return $this->__actividad_verificar( $data[ 'id_mantenimiento' ], $conexion );
+    //     }
 
-            return $this->__actividad_verificar( $data[ 'id_mantenimiento' ], $conexion );
-        }
+    //     return null;
+    // }
 
-        return null;
-    }
-
-    private function __datos_por_ordenTrabajo( $id_orden_trabajo, $conexion )
-    {
-        $sql = "select id_mantenimiento, id_aero from orden_trabajo where id_orden_trabajo = $id_orden_trabajo";
-        $query = $this->array_query( $sql );
+    // private function __datos_por_ordenTrabajo( $id_orden_trabajo, $conexion ) {
+    //     $sql = "select id_mantenimiento, id_aero from orden_trabajo where id_orden_trabajo = $id_orden_trabajo";
+    //     $query = $this->array_query( $sql );
         
-        $arr = array(
-            'id_mantenimiento' => $query[ 0 ][ 'id_mantenimiento' ],
-            'id_aero' => $query[ 0 ][ 'id_aero' ]
-        );
+    //     $arr = array(
+    //         'id_mantenimiento' => $query[ 0 ][ 'id_mantenimiento' ],
+    //         'id_aero' => $query[ 0 ][ 'id_aero' ]
+    //     );
 
-        return $arr;
+    //     return $arr;
 
-        // ---------- buscamos todos los sistemas de las actividades que estan en el tipo de manteminiemto
+    //     // ---------- buscamos todos los sistemas de las actividades que estan en el tipo de manteminiemto
 
-        // $sql =  "select id_sistema_aero from actividad_verificar where id_mantenimiento = '$id_mantenimiento' ".
-        //         "order by id_mantenimiento asc";
-        // $query = $this->array_query( $sql, 'id_sistema_aero', null );
+    //     // $sql =  "select id_sistema_aero from actividad_verificar where id_mantenimiento = '$id_mantenimiento' ".
+    //     //         "order by id_mantenimiento asc";
+    //     // $query = $this->array_query( $sql, 'id_sistema_aero', null );
 
-        // $sistema = array_unique( $query );
+    //     // $sistema = array_unique( $query );
 
-        // return $sistema;
-    }
+    //     // return $sistema;
+    // }
 
-    private function __actividad_verificar ( $id_mantenimiento, $conexion )
-    {
-        $sql = "select * from actividad_verificar where id_mantenimiento = '$id_mantenimiento' && id_actividad_verificar not in( ".
-                    "select id_actividad_verificar from orden_trabajo_actividad )";    
+    // private function __actividad_verificar ( $id_mantenimiento, $conexion ) {
+    //     $sql = "select * from actividad_verificar where id_mantenimiento = '$id_mantenimiento' && id_actividad_verificar not in( ".
+    //                 "select id_actividad_verificar from orden_trabajo_actividad )";    
 
-        $data = $this->array_query( $sql );
-        $arr = array();
+    //     $data = $this->array_query( $sql );
+    //     $arr = array();
 
-        foreach ( $data as $act ) 
-        {
-            // ---------- consultamos nombre del sistema
+    //     foreach ( $data as $act ) 
+    //     {
+    //         // ---------- consultamos nombre del sistema
 
-            $id_sistema_aero = $act[ 'id_sistema_aero' ];
-            $sql = "select nombre_sistema_aero from sistema_aero where id_sistema_aero = '$id_sistema_aero'";
-            $query = $this->array_query( $sql, 'nombre_sistema_aero', null );
-            $act[ 'nombre_sistema_aero' ] = $query[ 0 ];
+    //         $id_sistema_aero = $act[ 'id_sistema_aero' ];
+    //         $sql = "select nombre_sistema_aero from sistema_aero where id_sistema_aero = '$id_sistema_aero'";
+    //         $query = $this->array_query( $sql, 'nombre_sistema_aero', null );
+    //         $act[ 'nombre_sistema_aero' ] = $query[ 0 ];
 
-            // ---------- consultamos nombre del equipo
+    //         // ---------- consultamos nombre del equipo
 
-            $id_equipo_aero = $act[ 'id_equipo_aero' ];
-            $sql = "select nombre_equipo_aero from equipo_aero where id_equipo_aero = '$id_equipo_aero'";
-            $query = $this->array_query( $sql, 'nombre_equipo_aero', null );
-            $act[ 'nombre_equipo_aero' ] = $query[ 0 ];
+    //         $id_equipo_aero = $act[ 'id_equipo_aero' ];
+    //         $sql = "select nombre_equipo_aero from equipo_aero where id_equipo_aero = '$id_equipo_aero'";
+    //         $query = $this->array_query( $sql, 'nombre_equipo_aero', null );
+    //         $act[ 'nombre_equipo_aero' ] = $query[ 0 ];
 
-            // ---------- consultamos tablas internas de la actividad
+    //         // ---------- consultamos tablas internas de la actividad
 
-            $id_actividad_verificar = $act[ 'id_actividad_verificar' ];
+    //         $id_actividad_verificar = $act[ 'id_actividad_verificar' ];
 
-            $act[ 'parametro_actividad' ] = $this->__parametroActividad( $id_actividad_verificar, $con_todo );
-            $act[ 'lectura_actual' ] = $this->__lecturaActual( $id_actividad_verificar, $con_todo );
-            $act[ 'lectura_posterior' ] = $this->__lecturaPosterior( $id_actividad_verificar, $con_todo );
+    //         $act[ 'parametro_actividad' ] = $this->__parametroActividad( $id_actividad_verificar, $con_todo );
+    //         $act[ 'lectura_actual' ] = $this->__lecturaActual( $id_actividad_verificar, $con_todo );
+    //         $act[ 'lectura_posterior' ] = $this->__lecturaPosterior( $id_actividad_verificar, $con_todo );
 
-            $arr[] = $act;
-        }
+    //         $arr[] = $act;
+    //     }
 
-        return $arr;       
-    }
+    //     return $arr;       
+    // }
 
     # -----------------------------------------
 
-    public function systems_into_mantto( $get )
-    {
+    public function systems_into_mantto( $get ) {
         $id_mantenimiento = $get[ 'id_mantenimiento' ];
-        $id_orden_trabajo = $get[ 'id_orden_trabajo' ];
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $get[ 'id_orden_trabajo' ] );
         $con_datos = $get[ 'con_datos' ];
 
-        if ( !empty( $id_mantenimiento ) ) 
-        {
-            switch ( $con_datos ) {
-                case 'true': # sistemas con datos capturados
-                    $sql = "SELECT DISTINCT id_sistema_aero FROM actividad_verificar ".
-                            "WHERE id_mantenimiento = '$id_mantenimiento' AND ".
-                            "id_actividad_verificar IN ( ".
-                                "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
-                                "WHERE id_orden_trabajo = $id_orden_trabajo ".
-                            ")";
-                    break;
-                
-                default: # sistemas sin datos capturados
-                    $sql = "SELECT DISTINCT id_sistema_aero FROM actividad_verificar ".
-                            "WHERE id_mantenimiento = '$id_mantenimiento' AND ".
-                            "id_actividad_verificar NOT IN ( ".
-                                "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
-                                "WHERE id_orden_trabajo = $id_orden_trabajo ".
-                            ")";
-                    break;
-            }
+        if ( empty( $id_mantenimiento ) ) return null;
 
-            // return $sql;
+        # buscar el [id_lista_verificacion] con el id_mantenimiento
+        $sql =
+        "SELECT id_lista_verificacion FROM lista_verificacion ".
+        "WHERE id_mantenimiento = '$id_mantenimiento'";
 
-            $query = $this->array_query( $sql, 'id_sistema_aero', null );
-            if ( $query == null ) return null;
+        $id_lista_verificacion = $this->query( $sql, 'id_lista_verificacion', NULL );
+        if ( $id_lista_verificacion == NULL ) return NULL;
+
+        switch ( $con_datos ) {
+            case 'true': # sistemas con datos capturados
+                $sql = 
+                "SELECT DISTINCT id_sistema_aero FROM actividad_verificar ".
+                "WHERE id_lista_verificacion = $id_lista_verificacion ".
+                "AND id_actividad_verificar IN ( ".
+                    "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
+                    "WHERE id_orden_trabajo = $id_orden_trabajo ".
+                ")";
+                break;
             
-            $mtz = array_unique( $query );
-            $arr = array(); // matriz de retorno
-
-            foreach ( $mtz as $id_sistema_aero ) 
-            {
-                $sql = "select * from sistema_aero where id_sistema_aero = '$id_sistema_aero'";
-                $query = $this->array_query( $sql );
-                $arr[] = $query[ 0 ];
-            }
-
-            return $arr;
+            default: # sistemas sin datos capturados
+                $sql = 
+                "SELECT DISTINCT id_sistema_aero FROM actividad_verificar ".
+                "WHERE id_lista_verificacion = $id_lista_verificacion ".
+                "AND id_actividad_verificar NOT IN ( ".
+                    "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
+                    "WHERE id_orden_trabajo = $id_orden_trabajo ".
+                ")";
+                break;
         }
 
-        return null;
+        // return $sql;
+
+        $query = $this->array_query( $sql, 'id_sistema_aero', null );
+        if ( $query == null ) return null;
+        
+        $mtz = array_unique( $query );
+        $arr = array(); // matriz de retorno
+
+        foreach ( $mtz as $id_sistema_aero ) {
+            $sql = 
+            "SELECT * FROM sistema_aero ".
+            "WHERE id_sistema_aero = '$id_sistema_aero'";
+            $query = $this->array_query( $sql );
+            $arr[] = $query[ 0 ];
+        }
+
+        return $arr;
     }
  
     /**
@@ -748,25 +940,32 @@ class mantenimiento extends sigesop
      * para que retorne equipos con datos en las actividades
      * o que retorne equipos sin datos en las actividades
      */
-    public function equipo_into_systems_mantto ( $get )
-    {
-        $validar 
-            = $this->verificaDatosNulos( $get, 
-                array( 'id_mantenimiento', 'id_sistema_aero' )
-            );
+    public function equipo_into_systems_mantto ( $get ) {
+        $validar =
+            $this->verificaDatosNulos( $get, array( 
+                'id_mantenimiento', 'id_sistema_aero' 
+            ));
 
-        if ( $validar !== 'OK' ) return null;
+        // if ( $validar !== 'OK' ) return null;
 
         $id_mantenimiento = $get[ 'id_mantenimiento' ];
         $id_sistema_aero = $get[ 'id_sistema_aero' ];
-        $id_orden_trabajo = $get[ 'id_orden_trabajo' ];
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $get[ 'id_orden_trabajo' ] );
         $con_datos = $get[ 'con_datos' ];
+
+        # buscar el [id_lista_verificacion] con el id_mantenimiento
+        $sql =
+        "SELECT id_lista_verificacion FROM lista_verificacion ".
+        "WHERE id_mantenimiento = '$id_mantenimiento'";
+
+        $id_lista_verificacion = $this->query( $sql, 'id_lista_verificacion', NULL );
+        if ( $id_lista_verificacion == NULL ) return NULL;
 
         switch ( $con_datos ) {
             case 'true': # retorna equipos dentro de sistemas con datos capturados
                 $sql =
                     "SELECT DISTINCT id_equipo_aero FROM actividad_verificar ".
-                    "WHERE id_mantenimiento = '$id_mantenimiento' ".
+                    "WHERE id_lista_verificacion = $id_lista_verificacion ".
                     "AND id_sistema_aero = '$id_sistema_aero' AND ".
                     "id_actividad_verificar IN ( ".
                         "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
@@ -777,7 +976,7 @@ class mantenimiento extends sigesop
             default: # retorna equipos dentro de sistemas sin datos capturados
                 $sql =
                     "SELECT DISTINCT id_equipo_aero FROM actividad_verificar ".
-                    "WHERE id_mantenimiento = '$id_mantenimiento' ".
+                    "WHERE id_lista_verificacion = $id_lista_verificacion ".
                     "AND id_sistema_aero = '$id_sistema_aero' AND ".
                     "id_actividad_verificar NOT IN ( ".
                         "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
@@ -810,51 +1009,61 @@ class mantenimiento extends sigesop
      * @return [Array] retorna el conjunto de actividades
      * existentes dentro de un equipo en particular
      */
-    public function actividades_into_equipo ( $get )
-    {
+    public function actividades_into_equipo ( $get ) {
         $validar = 
-            $this->verificaDatosNulos( $get, 
-                array( 'id_mantenimiento', 'id_equipo_aero', 'id_orden_trabajo' ) 
-            );
+            $this->verificaDatosNulos( $get, array( 
+                'id_mantenimiento', 'id_equipo_aero', 'id_orden_trabajo' 
+            ));
 
-        if ( $validar === 'OK' )
-        {
-            $id_mantenimiento = $get[ 'id_mantenimiento' ];
-            $id_equipo_aero = $get[ 'id_equipo_aero' ];
-            $id_orden_trabajo = $get[ 'id_orden_trabajo' ];
+        // if ( $validar === 'OK' ) return null;
+        
+        $id_mantenimiento = $get[ 'id_mantenimiento' ];
+        $id_equipo_aero = $get[ 'id_equipo_aero' ];
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $get[ 'id_orden_trabajo' ] );
 
-            return $this->__actividad_verificar_equipo( $get );
-        }
+        return $this->__actividad_verificar_equipo( $get );
     }
 
-    private function __actividad_verificar_equipo ( $data )
-    {
+    private function __actividad_verificar_equipo ( $data ) {
         $id_mantenimiento = $data[ 'id_mantenimiento' ];
         $id_equipo_aero = $data[ 'id_equipo_aero' ];
-        $id_orden_trabajo = $data[ 'id_orden_trabajo' ]; 
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $data[ 'id_orden_trabajo' ] ); 
         $con_datos = $data[ 'con_datos' ];
 
+        # buscar el [id_lista_verificacion] con el id_mantenimiento
+        $sql =
+        "SELECT id_lista_verificacion FROM lista_verificacion ".
+        "WHERE id_mantenimiento = '$id_mantenimiento'";
+
+        $id_lista_verificacion = $this->query( $sql, 'id_lista_verificacion', NULL );
+        if ( $id_lista_verificacion == NULL ) return NULL;
+
         # Preparamos el tipo de consulta
-        
+        $sql = 
+        "SELECT id_actividad_verificar, ".
+        "id_lista_verificacion, ".
+        "id_sistema_aero, ".
+        "id_equipo_aero, ".
+        "actividad_verificar ".
+        "FROM actividad_verificar ".
+        "WHERE id_lista_verificacion = $id_lista_verificacion ".
+        "AND id_equipo_aero = '$id_equipo_aero' ";
+
         switch ( $con_datos ) {
             case 'true':
-                $sql =  "SELECT * FROM actividad_verificar ".
-                        "WHERE id_mantenimiento = '$id_mantenimiento' ".
-                        "AND id_equipo_aero = '$id_equipo_aero' ".
-                        "AND id_actividad_verificar IN( ".
-                            "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
-                            "WHERE id_orden_trabajo = $id_orden_trabajo ".
-                        ")";
+                $sql .=  
+                "AND id_actividad_verificar IN( ".
+                    "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
+                    "WHERE id_orden_trabajo = $id_orden_trabajo ".
+                ")";
                 break;
             
             default:
-                $sql =  "SELECT * FROM actividad_verificar ".
-                        "WHERE id_mantenimiento = '$id_mantenimiento' ".
-                        "AND id_equipo_aero = '$id_equipo_aero' ".
-                        "AND id_actividad_verificar NOT IN( ".
-                            "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
-                            "WHERE id_orden_trabajo = $id_orden_trabajo ".
-                        ")";
+                $sql .=  
+                "AND id_actividad_verificar NOT IN( ".
+                    "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
+                    "WHERE id_orden_trabajo = $id_orden_trabajo ".
+                ")";
                 break;
         }
 
@@ -880,8 +1089,7 @@ class mantenimiento extends sigesop
         # complementamos datos de nuevos campos
 
         $arr = array();
-        foreach ( $mtz as $actividad )
-        {
+        foreach ( $mtz as $actividad ) {
             $id_actividad_verificar = $actividad[ 'id_actividad_verificar' ];
 
             $actividad[ 'parametro_actividad' ] = $con_datos == 'true' ?
@@ -907,33 +1115,64 @@ class mantenimiento extends sigesop
         return $arr;
     }
 
-    private function __parametroActividad ( $id_actividad )
-    {
-        $sql = "select * from parametro_actividad where id_actividad = $id_actividad order by secuencia_datos asc";
-        $matrizParametros = $this->array_query( $sql );
-        return $matrizParametros;
+    private function __parametroActividad ( $id_actividad ) {
+        $sql = 
+        "SELECT id_actividad, ".
+        "id, ".
+        "tipo_dato, ".
+        "dato, ".
+        "parametro, ".
+        "secuencia_datos, ".
+        "unidad_medida ".
+        "FROM parametro_actividad ".
+        "WHERE id_actividad = $id_actividad ".
+        "ORDER BY secuencia_datos ASC";
+
+        $arr = $this->array_query( $sql );
+        return $arr;
     }
 
-    private function __lecturaActual ( $id_actividad, $con_todo, $id_orden_trabajo )
-    {
-        $sql =  "SELECT t_la.id_actividad, t_la.tipo_dato, t_la.parametro, ".
-                "t_la.unidad_medida, t_la.secuencia_datos, t_la.id, t_pa.tipo_dato ".
-                "as tipo_validacion, t_pa.dato as dato_validacion ".
-                "FROM lectura_actual t_la LEFT JOIN parametro_actividad t_pa ".
-                "ON t_la.id_actividad = t_pa.id_actividad ".
-                "WHERE t_la.id_actividad = $id_actividad ".
-                "AND t_la.secuencia_datos = t_pa.secuencia_datos ".
-                "ORDER BY t_la.secuencia_datos ASC";
-        
+    private function __lecturaActual ( $id_actividad, $con_todo, $id_orden_trabajo ) {
+        # buscamos el tipo de dato para realizar
+        # consultas por filas de datos o por lotes completos
+        $sql =
+        "SELECT tipo_dato ".
+        "FROM parametro_actividad ".
+        "WHERE id_actividad = $id_actividad";
+        $tipo_dato = $this->query( $sql, 'tipo_dato', NULL );
+
+        $sql =  
+        "SELECT t_la.id_actividad, ".
+        "t_la.tipo_dato, ".
+        "t_la.parametro, ".
+        "t_la.unidad_medida, ".
+        "t_la.secuencia_datos, ".
+        "t_la.id, ".
+        "t_pa.tipo_dato AS tipo_validacion, ".
+        "t_pa.dato AS dato_validacion ".
+        "FROM lectura_actual t_la ".
+        "LEFT JOIN parametro_actividad t_pa ".
+        "ON t_la.id_actividad = t_pa.id_actividad ".
+        "WHERE t_la.id_actividad = $id_actividad ";
+
+        # si es un tipo de dato diferente a texto se verifica
+        # la secuencia de datos para enlazar las filas de 
+        # datos correctmente
+        if ( $tipo_dato != 'TEXTO' ) {
+            $sql .= "AND t_la.secuencia_datos = t_pa.secuencia_datos ";
+        }
+
+        $sql .=
+        "ORDER BY t_la.secuencia_datos ASC";
+
         // return $sql;
+        
         $arr = $this->array_query( $sql );
 
-        switch ( $con_todo ) 
-        {
+        switch ( $con_todo ) {
             case ( $con_todo == 'con_captura' || $con_todo == 'barrido_validacion' ):
                 $i = 0;
-                foreach ( $arr as $lectura_actual ) 
-                {
+                foreach ( $arr as $lectura_actual ) {
                     $id = $lectura_actual[ 'id' ];
                     $sql =  "SELECT t_dla.dato, t_dla.prioridad ".
                             "FROM datos_lectura_actual t_dla ".
@@ -956,19 +1195,39 @@ class mantenimiento extends sigesop
         }
     }
 
-    private function __lecturaPosterior ( $id_actividad, $con_todo, $id_orden_trabajo )
-    {
-        $sql =  "SELECT t_lp.id_actividad, t_lp.tipo_dato, t_lp.parametro, ".
-                "t_lp.unidad_medida, t_lp.secuencia_datos, t_lp.id, t_pa.tipo_dato ".
-                "as tipo_validacion, t_pa.dato as dato_validacion ".
-                "FROM lectura_posterior t_lp ".
-                "LEFT JOIN parametro_actividad t_pa ".
-                "ON t_lp.id_actividad = t_pa.id_actividad ".
-                "WHERE t_lp.id_actividad = $id_actividad ".
-                "AND t_lp.secuencia_datos = t_pa.secuencia_datos ".
-                "ORDER BY t_lp.secuencia_datos ASC";
+    private function __lecturaPosterior ( $id_actividad, $con_todo, $id_orden_trabajo ) {
+        # buscamos el tipo de dato para realizar
+        # consultas por filas de datos o por lotes completos
+        $sql =
+        "SELECT tipo_dato ".
+        "FROM parametro_actividad ".
+        "WHERE id_actividad = $id_actividad";
+        $tipo_dato = $this->query( $sql, 'tipo_dato', NULL );
+
+        $sql =  
+        "SELECT t_lp.id_actividad, ".
+        "t_lp.tipo_dato, ".
+        "t_lp.parametro, ".
+        "t_lp.unidad_medida, ".
+        "t_lp.secuencia_datos, ".
+        "t_lp.id, ".
+        "t_pa.tipo_dato AS tipo_validacion, ".
+        "t_pa.dato AS dato_validacion ".
+        "FROM lectura_posterior t_lp ".
+        "LEFT JOIN parametro_actividad t_pa ".
+        "ON t_lp.id_actividad = t_pa.id_actividad ".
+        "WHERE t_lp.id_actividad = $id_actividad ";
+
+        # si es un tipo de dato diferente a texto se verifica
+        # la secuencia de datos para enlazar las filas de 
+        # datos correctmente
+        if ( $tipo_dato != 'TEXTO' ) {
+            $sql .= "AND t_lp.secuencia_datos = t_pa.secuencia_datos ";
+        }
+
+        $sql .=
+        "ORDER BY t_lp.secuencia_datos ASC";
         
-        // return $sql;
         $arr = $this->array_query( $sql );
 
         switch ( $con_todo ) 
@@ -998,8 +1257,7 @@ class mantenimiento extends sigesop
         }
     }
 
-    private function __observaciones( $id_actividad_verificar, $id_orden_trabajo )
-    {
+    private function __observaciones( $id_actividad_verificar, $id_orden_trabajo ) {
         $sql = 
             "SELECT observaciones FROM datos_actividad ".
             "WHERE id_actividad = $id_actividad_verificar ".
@@ -1012,8 +1270,7 @@ class mantenimiento extends sigesop
         return $this->query( $sql, 'observaciones', -1 );
     }
 
-    private function __resolve_equipo_null ( $id_equipo_aero, $conexion )
-    {
+    private function __resolve_equipo_null ( $id_equipo_aero, $conexion ) {
         $sql = "select id_sistema_aero from equipo_aero where id_equipo_aero = $id_equipo_aero";
         $query = $this->array_query( $sql, 'id_sistema_aero', null );
         $id_sistema_aero = $query[0];
@@ -1030,69 +1287,60 @@ class mantenimiento extends sigesop
 
     # insertarDatosListaVerificacion -----------------------
 
-    public function insertarDatosListaVerificacion ( $data )
-    {
-        $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
-            return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
-        if ( !$this->estadoConexionMysql )
-            return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );        
+    public function insertarDatosListaVerificacion ( $data ) {
+        $rsp = array();
 
-        // $data = null;
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'id_orden_trabajo', 'datos_actividad'
+            ));
 
-        if ( !empty( $data ) )
-        {
-            # insertamos la tabla [datos_lista_verificacion]
-
-            $id_orden_trabajo = $data[ 'id_orden_trabajo' ];
-            $fecha = date( 'Y/m/d' );
-            $hora = date( 'h:i:s' );
-            $observaciones = '';
-            $datos_actividad = $data[ 'datos_actividad' ];
-            $conexion = $this->conexion;         
-            
-            $sql = "insert into datos_lista_verificacion values( $id_orden_trabajo, '$fecha', '$hora', '$observaciones' )";
-            $query = $this->insert_query( $sql );
-
-            if ( $query !== 'OK' ) 
-            {
-                $conexion->rollback();
-
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar tabla: [datos_lista_verificacion]' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => $query );
-                return $rsp;
-            }
-
-            # insertamos actividades
-
-            $datos_actividad = $this->__insertar_datos_actividad( $id_orden_trabajo, $datos_actividad );
-            if ( $datos_actividad === 'OK' )
-            {
-                $conexion->commit();
-                $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Datos guardados satisfactoriamente' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => 'Correcto' );
-                return $rsp;
-            }
-
-            else 
-            {
-                $conexion->rollback();
-
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al guardar los datos' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => $datos_actividad );
-                return $rsp;
-            }
-        }
-        else {
-            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => 'Sin datos...' );
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
             $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
         }
 
-        return $rsp; 
+        # insertamos la tabla [datos_lista_verificacion]
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $data[ 'id_orden_trabajo' ] );
+        $fecha = date( 'Y/m/d' );
+        $hora = date( 'h:i:s' );
+        $observaciones = '';
+        $datos_actividad = $data[ 'datos_actividad' ];     
+        
+        # registramos observaciones, fecha y hora de la insercion
+        # de datos
+        $sql = 
+        "INSERT INTO datos_lista_verificacion ".
+        "VALUES( $id_orden_trabajo, '$fecha', '$hora', '$observaciones' )";        
+        $query = $this->insert_query( $sql );
+
+        if ( $query !== 'OK' ) {
+            $this->conexion->rollback();
+
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar tabla: [datos_lista_verificacion]' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => $query );
+            return $rsp;
+        }
+
+        # insertamos actividades
+        $datos_actividad = $this->__insertar_datos_actividad( $id_orden_trabajo, $datos_actividad );
+        if ( $datos_actividad === 'OK' ) {
+            $this->conexion->commit();
+            $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Datos guardados satisfactoriamente' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => 'Correcto' );
+            return $rsp;
+        }
+
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al guardar los datos' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => $datos_actividad );
+            return $rsp;
+        }
     }
 
-    private function __insertar_datos_actividad ( $id_orden_trabajo, $arr )
-    {
+    private function __insertar_datos_actividad ( $id_orden_trabajo, $arr ) {
         $mtzError = array();
 
         foreach ( $arr as $actividad ) 
@@ -1152,8 +1400,7 @@ class mantenimiento extends sigesop
         else return sizeof( $mtzError )." de las ".sizeof( $arr )." actividades han sido capturadas previamente";
     }
 
-    private function verifica_actividad_insertada ( $id_orden_trabajo, $id_actividad )
-    {
+    private function verifica_actividad_insertada ( $id_orden_trabajo, $id_actividad ) {
         $sql = "select id_actividad_verificar from orden_trabajo_actividad where id_orden_trabajo = $id_orden_trabajo and id_actividad_verificar = $id_actividad";
         $query = $this->array_query( $sql, 'id_actividad_verificar', null );
 
@@ -1161,8 +1408,7 @@ class mantenimiento extends sigesop
         else return false;
     }
 
-    private function __datos_lectura( $arr, $id_actividad, $tipo_lectura )
-    {
+    private function __datos_lectura( $arr, $id_actividad, $tipo_lectura ) {
         foreach ( $arr as $lectura ) 
         {
             $tipo_dato = $lectura[ 'tipo_dato' ];
@@ -1210,8 +1456,7 @@ class mantenimiento extends sigesop
         return 'OK';
     }
 
-    private function __evaluacion_parametro ( $tipo_validacion, $dato_validacion, $dato )
-    {
+    private function __evaluacion_parametro ( $tipo_validacion, $dato_validacion, $dato ) {
         switch ( $tipo_validacion ) 
         {
             case 'BINARIO': return true; break;

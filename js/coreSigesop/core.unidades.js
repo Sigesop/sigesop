@@ -1,6 +1,5 @@
 sigesop.unidades = {
-	document: function ( opt ) 
-	{
+	document: function ( opt ) {
 		var 
 
 		suf = opt.suf || '',
@@ -21,7 +20,7 @@ sigesop.unidades = {
 					'<div class="col-md-7">' +
 						'<input name="numero_unidad" id="numero-unidad-' + suf +
 						'" class="form-control input-md MAYUS" value="' +
-						'" placeholder="Ingrese ID de Unidad ( 1-4 caracteres, signos aceptados [-_.] [A-Za-z] [0-9])">' +
+						'" placeholder="De 1 – 4 caracteres [- _ .] [0-9] [A-Z]">' +
 					'</div>' +
 				'</div>' +
 				
@@ -147,22 +146,31 @@ sigesop.unidades = {
 					'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 				'</div>' +
 
+				'<div class="form-group">'+
+					'<div class="col-sm-5 control-label"></div>'+
+					'<p class="col-sm-7">'+
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de Unidades</button>'+					
+					'</p>'+
+				'</div>'+
+
 				'<div class="form-group">' +					
 					'<div class="col-sm-12 col-md-12" id="tabla-registro-unidades-' + suf + '"></div>' +
 				'</div>' +
 			'</form>',
 
 		javascript = function () {
+			var 
 			table = 
-				sigesop.tablaRegistro({
-					head: 'NUMERO DE UNIDAD, CAPACIDAD INSTALADA, CAPACIDAD EFECTIVA',
-					campo: 'numero_unidad, capacidad_instalada, capacidad_efectiva_unidad'
-				});
+			sigesop.tablaRegistro({
+				head: 'NUMERO DE UNIDAD, CAPACIDAD INSTALADA, CAPACIDAD EFECTIVA',
+				campo: 'numero_unidad, capacidad_instalada, capacidad_efectiva_unidad'
+			}),
+			$botonImprimir = $( doc.IDS.botonImprimir );			
 
-				doc.table.update_table = table.update_table; // enlazamos a vista publica
-				doc.table.body = table.IDS.body;
-				document.getElementById( doc.IDS.idTabla.flushChar('#') )
-				.innerHTML = '<br>' + table.html;
+			doc.table.update_table = table.update_table; // enlazamos a vista publica
+			doc.table.body = table.IDS.body;
+			document.getElementById( doc.IDS.idTabla.flushChar('#') )
+			.innerHTML = '<br>' + table.html;
 
 			$( table.IDS.body ).contextMenu({
 				selector: 'tr',
@@ -171,7 +179,7 @@ sigesop.unidades = {
 		            	name: 'Editar', 
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.editar == 'function' ?
 		        				opt.table.actions.editar( index ):
 		        				console.log( 'function editar is null' );
@@ -181,7 +189,7 @@ sigesop.unidades = {
 		            	name: 'Eliminar', 
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.eliminar == 'function' ?
 		        				opt.table.actions.eliminar( index ):
 		        				console.log( 'function eliminar is null' );
@@ -189,9 +197,18 @@ sigesop.unidades = {
 		            }
 				}
 			});
+
+			$botonImprimir.on( 'click', function ( event ) { 
+				var url = sigesop.raizServidor + 'ajax.php?class=unidades' +
+					'&action=imprimir',
+					win = window.open( url );
+
+				win.focus();
+			});
 		},
 
 		IDS = {
+			botonImprimir: '#btn-imprimir-reporte-' + suf,
 			idTabla: '#tabla-registro-unidades-' + suf,
 			form: '#form-registro-unidades-' + suf
 		},

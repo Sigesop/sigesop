@@ -1,6 +1,5 @@
 sigesop.gestionCentral = {
-	document: function ( opt )
-	{
+	document: function ( opt ) {
 		var
 		suf = opt.suf || '',
 
@@ -11,7 +10,7 @@ sigesop.gestionCentral = {
 				'<div class="col-sm-7">'+
 					'<input name="clave_20" id="clave-central-' + suf +
 					'" class="form-control input-md MAYUS" disabled ' +
-					'placeholder="Ingrese clave de la central ( 5 caracteres exactos, signos aceptados [A-Z] [0-9])">'+
+					'placeholder="5 caracteres exactos. [0-9] [A-Z]">'+
 				'</div>'+
 			'</div>'+
 
@@ -20,7 +19,7 @@ sigesop.gestionCentral = {
 				'<div class="col-sm-7">'+
 					'<input name="clave_sap" id="clave-SAP-central-' + suf + 
 					'" class="form-control input-md MAYUS" disabled ' +
-					'placeholder="Ingrese clave SAP ( 4 caracteres exactos, signos aceptados [A-Z] [0-9])" >'+
+					'placeholder="4 caracteres exactos. [0-9] [A-Z]" >'+
 				'</div>'+
 			'</div>'+
 
@@ -29,51 +28,51 @@ sigesop.gestionCentral = {
 				'<div class="col-sm-7">'+
 					'<input name="centro_costo" id="centro-costo-central-' + suf + 
 					'" class="form-control input-md MAYUS" disabled ' +
-					'placeholder="Ingrese centro costo ( 1-6 caracteres, signos aceptados [-_.] [A-Za-z] [0-9])">'+
+					'placeholder="De 1-6 caracteres. [- _ .] [0-9] [A-Z]">'+
 				'</div>'+
 			'</div>'+
 
 			'<div class="form-group">'+
-				'<label class="col-sm-3 control-label">Nombre de la Central:</label>'+
+				'<label class="col-sm-3 control-label">Nombre:</label>'+
 				'<div class="col-sm-7">'+
 					'<input name="nombre_central" id="nombre-central-' + suf + 
 					'" class="form-control input-md MAYUS" disabled ' +
-					'placeholder="Nombre de la central"  >' +
+					'placeholder="De 1-100 caracteres."  >' +
 				'</div>'+
 			'</div>'+
 
 			'<div class="form-group">'+
-				'<label class="col-sm-3 control-label">Dirección de la Central:</label>'+
+				'<label class="col-sm-3 control-label">Dirección:</label>'+
 				'<div class="col-sm-7">'+
 					'<textarea name="direccion" id="direccion-central-' + suf + 
 					'" class="form-control input-md MAYUS" disabled ' +
-					'placeholder="Dirección de la central" ></textarea>' +
+					'placeholder="De 1-100 caracteres." ></textarea>' +
 				'</div>'+
 			'</div>'+
 
 			'<div class="form-group">'+
-				'<label class="col-sm-3 control-label">Teléfono de la Central:</label>'+
+				'<label class="col-sm-3 control-label">Teléfono:</label>'+
 				'<div class="col-sm-7">'+
 					'<input name="telefono" id="telefono-central-' + suf + 
 					'" class="form-control input-md MAYUS" disabled ' +
-					'placeholder="Teléfono de la central" >' +
+					'placeholder="De 1-50 caracteres." >' +
 				'</div>'+
 			'</div>'+
 
 			'<div class="form-group">'+
-				'<label class="col-sm-3 control-label">Código Postal de la Central:</label>'+
+				'<label class="col-sm-3 control-label">Código Postal:</label>'+
 				'<div class="col-sm-7">'+
 					'<input name="cp" id="codigo-postal-central-' + suf + 
 					'" class="form-control input-md" disabled ' +
-					'placeholder="Código Postal de la central" >'+
+					'placeholder="De 1-5 caracteres. [0-9]" >'+
 				'</div>'+
 			'</div>'+
 
 			'<div class="form-group">'+
-				'<label class="col-sm-3 control-label">Superintendente de la Central</label>'+
+				'<label class="col-sm-3 control-label">Superintendente</label>'+
 				'<div class="col-sm-4">'+
 					'<input name="superintendente" id="superintendente-central-' + suf + 
-					'" class="form-control input-md MAYUS" disabled >' +
+					'" placeholder="5 caracteres exactos. [0-9] [A-Z]" class="form-control input-md MAYUS" disabled >' +
 				'</div>'+
 
 				'<div class="col-sm-4">'+
@@ -87,7 +86,7 @@ sigesop.gestionCentral = {
 			'</div>' +
 
 			'<div class="form-group">'+
-				'<label class="col-sm-3 control-label">Capacidad Instalada de la Central</label>'+
+				'<label class="col-sm-3 control-label">Capacidad Instalada</label>'+
 				'<div class="col-sm-7">'+
 					'<input id="capacidad-instalada-central-' + suf + 
 					'" class="form-control input-md" disabled>'+
@@ -101,6 +100,7 @@ sigesop.gestionCentral = {
 						'<button id="btn-guardar-central-' + suf + '" type="submit" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
 						'<button id="btn-limpiar-campos-central-' + suf +  '" type="reset" class="btn btn-success" disabled> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button> ' +
 						'<button id="btn-editar-central-' + suf +  '" type="" class="btn btn-danger"><span class="glyphicon glyphicon-list"></span> Editar</button> ' +
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de la Central</button>'+
 					'</p>'+
 				'</div>'+
 				'<div class="col-sm-1"></div>'+
@@ -117,21 +117,42 @@ sigesop.gestionCentral = {
 
 			doc = this,
 			
-			clickAceptar = function( event ) {
-				event.preventDefault();
-				enable.call( doc );
-				$( win.idDiv ).modal( 'hide' );
-			},
+			// clickAceptar = function( event ) {
+			// 	event.preventDefault();
+			// 	enable.call( doc );
+			// 	$( win.idDiv ).modal( 'hide' );
+			// },
 
-			win = sigesop.ventanaEmergente({
-				idDiv: 'confirmarSolicitud' + suf,
-				titulo: 'Autorización requerida',
-				clickAceptar: clickAceptar,
-				showBsModal: function () {
-					document.getElementById( this.idBody )
-					.innerHTML = '<div class="alert alert-danger text-center"><h4>¿Está seguro de editar datos de la central?</h4></div>';
-				}
-			});	
+		    win = BootstrapDialog.show({
+		        title: 'Autorización requerida',
+		        type: BootstrapDialog.TYPE_DEFAULT,
+		        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de editar datos de la central?</h4></div>',
+		        size: BootstrapDialog.SIZE_NORMAL,
+		        draggable: true,
+		        buttons: [{
+		            label: 'Cancelar',
+		            action: function( dialog ) {
+		                dialog.close();
+		            }
+		        },{
+		            label: 'Aceptar',
+		            cssClass: 'btn-danger',
+		            action: function ( dialog ) {
+		            	enable.call( doc );
+		            	dialog.close();
+		            }
+		        }]
+		    });
+
+			// win = sigesop.ventanaEmergente({
+			// 	idDiv: 'confirmarSolicitud' + suf,
+			// 	titulo: 'Autorización requerida',
+			// 	clickAceptar: clickAceptar,
+			// 	showBsModal: function () {
+			// 		document.getElementById( this.idBody )
+			// 		.innerHTML = '<div class="alert alert-danger text-center"><h4>¿Está seguro de editar datos de la central?</h4></div>';
+			// 	}
+			// });	
 		},
 
 		/**
@@ -207,7 +228,7 @@ sigesop.gestionCentral = {
 			$( datos.telefono.idHTML ).val( obj.telefono );
 			$( datos.cp.idHTML ).val( obj.cp );
 			$( datos.superintendente.idHTML ).val( obj.superintendente );
-			$( datos.capacidad_instalada.idHTML ).val( obj.capacidad_instalada );
+			$( datos.capacidad_instalada.idHTML ).val( parseFloat( obj.capacidad_instalada ).toFixed(2) );
 		},
 
 		/**
@@ -234,8 +255,7 @@ sigesop.gestionCentral = {
 		 * @return {void} resetea los datos de la estructura de datos
 		 * principal y la validacion del formulario
 		 */
-		vaciarDatos = function ()
-		{
+		vaciarDatos = function () {
 			var doc = this;
 			doc.datos.clave_20_update.valor = null;			
 			doc.datos.clave_20.valor = null;
@@ -262,7 +282,7 @@ sigesop.gestionCentral = {
 			
 			doc = this, 
 
-			clickAceptar = function( event ) {
+			actionOK = function( dialog ) {
 				/* Guardamos el id del sistema y ponenos el nombre del sistema en la caja
 				 */
 											
@@ -284,36 +304,39 @@ sigesop.gestionCentral = {
 				var val = window.sesion.matrizUsuario[ index ]['RDE_trabajador'];
 				$( doc.datos.superintendente.idHTML ).val( val );
 				doc.IDS.$form.formValidation( 'revalidateField', 'superintendente' );
-				$( win.idDiv ).modal( 'hide' );				
+				dialog.close();				
 			},
 
-			clickCerrar = function( event ) {
-				doc.IDS.$form.formValidation( 'revalidateField', 'superintendente' );
-				$( win.idDiv ).modal( 'hide' );
-			},
-
-			showBsModal = function () {
-				document.getElementById( this.idBody )
-				.innerHTML = tabla.html;					
-
-				sigesop.query({
-					class: 'usuarios',
-					query: 'obtenerUsuarios',
-					success: function ( data ) 
-					{
-						window.sesion.matrizUsuario = data;
-						tabla.update_table( data );
-					}
-				});
-			},
-
-			win = sigesop.ventanaEmergente({
-				idDiv: 'seleccionTrabajador',
-				titulo: 'Selección de superintendente',
-				clickAceptar: clickAceptar,
-				clickCerrar: clickCerrar,
-				showBsModal: showBsModal
-			});
+		    win = BootstrapDialog.show({
+		        title: 'Selección de superintendente',
+		        type: BootstrapDialog.TYPE_DEFAULT,
+		        message: tabla.html,
+		        onshown: function ( dialog ) {
+					sigesop.query({
+						class: 'usuarios',
+						query: 'obtenerUsuarios',
+						success: function ( data ) 
+						{
+							window.sesion.matrizUsuario = data;
+							tabla.update_table( data );
+						}
+					});
+		        },
+		        size: BootstrapDialog.SIZE_WIDE,        
+		        draggable: true,
+		        buttons: [{
+		            label: 'Cancelar',
+		            // cssClass: 'btn-danger',
+		            action: function( dialog ) {
+		            	doc.IDS.$form.formValidation( 'revalidateField', 'superintendente' );
+		                dialog.close();
+		            }
+		        }, {
+		            label: 'Aceptar',
+		            cssClass: 'btn-success',
+		            action: actionOK
+		        }]
+		    });
 		},
 
 		javascript = function () { 
@@ -322,7 +345,8 @@ sigesop.gestionCentral = {
 			form = doc.IDS.form,
 			$botonEditar = $( doc.IDS.botonEditar ),
 			$botonSuperintendente = $( doc.IDS.botonSuperintendente ),
-			$botonLimpiar = $( doc.IDS.botonLimpiar ),		
+			$botonLimpiar = $( doc.IDS.botonLimpiar ),
+			$botonImprimir = $( doc.IDS.botonImprimir ),		
 			$form = $( form )
 			.formValidation({
 		        icon: {
@@ -452,6 +476,12 @@ sigesop.gestionCentral = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
+
+		                    stringLength: {
+		                    	min: 1,
+		                    	max: 5,
+		                    	message: 'Número de caracteres inválido'
+		                    },
 		                    
 		                    integer: {		                    	
 		                    	message: 'Caracteres inválidos, sólo números'
@@ -495,6 +525,14 @@ sigesop.gestionCentral = {
 			$botonEditar.on( 'click', function ( event ) {
 				event.preventDefault();
 				dialog_anable.call( doc );
+			});
+
+			$botonImprimir.on( 'click', function ( event ) { 
+				var url = sigesop.raizServidor + 'ajax.php?class=gestionCentral' +
+					'&action=imprimir',
+					win = window.open( url );
+
+				win.focus();
 			});
 
 			$( '.MAYUS' ).eventoCambioMayuscula();
@@ -542,6 +580,7 @@ sigesop.gestionCentral = {
 			botonEditar         : '#btn-editar-central-' + suf,
 			botonLimpiar        : '#btn-limpiar-campos-central-' + suf,
 			botonSuperintendente: '#btn-superintendente-central-' + suf,
+			botonImprimir: '#btn-imprimir-reporte-' + suf,
 			form                : '#form-gestion-central-' + suf,
 			$form               : null
 		},

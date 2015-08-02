@@ -70,45 +70,50 @@ function editarElemento( index ) {
 	}
 
 	var 
+
+	success = function ( datos, IDS, limpiarCampos ) {
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		sigesop.query({
+			data: datos,
+			class: 'listaVerificacion',
+			query: 'actualizarUnidadMedida',
+			queryType: 'sendData',
+			type: 'POST',
+			OK: function( msj, eventos ) {
+				$.unblockUI();
+				win.close();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+		}) ;
+	},
+
 	_doc = sigesop.unidadMedida.document ({
 		obj: elem, 
 		suf: 'update',
 		error: sigesop.completeCampos,
-		success: actualizarElemento
+		success: success
 	}),
 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'win-edicion-unidad-medida',
-		titulo: 'Edicion de Unidad de Medida',
-		clickAceptar: function ( event ) {
-			event.preventDefault();
-			$( win.idDiv ).modal( 'hide' );
-		},
-		showBsModal: function ()  {
-			document.getElementById( this.idBody )
-			.innerHTML = _doc.html;
-			_doc.javascript();
-		}
-	});
-}
-
-function actualizarElemento( datos, IDS, limpiarCampos ) {
-	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
-	sigesop.query({
-		data: datos,
-		class: 'listaVerificacion',
-		query: 'actualizarUnidadMedida',
-		queryType: 'sendData',
-		type: 'POST',
-		OK: function( msj, eventos ) {
-			$.unblockUI();
-			$( '#win-edicion-unidad-medida' ).modal( 'hide' );
-			getData();
-			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-		},
-		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
-		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
-	}) ;
+    win = BootstrapDialog.show({
+        title: 'Edicion de Unidad de Medida',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: _doc.html,
+        onshown: function ( dialog ) {
+        	_doc.javascript();
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
 }
 
 function eliminarElemento ( index ) {
@@ -122,30 +127,67 @@ function eliminarElemento ( index ) {
 	}
 
 	var 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'win-confirmar-eliminacion',
-		titulo: 'Autorización requerida',
-		clickAceptar: function( event ) {
-			event.preventDefault();
-			sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
-			$( win.idDiv ).modal( 'hide' );
-			sigesop.query({
-				data: { unidad_medida: elem.unidad_medida },
-				class: 'listaVerificacion',
-				query: 'eliminarUnidadMedida',
-				queryType: 'sendData',
-				OK: function ( msj, eventos ) {
-					$.unblockUI();
-					getData();
-					sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-				},
-				NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
-				DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
-			});					
-		},
-		showBsModal: function () {
-			document.getElementById( this.idBody ).innerHTML = 
-			'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
-		}
-	});
+
+	action = function ( dialog ) {
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		dialog.close();
+		sigesop.query({
+			data: { unidad_medida: elem.unidad_medida },
+			class: 'listaVerificacion',
+			query: 'eliminarUnidadMedida',
+			queryType: 'sendData',
+			OK: function ( msj, eventos ) {
+				$.unblockUI();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+		});	
+	},
+
+    win = BootstrapDialog.show({
+        title: 'Autorización requerida',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',        
+        size: BootstrapDialog.SIZE_NORMAL,
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        },{
+            label: 'Aceptar',
+            cssClass: 'btn-danger',
+            action: action
+        }]
+    });
+
+	// win = sigesop.ventanaEmergente({
+	// 	idDiv: 'win-confirmar-eliminacion',
+	// 	titulo: 'Autorización requerida',
+	// 	clickAceptar: function( event ) {
+	// 		event.preventDefault();
+	// 		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+	// 		$( win.idDiv ).modal( 'hide' );
+	// 		sigesop.query({
+	// 			data: { unidad_medida: elem.unidad_medida },
+	// 			class: 'listaVerificacion',
+	// 			query: 'eliminarUnidadMedida',
+	// 			queryType: 'sendData',
+	// 			OK: function ( msj, eventos ) {
+	// 				$.unblockUI();
+	// 				getData();
+	// 				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+	// 			},
+	// 			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+	// 			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+	// 		});					
+	// 	},
+	// 	showBsModal: function () {
+	// 		document.getElementById( this.idBody ).innerHTML = 
+	// 		'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
+	// 	}
+	// });
 }

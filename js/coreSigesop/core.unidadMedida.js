@@ -4,8 +4,7 @@
  * 
  */
 sigesop.unidadMedida = {
-	document: function ( opt )
-	{		
+	document: function ( opt ) {		
 		var 
 		
 		suf = opt.suf || '',
@@ -20,7 +19,7 @@ sigesop.unidadMedida = {
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="col-sm-3 control-label">Descripcion Unidad de Medida:</label>' +
+					'<label class="col-sm-3 control-label">Descripción:</label>' +
 					'<div class="col-sm-7">' +
 						'<textarea name="descripcion_unidad_medida" id="desc-unidad-medida-' + suf + '" class="form-control input-md evtCambioMay" placeholder="Ingrese descripcion de la actividad"></textarea>' +
 					'</div>' +
@@ -200,22 +199,30 @@ sigesop.unidadMedida = {
 		suf = opt.suf || '',
 
 		html = 
-			'<form id="form-registro-unidad-medida-' + suf + '" class="form-horizontal" role="form">'+
-				'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
-					'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
-						'<span aria-hidden="true">×</span>' +
-					'</button>' +
-					'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
-				'</div>' +
+		'<form id="form-registro-unidad-medida-' + suf + '" class="form-horizontal" role="form">'+
+			'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
+				'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
+					'<span aria-hidden="true">×</span>' +
+				'</button>' +
+				'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
+			'</div>' +
 
-				'<div class="form-group">' +					
-					'<div class="col-sm-12 col-md-12" id="tabla-registro-unidad-medida-' + suf + '"></div>' +
-				'</div>' +
-			'</form>',
+			'<div class="form-group">'+
+				'<div class="col-sm-5 control-label"></div>'+
+				'<p class="col-sm-7">'+
+					'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de unidades de medida</button>'+					
+				'</p>'+
+			'</div>'+
+
+			'<div class="form-group">' +					
+				'<div class="col-sm-12 col-md-12" id="tabla-registro-unidad-medida-' + suf + '"></div>' +
+			'</div>' +
+		'</form>',
 
 		javascript = function () {
 			var
 			doc = this,
+			$botonImprimir = $( doc.IDS.botonImprimir ),
 			table = 
 				sigesop.tablaRegistro({
 					head: 'UNIDAD DE MEDIDA, DESCRIPCIÓN',
@@ -234,7 +241,7 @@ sigesop.unidadMedida = {
 		            	name: 'Editar', 
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.editar == 'function' ?
 		        				opt.table.actions.editar( index ):
 		        				console.log( 'function editar is null' );
@@ -244,7 +251,7 @@ sigesop.unidadMedida = {
 		            	name: 'Eliminar', 
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.eliminar == 'function' ?
 		        				opt.table.actions.eliminar( index ):
 		        				console.log( 'function eliminar is null' );
@@ -252,9 +259,18 @@ sigesop.unidadMedida = {
 		            }
 				}
 			});
+
+			$botonImprimir.on( 'click', function ( event ) { 
+				var url = sigesop.raizServidor + 'ajax.php?class=listaVerificacion' +
+					'&action=imprimirUM',
+					win = window.open( url );
+
+				win.focus();
+			});
 		},
 
 		IDS = {
+			botonImprimir: '#btn-imprimir-reporte-' + suf,
 			idTabla: '#tabla-registro-unidad-medida-' + suf,
 			form: '#form-registro-unidad-medida-' + suf
 		},

@@ -35,6 +35,11 @@ switch ( $_GET['class'] ) // clases del sistema
 		$obj = new mantenimiento( $user, $pass );
 		break;
 
+	case 'materiales':
+		require ( 'materiales.class.php' );
+		$obj = new materiales( $user, $pass );
+		break;
+
 	case 'operacion':
 		require ( 'operacion.class.php' );
 		$obj = new operacion( $user, $pass );

@@ -127,10 +127,39 @@ function editarElemento( index ) {
 
 	/* creamos la estructura para la edicion de el usuario en la ventana	
 	 */
-	var _doc = sigesop.unidades.document ({
+	var 
+
+	success = function ( datos, IDS, limpiarCampos ) {
+		datos.numero_unidad.valor = $( datos.numero_unidad.idHTML ).val();
+
+		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI' );
+		sigesop.query({
+			data: datos,
+			class: 'unidades',
+			query: 'actualizarUnidad',
+			queryType: 'sendData',
+			type: 'POST',
+			OK: function ( msj, eventos ) {
+				getData();
+				$.unblockUI();
+				win.close();
+				sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'success' );
+			},
+			NA: function ( msj, eventos ) {
+				$.unblockUI();
+				sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
+			},
+			DEFAULT: function ( msj, eventos ) {
+				$.unblockUI();
+				sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
+			}
+		}) ;
+	},
+
+	_doc = sigesop.unidades.document ({
 		obj: elemento,  
 		suf: '-update',
-		success: actualizarElemento,
+		success: success,
 		error: sigesop.completeCampos
 	});
 
@@ -142,44 +171,21 @@ function editarElemento( index ) {
 	 */
 	var 
 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'div-edicion-unidades',
-		titulo: 'Edicion de Unidad',
-		clickAceptar: function ( event ) {
-			event.preventDefault();
-			$( win.idDiv ).modal( 'hide' );
-		},
-		showBsModal: function () {
-			document.getElementById( this.idBody )
-			.innerHTML = _doc.html;
-			_doc.javascript();
-		}
-	});
-}
-
-function actualizarElemento( datos, IDS, limpiarCampos ) {
-	datos.numero_unidad.valor = $( datos.numero_unidad.idHTML ).val();
-
-	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI' );
-	sigesop.query({
-		data: datos,
-		class: 'unidades',
-		query: 'actualizarUnidad',
-		queryType: 'sendData',
-		type: 'POST',
-		OK: function ( msj, eventos ) {
-			getData();
-			$.unblockUI();
-			$( '#div-edicion-unidades' ).modal( 'hide' );
-			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'success' );
-		},
-		NA: function ( msj, eventos ) {
-			$.unblockUI();
-			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
-		},
-		DEFAULT: function ( msj, eventos ) {
-			$.unblockUI();
-			sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
-		}
-	}) ;
+    win = BootstrapDialog.show({
+        title: 'Edicion de Unidad',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: _doc.html,
+        onshown: function ( dialog ) {
+        	_doc.javascript();
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
 }

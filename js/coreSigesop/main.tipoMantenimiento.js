@@ -44,27 +44,6 @@ function getData() {
 	});
 }
 
-function procesoElemento ( doc, btn, callback ) {
-	// ---------- capturar los datos restantes del formulario
-	
-	doc.datos.nombre_mantenimiento.valor = $( doc.datos.nombre_mantenimiento.idHTML ).val().trim();
-	doc.datos.id_mantenimiento.valor = $( doc.datos.id_mantenimiento.idHTML ).val().trim();
-	doc.datos.numero_frecuencia.valor = $( doc.datos.numero_frecuencia.idHTML ).val().trim();
-	doc.datos.tipo_frecuencia.valor = $( doc.datos.tipo_frecuencia.idHTML ).val().trim();
-
-	// ---------- validar los datos almacenados
-
-	var arr = [
-		doc.datos.nombre_mantenimiento,
-		doc.datos.id_mantenimiento,
-		doc.datos.numero_frecuencia,
-		doc.datos.tipo_frecuencia
-	];
-	
-	if ( sigesop.validacion( arr, {tipoValidacion: 'error'} ) ) callback( doc, btn );
-	else sigesop.msgBlockUI( 'Complete los campos', 'error' );
-}
-
 function nuevoElemento( datos, IDS, limpiarCampos ) {
 	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
 	sigesop.query({
@@ -95,44 +74,51 @@ function editarElemento( index ) {
 	}
 
 
-	var _doc = sigesop.tipoMantenimiento.document ({
+	var 
+
+	success = function ( datos, IDS, limpiarCampos ) {
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		sigesop.query({
+			data: datos,
+			class: 'listaVerificacion',
+			query: 'actualizarTipoMantto',
+			queryType: 'sendData',
+			type: 'POST',
+			OK: function( msj, eventos ) {
+				$.unblockUI();
+				win.close();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+		}) ;
+	}
+
+	_doc = sigesop.tipoMantenimiento.document ({
 		obj: elem, 
 		suf: 'update',
 		error: sigesop.completeCampos,
-		success: actualizarElemento
+		success: success
 	}),
 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'win-edicion-tipo-mantenimiento',
-		titulo: 'Edicion de tipo de mantenimiento',
-		clickAceptar: function ( event ) {
-			event.preventDefault();
-			$( win.idDiv ).modal( 'hide' );
-		},
-		showBsModal: function () {
-			document.getElementById( this.idBody ).innerHTML = _doc.html;
-			_doc.javascript();
-		}
-	});
-}
-
-function actualizarElemento( datos, IDS, limpiarCampos ) {
-	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
-	sigesop.query({
-		data: datos,
-		class: 'listaVerificacion',
-		query: 'actualizarTipoMantto',
-		queryType: 'sendData',
-		type: 'POST',
-		OK: function( msj, eventos ) {
-			$.unblockUI();
-			$( '#win-edicion-tipo-mantenimiento' ).modal( 'hide' );
-			getData();
-			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-		},
-		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
-		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
-	}) ;
+    win = BootstrapDialog.show({
+        title: 'Edicion de tipo de mantenimiento',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: _doc.html,
+        onshown: function ( dialog ) {
+        	_doc.javascript();
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
 }
 
 function eliminarElemento ( index ) {
@@ -146,30 +132,67 @@ function eliminarElemento ( index ) {
 	}
 
 	var 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'confifirmar-eliminacion',
-		titulo: 'Autorización requerida',
-		clickAceptar: function( event ) {
-			event.preventDefault();
-			sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
-			$( win.idDiv ).modal( 'hide' );
-			sigesop.query({
-				data: { id_mantenimiento: elem.id_mantenimiento },
-				class: 'listaVerificacion',
-				query: 'eliminarTipoMantto',
-				queryType: 'sendData',
-				OK: function ( msj, eventos ) {
-					$.unblockUI();
-					getData();
-					sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-				},
-				NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
-				DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
-			});					
-		},
-		showBsModal: function () {
-			document.getElementById( this.idBody ).innerHTML = 
-			'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
-		}
-	});
+
+	action = function ( dialog ) {
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		dialog.close();
+		sigesop.query({
+			data: { id_mantenimiento: elem.id_mantenimiento },
+			class: 'listaVerificacion',
+			query: 'eliminarTipoMantto',
+			queryType: 'sendData',
+			OK: function ( msj, eventos ) {
+				$.unblockUI();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+		});	
+	},
+
+    win = BootstrapDialog.show({
+        title: 'Autorización requerida',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',
+        size: BootstrapDialog.SIZE_NORMAL,
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        },{
+            label: 'Aceptar',
+            cssClass: 'btn-danger',
+            action: action
+        }]
+    });
+
+	// win = sigesop.ventanaEmergente({
+	// 	idDiv: 'confifirmar-eliminacion',
+	// 	titulo: 'Autorización requerida',
+	// 	clickAceptar: function( event ) {
+	// 		event.preventDefault();
+	// 		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+	// 		$( win.idDiv ).modal( 'hide' );
+	// 		sigesop.query({
+	// 			data: { id_mantenimiento: elem.id_mantenimiento },
+	// 			class: 'listaVerificacion',
+	// 			query: 'eliminarTipoMantto',
+	// 			queryType: 'sendData',
+	// 			OK: function ( msj, eventos ) {
+	// 				$.unblockUI();
+	// 				getData();
+	// 				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+	// 			},
+	// 			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+	// 			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+	// 		});					
+	// 	},
+	// 	showBsModal: function () {
+	// 		document.getElementById( this.idBody ).innerHTML = 
+	// 		'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
+	// 	}
+	// });
 }

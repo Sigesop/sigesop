@@ -298,6 +298,13 @@ sigesop.tipoMantenimiento = {
 					'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 				'</div>' +
 
+				'<div class="form-group">'+
+					'<div class="col-sm-5 control-label"></div>'+
+					'<p class="col-sm-7">'+
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de los tipos de mantenimiento</button>'+					
+					'</p>'+
+				'</div>'+
+
 				'<div class="form-group">' +					
 					'<div class="col-sm-12 col-md-12" id="tabla-registro-tipo-mantenimiento-' + suf + '"></div>' +
 				'</div>' +
@@ -306,6 +313,7 @@ sigesop.tipoMantenimiento = {
 		javascript = function () {
 			var
 			doc = this,
+			$botonImprimir = $( doc.IDS.botonImprimir ),
 			table = 
 				sigesop.tablaRegistro({
 					head: 'ID, NOMBRE MANTENIMIENTO, FRECUENCIA, TIPO FRECUENCIA',
@@ -324,7 +332,7 @@ sigesop.tipoMantenimiento = {
 		            	name: 'Editar', 
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.editar == 'function' ?
 		        				opt.table.actions.editar( index ):
 		        				console.log( 'function editar is null' );
@@ -334,7 +342,7 @@ sigesop.tipoMantenimiento = {
 		            	name: 'Eliminar', 
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.eliminar == 'function' ?
 		        				opt.table.actions.eliminar( index ):
 		        				console.log( 'function eliminar is null' );
@@ -342,9 +350,17 @@ sigesop.tipoMantenimiento = {
 		            }
 				}
 			});
+
+			$botonImprimir.on( 'click', function ( event ) { 
+				var url = sigesop.raizServidor + 'ajax.php?class=listaVerificacion' +
+					'&action=imprimirTipoMtto',
+					win = window.open( url );
+				win.focus();
+			});
 		},
 
 		IDS = {
+			botonImprimir: '#btn-imprimir-reporte-' + suf,
 			idTabla: '#tabla-registro-tipo-mantenimiento-' + suf,
 			form: '#form-registro-tipo-mantenimiento-' + suf
 		},

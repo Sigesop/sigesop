@@ -5,8 +5,7 @@
  * 
  */
 sigesop.generadores = {
-	document: function( opt ) 
-	{
+	document: function( opt ) {
 		var 
 
 		suf = opt.suf || '',
@@ -122,7 +121,7 @@ sigesop.generadores = {
 		                        message: 'Campo requerido'
 		                    },
 		                    stringLength: {
-		                    	max: 4,
+		                    	max: 50,
 		                    	message: 'Número de caracteres inválido'
 		                    },
 		                    regexp: {
@@ -195,7 +194,7 @@ sigesop.generadores = {
 				$numero_aero.val( obj.numero_aero );
 				$capacidad_efectiva_aero.val( obj.capacidad_efectiva_aero );
 
-				/* Guardamos el ID del equipo que se actualizará				
+				/* Guardamos el ID que se actualizará				
 				 */
 				datos.numero_aero_update.valor = obj.numero_aero;
 			}
@@ -271,7 +270,7 @@ sigesop.generadores = {
 							valor: 'C.A., FALLA, MTTO, F.A., DISPONIBLE'
 						}
 					}
-				});
+				});			
 
 			doc.table.update_table = table.update_table; // enlazamos a vista publica
 			doc.table.body = table.IDS.body;
@@ -285,7 +284,7 @@ sigesop.generadores = {
 		            	name: 'Editar', 
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.editar == 'function' ?
 		        				opt.table.actions.editar( index ):
 		        				console.log( 'function editar is null' );
@@ -295,7 +294,7 @@ sigesop.generadores = {
 		            	name: 'Eliminar', 
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			typeof opt.table.actions.eliminar == 'function' ?
 		        				opt.table.actions.eliminar( index ):
 		        				console.log( 'function eliminar is null' );
@@ -321,5 +320,145 @@ sigesop.generadores = {
 		};
 
 		return doc;
-	}	
+	},
+
+	registroReporte : function ( opt ) {
+		var
+			obj = opt.obj || {},
+			suf = opt.suf || '';
+
+		var 
+		html = 
+			'<form id="form-imprimir-reporte-' + suf + '" class="form-horizontal" role="form">'+
+			
+				'<div class="form-group">'+
+					'<label class="control-label col-sm-5 ">No. de Unidad: </label>'+
+					'<div class="col-sm-2">'+
+						'<select name="numero_unidad" id="numero-unidad-impresion-reporte-' + suf + '"class="form-control input-md"></select>' +
+					'</div>'+
+				'</div>'+
+				'<div class="form-group">'+
+					'<div class="col-sm-5 control-label"></div>'+
+					'<p class="col-sm-7">'+
+						//'<button type="button" id="btn-imprimir-reporte-2' + suf + '" class="btn btn-success" > <span></span> Reporte general</button>  '+					
+						'<button type="submit" id="btn-consulta-reporte-' + suf + '" class="btn btn-success"  data-loading-text="Buscando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Consultar</button> ' +
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+					
+					'</p>'+
+				'</div>'+
+
+				'<div id="tabla-impresion-reporte-' + suf + '" class="form-group"> </div>'+
+
+				'</form>',
+
+		javascript = function () {
+			var 
+			doc = this,
+			form = doc.IDS.form,
+			$numero_unidad = $( doc.datos.numero_unidad.idHTML ),
+			$botonConsultar = $( doc.IDS.botonConsultar ),
+			$botonImprimir = $( doc.IDS.botonImprimir ),
+			$form = $( form )
+			.formValidation({
+				// live: 'submit',
+		        icon: {
+		            valid: 'glyphicon glyphicon-ok',
+		            invalid: 'glyphicon glyphicon-remove',
+		            validating: 'glyphicon glyphicon-refresh'
+		        },
+
+		        onSuccess: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.success == 'function' ?
+		        		opt.success( doc.datos, doc.IDS ) :
+		        		console.log( 'success is null' );
+
+		        	$( form ).data( 'formValidation' ).disableSubmitButtons( false );
+		        },
+
+		        onError: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.error == 'function' ?
+		        		opt.error() : console.log( 'error is null' );			        	
+		        },
+
+		        fields: {
+		        	numero_unidad: {
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Seleccione unidad de generador'
+		                    	}
+		                	}
+		                },	            
+		        }
+			})			
+			.on( 'success.form.fv', function( e ) { $botonImprimir.prop( 'disabled', false ); })
+	        .on( 'err.field.fv', function( e ) { $botonImprimir.prop( 'disabled', true ); })
+			.on( 'success.field.fv', function( e, data ) { data.fv.disableSubmitButtons( false ); });
+	
+			doc.IDS.$form = $form;
+
+			var tabla_reporte = 
+			sigesop.tablaRegistro({
+				suf: '_reporte',
+				head: 'NUMERO DE AEROGENERADOR, NUMERO DE UNIDAD, ESTADO LICENCIA, CAPACIDAD EFECTIVA, FECHA DE OPERACION',
+					campo: 'numero_aero, numero_unidad, estado_licencia, capacidad_efectiva_aero, fecha_operacion',
+			});
+
+
+			doc.table.update_table = tabla_reporte.update_table; // enlazamos a vista publica
+			doc.table.body = tabla_reporte.IDS.body;
+			document.getElementById( doc.IDS.idTabla.flushChar('#') ).innerHTML = '<br>' + tabla_reporte.html
+
+		
+			$botonImprimir.on( 'click', function ( event ) { 
+		
+				var url = sigesop.raizServidor + 'ajax.php?class=generadores' +
+					'&action=imprimir'+'&option=unidad' + '&numero_unidad=' + $numero_unidad.val(),
+					//console.log(url);
+				 	win = window.open( url );
+
+				 win.focus();
+
+			 });
+
+			// $botonConsultar.on( 'click', function ( event ) { 
+		
+			// 	var url = sigesop.raizServidor + 'ajax.php?class=generadores' +
+			// 		'&action=imprimir&option=general',
+
+			// 		win = window.open( url );
+
+			// 	win.focus();
+
+			//  });
+		},
+					
+		datos = {
+			numero_unidad:{
+				idHTML: '#numero-unidad-impresion-reporte-' + suf,
+				valor: null
+			} 
+		},
+
+		IDS = {
+			idTabla: '#tabla-impresion-reporte-' + suf,
+			botonConsultar: '#btn-consulta-reporte-' + suf,
+			botonImprimir: '#btn-imprimir-reporte-' + suf,
+			// botonImp2: '#btn-imprimir-reporte-2' + suf,
+			form: '#form-imprimir-reporte-' + suf
+		},
+
+		doc = {
+			html: html,
+			javascript: javascript,
+			datos: datos,
+			IDS: IDS,
+			table: {
+				body: null,
+				update_table: null
+			}
+		}
+
+		return doc;
+	}
 }

@@ -1,21 +1,40 @@
 <?php
-require 'sigesop.class.php';
-require '../Carbon/Carbon.php';
-include 'pdf.class.php';
+require_once 'sigesop.class.php';
+require_once '../Carbon/Carbon.php';
+include_once 'pdf.class.php';
 use Carbon\Carbon;
 
-class operacion extends sigesop
-{	
+class operacion extends sigesop {
 	public function __construct( $usuario, $clave ) { 
-        parent::sigesop( $usuario, $clave ); 
+        parent::sigesop( $usuario, $clave );
     }
     
     public function __destruct(){ parent::__destruct(); }
-	public function solicitudAjax( $accion, $post, $get ) {
-		switch ( $accion )
-		{
+	
+    public function solicitudAjax( $accion, $post, $get ) {
+		switch ( $accion ) { 
+            case 'actualizar_relatorio':
+                $query = $this->actualizar_relatorio( $post );
+                echo json_encode( $query );
+                break;
+
+            case 'actualizar_evento_relatorio':
+                $query = $this->actualizar_evento_relatorio( $post );
+                echo json_encode( $query );
+                break;
+
+            case 'agregar_consecutivo_inicializador':
+                $query = $this->agregar_consecutivo_inicializador( $post );
+                echo json_encode( $query );
+                break;
+
             case 'cerrar_evento':
                 $query = $this->cerrar_evento( $get );
+                echo json_encode( $query );
+                break;
+
+            case 'verifica_consecutivo_licencia':
+                $query = $this->verifica_consecutivo_licencia( $get );
                 echo json_encode( $query );
                 break;
 
@@ -24,6 +43,15 @@ class operacion extends sigesop
                 echo json_encode( $query );
                 break;
 
+            case 'eliminar_libro_relatorio':
+                $query = $this->eliminar_libro_relatorio( $get );
+                echo json_encode( $query );
+                break;
+
+            case 'eliminar_libro_relatorio_historial':
+                $query = $this->eliminar_libro_relatorio_historial( $get );
+                echo json_encode( $query );
+                break;
 
             case 'imprimir':
                 $query = $this->imprimir( $get );
@@ -60,63 +88,59 @@ class operacion extends sigesop
                 echo json_encode( $query );
                 break; 
 
+            case 'obtener_tipo_reporte':
+                $query = $this->obtener_tipo_reporte();
+                echo json_encode( $query );
+                break; 
+
             default:
                 echo json_encode('Funcion no registrada en la clase operacion');
             break;
 		}
 	}
 
-    public function cerrar_evento ( $get ) {
-        $rsp = array( 'status' => array(), 'eventos' => array() );
-        $id_libro_relatorio = $get[ 'id_libro_relatorio' ];
-        $numero_aero = $get[ 'numero_aero' ];
-        $fecha = Carbon::now( 'America/Mexico_City' )->format( 'd-m-Y' );
-        $hora = Carbon::now( 'America/Mexico_City' )->toTimeString();
+    private $tipo_reporte = array( 'AEROGENERADOR', 'UNIDAD' );
 
-        if ( !empty( $id_libro_relatorio ) ) {
-            $conexion = $this->conexion;
-            $sql =  "UPDATE libro_relatorio SET estado_evento = FALSE, ".
-                    "fecha_termino_evento = STR_TO_DATE( '$fecha', '%d-%m-%Y' ), ".
-                    "hora_termino_evento = '$hora' ".
-                    "where id_libro_relatorio = '$id_libro_relatorio'";
-            
-            $query = $this->insert_query( $sql );
-            if ( $query != 'OK' ) {
-                $conexion->rollback();
-
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al cerrar evento' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
-                return $rsp;
-            }
-
-            $query = $this->__cambiar_estado_generador( $numero_aero, 'DISPONIBLE', $fecha );
-            if ( $query === 'OK' ) {
-                $conexion->commit();
-
-                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Cerrado' );
-                $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Evento cerrado satisfactoriamente.' );
-                return $rsp;
-            }
-
-            else {
-                $conexion->rollback();
-
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al cerrar evento' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => "Error al cambiar estado del generador. ".$query );
-                return $rsp;
-            }
-        }
-
-        else
-            $rsp [ 'status' ] = array( 'transaccion' => 'NA', 'msj' => 'Un campo necesario se encuentra nulo o no es válido' );
-        
-        return $rsp;
+    public function obtener_tipo_reporte () {
+        return $this->tipo_reporte;
     }
 
-    public function eliminar_libro_licencia( $data ) {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL"; 
+    public function nuevo_libro_licencia( $data ) {
+        $rsp = array();
 
+        $validar = 
+            $this->verificaDatosNulos( $data, array(
+                'anio_licencia'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $anio_licencia = $data[ 'anio_licencia' ][ 'valor' ];
+
+        $sql = 
+        "INSERT INTO libro_licencia ( anio_licencia ) VALUES ( '$anio_licencia' )";
+        // return $sql;
+        $query = $this->insert_query( $sql );
+        
+        if ( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Año de licencia creado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $anio_licencia, 'msj' => 'Correcto' );
+            return $rsp;
+        }
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar usuario responsable' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $anio_licencia, 'key' => 'anio_licencia', 'msj' => $query );
+            return $rsp;
+        }
+    }  
+
+    public function eliminar_libro_licencia( $data ) {
         $id_libro_licencia = $data['id_libro_licencia'];
 
         if ( !empty( $id_libro_licencia ) )
@@ -137,72 +161,247 @@ class operacion extends sigesop
         else return 'NA';
     }
 
-    public function nuevo_evento_relatorio ( $post ) {
-        $conexion = $this->conexion;
-        $rsp = array( 'status' => array(), 'eventos' => array() );
+    public function obtener_libro_licencia () {
+        $sql =  
+            "SELECT id_libro_licencia, anio_licencia, inicializador ".
+            "FROM libro_licencia";
+        $query = $this->array_query( $sql );
+        return $query;
+    }
+
+    public function agregar_consecutivo_inicializador ( $post ) {
+        $rsp = array();
 
         $validar = 
             $this->verificaDatosNulos( $post, array(
-                'id_libro_relatorio', 'fecha_evento', 'hora', 'descripcion_evento'
+                'consecutivo_licencia', 'id_libro_licencia'
             ));
 
-        if ( $validar == 'OK' ) 
-        {
-            $id_libro_relatorio = $post[ 'id_libro_relatorio' ][ 'valor' ];
-            $fecha_evento = $post[ 'fecha_evento' ][ 'valor' ];
-            $hora = $post[ 'hora' ][ 'valor' ];         
-            $descripcion_evento = $post[ 'descripcion_evento' ][ 'valor' ];
-
-            $sql =  "insert into libro_relatorio_historial( id_libro_relatorio, fecha_evento, ".
-                    "hora, descripcion_evento ) values( $id_libro_relatorio, STR_TO_DATE( '$fecha_evento', '%d-%m-%Y' ), ".
-                    "'$hora', '$descripcion_evento')";
-
-            $query = $this->insert_query( $sql );
-            if ( $query == 'OK' )
-            {
-                $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' =>$fecha_evento, 'msj' => 'OK' );
-                $conexion->commit();
-            }
-            else 
-            {
-                $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => $query );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $fecha_evento, 'msj' => 'Error al ingresar evento' );
-                $conexion->rollback();
-            }            
-        }
-        else {
+        if( $validar !== 'OK' ) {
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
             $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
         }
 
-        return $rsp;
+        $consecutivo_licencia = $post[ 'consecutivo_licencia' ][ 'valor' ];
+        $id_libro_licencia = $post[ 'id_libro_licencia' ][ 'valor' ];
+
+        $sql = 
+        "UPDATE libro_licencia SET inicializador = $consecutivo_licencia ".
+        "WHERE id_libro_licencia = $id_libro_licencia";
+        $query = $this->insert_query( $sql );
+
+        if ( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Año de licencia creado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $consecutivo_licencia, 'msj' => 'Correcto' );
+            return $rsp;
+        }
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar usuario responsable' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $consecutivo_licencia, 'key' => 'consecutivo_licencia', 'msj' => $query );
+            return $rsp;
+        }
     }
 
-    public function nuevo_libro_licencia( $data ) {
-        $anio_licencia = $data[ 'anio_licencia' ][ 'valor' ];
+    # verifica si existen relatorios asociados a un año especifico
+    public function verifica_consecutivo_licencia ( $get ) {
+        $rsp = array( 'status' => array(), 'eventos' => array() );
 
-        if ( !empty( $anio_licencia ) ) 
-        {
-            $conexion = $this->conexion;
-            $sql = "insert into libro_licencia ( anio_licencia ) values ( '$anio_licencia' )";
-            // return $sql;
-            $query = $this->insert_query( $sql );
-            
-            if ( $query === 'OK' ) 
-            {
-                $conexion->commit();
-                return $query; 
-            }
-            else 
-            {
-                $conexion->rollback();
-                return $query." .Error al insertar año de licencia";
-            }
+        $validar = 
+            $this->verificaDatosNulos( $get, array(
+                'id_libro_licencia'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
         }
 
-        else return 'NA';
-    }    
+        $id_libro_licencia = $get[ 'id_libro_licencia' ];
+        $sql =
+        "SELECT id_libro_relatorio FROM libro_relatorio ".
+        "WHERE id_libro_licencia = $id_libro_licencia";
+        
+        $query = $this->query( $sql, 'id_libro_relatorio', NULL );
+        return !empty( $query ) ? 'OK' : NULL;
+    } 
+
+    # ----------------------------
+
+    public function nuevo_evento_relatorio ( $post ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $post, array(
+                'id_libro_relatorio', 'numero_aero',
+                'fecha_inicio_evento', 'hora_inicio_evento', 
+                'fecha_termino_estimado_evento', 'hora_termino_estimado_evento',
+                'fecha_termino_evento', 'hora_termino_evento', 
+                'condicion_operativa', 'descripcion_evento'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $id_libro_relatorio_historial = $this->auto_increment( 'libro_relatorio_historial', 'id_libro_relatorio_historial' );
+        $id_libro_relatorio = $post[ 'id_libro_relatorio' ][ 'valor' ];
+        $numero_aero = $post[ 'numero_aero' ][ 'valor' ];
+        
+        $fecha_inicio_evento = $post[ 'fecha_inicio_evento' ][ 'valor' ];
+        $hora_inicio_evento = $post[ 'hora_inicio_evento' ][ 'valor' ];         
+
+        $fecha_termino_estimado_evento = $post[ 'fecha_termino_estimado_evento' ][ 'valor' ];
+        $hora_termino_estimado_evento = $post[ 'hora_termino_estimado_evento' ][ 'valor' ];
+
+        $fecha_termino_evento = $post[ 'fecha_termino_evento' ][ 'valor' ];
+        $hora_termino_evento = $post[ 'hora_termino_evento' ][ 'valor' ];
+        
+        $condicion_operativa = $post[ 'condicion_operativa' ][ 'valor' ];
+        $descripcion_evento = $post[ 'descripcion_evento' ][ 'valor' ];
+
+        $sql =  
+        "INSERT INTO libro_relatorio_historial".
+        "( id_libro_relatorio_historial, id_libro_relatorio, ".
+        "fecha_inicio_evento, hora_inicio_evento, ".
+        "fecha_termino_estimado_evento, hora_termino_estimado_evento, ".
+        "fecha_termino_evento, hora_termino_evento, ".
+        "condicion_operativa, descripcion_evento ) ".
+        "VALUES( $id_libro_relatorio_historial, $id_libro_relatorio, ".
+        "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+        "'$hora_inicio_evento', ".
+        "STR_TO_DATE( '$fecha_termino_estimado_evento', '%d-%m-%Y' ), ".
+        "'$hora_termino_estimado_evento', ".        
+        "STR_TO_DATE( '$fecha_termino_evento', '%d-%m-%Y' ), ".
+        "'$hora_termino_evento', '$condicion_operativa', ".
+        "'$descripcion_evento')";
+
+        // return $sql;
+
+        $query = $this->insert_query( $sql );
+        if ( $query != 'OK' ) {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar evento' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+            return $rsp;
+        }
+
+        # cerramos el evento si se ingresa un evento adicional como [DISPONIBLE]
+        # si es cualquier otra condicion operativa simplemente agregamos
+        $query = $condicion_operativa != 'DISPONIBLE' ?
+        $this->__cambiar_estado_generador( $numero_aero, $condicion_operativa, $fecha_inicio_evento ) :        
+        $this->__cerrar_evento ( $id_libro_relatorio, $fecha_termino_evento, $hora_termino_evento );
+
+        if ( $query == 'OK' ) {
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' =>$fecha_evento, 'msj' => 'OK' );
+            $this->conexion->commit();
+            return $rsp;
+        } else {
+            $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => $query );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $fecha_evento, 'msj' => 'Error al ingresar evento' );
+            $this->conexion->rollback();
+            return $rsp;
+        }
+    } 
+
+    public function __cerrar_evento ( $id_libro_relatorio, $fecha_termino_evento, $hora_termino_evento ) {
+        // $condicion_operativa = $data[ 'condicion_operativa' ];
+        // $id_libro_relatorio = $data[ 'id_libro_relatorio' ];
+        // $numero_aero = $data[ 'numero_aero' ];
+        // $fecha = Carbon::now( 'America/Mexico_City' )->format( 'd-m-Y' );
+        // $hora = Carbon::now( 'America/Mexico_City' )->toTimeString();
+        // $conexion = $this->conexion;        
+
+        # cerramos la orden de trabajo si se trata de un mantenimiento
+        // if ( $condicion_operativa == 'MTTO' ) {
+        //     $query = $this->__cerrar_orden_trabajo( $id_libro_relatorio, $fecha );
+        //     if ( $query != 'OK' ) {
+        //         $conexion->rollback();
+
+        //         $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al cerrar evento' );
+        //         $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+        //         return $rsp;
+        //     }
+        // }
+
+        # Buscamos numero de aerogenerador
+        $sql = "SELECT numero_aero FROM libro_relatorio WHERE id_libro_relatorio = $id_libro_relatorio";
+        $numero_aero = $this->query( $sql, 'numero_aero', NULL );
+
+        # cerramos el evento del libro relatorio
+        $sql =  
+        "UPDATE libro_relatorio ".
+        "SET estado_evento = FALSE, ".
+        "fecha_termino_evento = STR_TO_DATE( '$fecha_termino_evento', '%d-%m-%Y' ), ".
+        "hora_termino_evento = '$hora_termino_evento' ".
+        "WHERE id_libro_relatorio = '$id_libro_relatorio'";
+
+        // return $sql;
+
+        $query = $this->insert_query( $sql );
+        if ( $query != 'OK' ) $query;
+
+        # cambiamos el estado del generador para cambiar las graficas
+        $query = $this->__cambiar_estado_generador( $numero_aero, 'DISPONIBLE', $fecha_termino_evento );
+        if ( $query === 'OK' ) return "OK";
+
+        else $query;
+    }
+
+    private function __cerrar_orden_trabajo ( $id_libro_relatorio, $fecha_realizada ) {
+        # buscamos [id_orden_trabajo] del evento
+        $sql = 
+        "SELECT id_orden_trabajo FROM libro_relatorio ".
+        "WHERE id_libro_relatorio = $id_libro_relatorio";
+        $id_orden_trabajo = $this->query( $sql, 'id_orden_trabajo', NULL );
+
+        # cerramos la programacion de orden de trabajo
+        $sql =
+        "UPDATE programacion_mtto ".
+        "SET estado_asignado = 'FINALIZADO', ".
+        "fecha_realizada = STR_TO_DATE( '$fecha_realizada', '%d-%m-%Y' ) ".
+        "WHERE id_orden_trabajo = $id_orden_trabajo"; 
+        $query = $this->insert_query( $sql );
+        if ( $query !== 'OK' ) return $query;
+
+        # buscamos toda la programacion de mantenimiento de
+        # la orden de trabajo
+        $sql = 
+        "SELECT id_orden_trabajo FROM programacion_mtto ".
+        "WHERE id_prog_mtto IN( ".
+            "SELECT id_prog_mtto FROM programacion_mtto ".
+            "WHERE id_orden_trabajo = $id_orden_trabajo ".
+        ") ".
+        "ORDER BY fecha_inicial ASC";
+        $arr = $this->array_query( $sql, 'id_orden_trabajo', NULL );
+
+        # buscamos la posicion de la orden
+        $index = $this->indexof( $arr, $id_orden_trabajo );
+
+        # recorremos la orden activa a la siguiente programacion
+        # o de lo contrario cerramos completamente la orden
+        # de trabajo
+        if ( $index < (sizeof( $arr ) - 1) ) {
+            $id_orden_trabajo = $index + 1;
+
+            $sql =
+            "UPDATE programacion_mtto ".
+            "SET estado_asignado = 'ACTIVO', ".            
+            "WHERE id_orden_trabajo = $id_orden_trabajo"; 
+            $query = $this->insert_query( $sql );
+            if ( $query !== 'OK' ) return $query;
+        }
+
+        else {
+
+        }
+    } 
 
     # nuevo_relatorio ----------------------
 
@@ -211,77 +410,69 @@ class operacion extends sigesop
 
         $validar = 
             $this->verificaDatosNulos( $post, array(
-                'reporte_por', 'numero_unidad', 'numero_aero', 'id_libro_licencia',
+                'reporte_por', 'numero_unidad', 'id_libro_licencia',
                 'hora_inicio_evento', 'fecha_inicio_evento', 'condicion_operativa',
                 'trabajador_solicito', 'trabajador_autorizo', 'descripcion_evento'
             ));
 
-        if ( $validar == 'OK' ) 
-        {
-            $reporte_por = $post[ 'reporte_por' ][ 'valor' ];
-            $condicion_operativa = $post[ 'condicion_operativa' ][ 'valor' ];
-            $numero_unidad = $post[ 'numero_unidad' ][ 'valor' ];
-            $numero_aero = $post[ 'numero_aero' ][ 'valor' ];            
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
 
-            switch ( $condicion_operativa ) 
-            {
-                case 'MTTO':
-                    $query = $this->__mantto_por_aero( $post, $numero_aero );
-                    if ( $query === 'OK' ) 
-                    {
+        $reporte_por = $post[ 'reporte_por' ][ 'valor' ];
+        $condicion_operativa = $post[ 'condicion_operativa' ][ 'valor' ];
+        $numero_unidad = $post[ 'numero_unidad' ][ 'valor' ];
+        $numero_aero = $post[ 'numero_aero' ][ 'valor' ];            
+
+        switch ( $condicion_operativa ) {
+            case 'MTTO':
+                $query = $this->__mantto_por_aero( $post, $numero_aero );
+                if ( $query === 'OK' ) {
+                    $this->conexion->commit();
+                    $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+                    $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
+                }
+
+                else {
+                    $this->conexion->rollback();
+                    $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+                    $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar mantenimiento.' );
+                }                    
+                break;                  
+            default:
+                if ( $reporte_por == 'AEROGENERADOR' ) {
+                    $query = $this->__evento_por_aero( $post, $numero_aero, $condicion_operativa );
+                    if ( $query === 'OK' ) {
                         $this->conexion->commit();
                         $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
                         $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
                     }
 
-                    else
-                    {
+                    else {
                         $this->conexion->rollback();
                         $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
-                        $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar mantenimiento.' );
-                    }                    
-                    break;                  
-                default:
-                    if ( $reporte_por == 'byAero' )
-                    {
-                        $query = $this->__evento_por_aero( $post, $numero_aero, $condicion_operativa );
-                        if ( $query === 'OK' ) 
-                        {
-                            $this->conexion->commit();
-                            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
-                            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
-                        }
-
-                        else
-                        {
-                            $this->conexion->rollback();
-                            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
-                            $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar evento.' );
-                        }
+                        $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar evento.' );
                     }
+                }
 
-                    else if ( $reporte_por == 'byUnidad' )
-                        $rsp = $this->__evento_por_unidad( $post, $numero_unidad, $condicion_operativa );
+                else if ( $reporte_por == 'UNIDAD' )
+                    $rsp = $this->__evento_por_unidad( $post, $numero_unidad, $condicion_operativa );
 
-                    else $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Sin tipo de reporte especificado' );
-                    break;
-            }
-        }
-        else {
-            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
-            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+                else $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Sin tipo de reporte especificado' );
+                break;
         }
 
         return $rsp;
     }
 
     private function __evento_por_aero ( $data, $numero_aero, $condicion_operativa ){
-        $id_libro_relatorio = $this->autoincrement( 'select id_libro_relatorio from libro_relatorio order by id_libro_relatorio asc', 'id_libro_relatorio' );
-        $id_libro_licencia = $data[ 'id_libro_licencia' ][ 'valor' ];
-        $secuencia_licencia = $this->autoincrement( 'select secuencia_licencia from libro_relatorio order by secuencia_licencia asc', 'secuencia_licencia' );
+        $id_libro_relatorio = $this->autoincrement( "select id_libro_relatorio from libro_relatorio order by id_libro_relatorio asc", 'id_libro_relatorio' );
+        $reporte_por = $data[ 'reporte_por' ][ 'valor' ];
+        $id_libro_licencia = $data[ 'id_libro_licencia' ][ 'valor' ];        
         $fecha_inicio_evento = $data[ 'fecha_inicio_evento' ][ 'valor' ];
         $hora_inicio_evento = $data[ 'hora_inicio_evento' ][ 'valor' ];
-        
         $fecha_termino_estimado = $data[ 'fecha_termino_estimado' ][ 'valor' ];
         $fecha_termino_estimado = !empty( $fecha_termino_estimado ) ? 
             "STR_TO_DATE( '$fecha_termino_estimado', '%d-%m-%Y' ), " : 'NULL, ';
@@ -289,16 +480,50 @@ class operacion extends sigesop
         $condicion_operativa = $data[ 'condicion_operativa' ][ 'valor' ];  
         // $mantto = $data[ 'condicion_operativa' ][ 'mantenimiento' ];         
         $trabajador_solicito = $data[ 'trabajador_solicito' ][ 'valor' ];
+        
         $trabajador_autorizo = $data[ 'trabajador_autorizo' ][ 'valor' ];
         $descripcion_evento = $data[ 'descripcion_evento' ][ 'valor' ];            
 
-        # verificamos si existe un evento previo del generador solicitado
-        $sql =  "insert into libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, ".
-                "secuencia_licencia, fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, ".
-                "trabajador_solicito, trabajador_autorizo, descripcion_evento ) values( $id_libro_relatorio, ".
-                "'$numero_aero', $id_libro_licencia, '$condicion_operativa', $secuencia_licencia, ".
-                "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', ".
-                $fecha_termino_estimado."'$trabajador_solicito', '$trabajador_autorizo', '$descripcion_evento' )";
+        $consecutivo_licencia = $data[ 'consecutivo_licencia' ][ 'valor' ];
+        
+        # verificamos si nos han enviado un consecutivo desde la 
+        # interfaz del navegador
+        if ( !empty( $consecutivo_licencia ) ) {
+            # verificar que el consecutivo de licencia no se repita
+            $check = $this->__unique_consecutivo_licencia( $id_libro_licencia, $consecutivo_licencia );
+            if ( !$check ) return "Consecutivo de licencia ingresado previamente";
+        }
+
+        # si [consecutivo_licencia] es NULL asignamos 
+        # automaticamente un consecutivo
+        else 
+            $consecutivo_licencia = $this->resolve_consecutivo_licencia( $id_libro_licencia );
+
+
+        # verificamos si no se ha ingresado previamente
+        $sql =  "SELECT numero_aero FROM libro_relatorio where estado_evento = TRUE AND numero_aero = '$numero_aero'";
+        $arr = $this->array_query( $sql, 'numero_aero' );
+        if ( !empty( $arr ) ) return 'Elemento ingresado previamente';
+
+        # verificamos si trae numero consecutivo de licencia
+        $sql = $trabajador_autorizo !== $this->root ?
+        "INSERT INTO libro_relatorio".
+        "( id_libro_relatorio, reporte_por, numero_aero, id_libro_licencia, condicion_operativa, ".
+        "consecutivo_licencia, fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, ".
+        "trabajador_solicito, trabajador_autorizo, descripcion_evento ) ".
+        "VALUES( $id_libro_relatorio, '$reporte_por', ".
+        "'$numero_aero', $id_libro_licencia, '$condicion_operativa', $consecutivo_licencia, ".
+        "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', ".
+        $fecha_termino_estimado."'$trabajador_solicito', '$trabajador_autorizo', '$descripcion_evento' )":
+
+        "INSERT INTO libro_relatorio".
+        "( id_libro_relatorio, reporte_por, numero_aero, id_libro_licencia, condicion_operativa, ".
+        "consecutivo_licencia, fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, ".
+        "trabajador_solicito, descripcion_evento ) ".
+        "VALUES( $id_libro_relatorio, '$reporte_por', ".
+        "'$numero_aero', $id_libro_licencia, '$condicion_operativa', $consecutivo_licencia, ".
+        "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', ".
+        $fecha_termino_estimado."'$trabajador_solicito', '$descripcion_evento' )";
         
         // return $sql;
         
@@ -313,8 +538,12 @@ class operacion extends sigesop
 
     private function __evento_por_unidad ( $data, $numero_unidad, $condicion_operativa ){
         # buscar todos los aeros de la unidad 
-        $sql =  "select numero_aero from aeros where numero_unidad = '$numero_unidad' and ".
-                "numero_aero not in( select numero_aero from libro_relatorio where estado_evento = TRUE )";
+        $sql =  
+            "SELECT numero_aero FROM aeros ".
+            "WHERE numero_unidad = '$numero_unidad' AND ".
+            "numero_aero NOT IN(".
+                "SELECT numero_aero FROM libro_relatorio WHERE estado_evento = TRUE".
+            ")";
         $arr = $this->array_query( $sql, 'numero_aero' );
         if ( empty( $arr ) ) # verificamos que no este vacio
             return array( 'status' => array( 'transaccion' => 'NA', 'msj' => 'Los elementos ya han sido ingresados.' ),
@@ -324,8 +553,7 @@ class operacion extends sigesop
         $rsp = array( 'status' => array(), 'eventos' => array() );
         $flag = true;
 
-        foreach ( $arr as $numero_aero )
-        {
+        foreach ( $arr as $numero_aero ) {
             $query = $this->__evento_por_aero( $data, $numero_aero, $condicion_operativa );
             if ( $query === 'OK' ) $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
             else
@@ -344,40 +572,78 @@ class operacion extends sigesop
         return $rsp;
     }
 
-    private function __mantto_por_aero ( $data, $numero_aero ){
-        $id_libro_relatorio = $this->autoincrement( 'select id_libro_relatorio from libro_relatorio order by id_libro_relatorio asc', 'id_libro_relatorio' );
+    private function __mantto_por_aero ( $data, $numero_aero ){        
+        $id_libro_relatorio = $this->autoincrement( "select id_libro_relatorio from libro_relatorio order by id_libro_relatorio asc", 'id_libro_relatorio' );
         $id_libro_licencia = $data[ 'id_libro_licencia' ][ 'valor' ];
-        $secuencia_licencia = $this->autoincrement( 'select secuencia_licencia from libro_relatorio order by secuencia_licencia asc', 'secuencia_licencia' );
         $fecha_inicio_evento = $data[ 'fecha_inicio_evento' ][ 'valor' ];
+
+        $fecha_termino_estimado = $data[ 'fecha_termino_estimado' ][ 'valor' ];
+        $fecha_termino_estimado = !empty( $fecha_termino_estimado ) ? 
+            "STR_TO_DATE( '$fecha_termino_estimado', '%d-%m-%Y' )" : 'NULL';
+        
         $hora_inicio_evento = $data[ 'hora_inicio_evento' ][ 'valor' ];          
         $trabajador_solicito = $data[ 'trabajador_solicito' ][ 'valor' ];
         $trabajador_autorizo = $data[ 'trabajador_autorizo' ][ 'valor' ];
-        $descripcion_evento = $data[ 'descripcion_evento' ][ 'valor' ];            
+        $descripcion_evento = $data[ 'descripcion_evento' ][ 'valor' ];
 
         $mantto = $data[ 'condicion_operativa' ][ 'mantenimiento' ];
-        $id_orden_trabajo = $mantto[ 0 ][ 'id_orden_trabajo' ];
+        $id_orden_trabajo = $mantto[ 0 ][ 'id_orden_trabajo' ];        
         $sin_licencia = $mantto[ 0 ][ 'sin_licencia' ];
 
+        $consecutivo_licencia = $data[ 'consecutivo_licencia' ][ 'valor' ];
+        
+        # verificamos si nos han enviado un consecutivo desde la 
+        # interfaz del navegador
+        if ( !empty( $consecutivo_licencia ) ) {
+            # verificar que el consecutivo de licencia no se repita
+            $check = $this->__unique_consecutivo_licencia( $id_libro_licencia, $consecutivo_licencia );
+            if ( !$check ) return "Consecutivo de licencia ingresado previamente";
+        }
+
+        # si [consecutivo_licencia] es NULL asignamos 
+        # automaticamente un consecutivo
+        else 
+            $consecutivo_licencia = $this->resolve_consecutivo_licencia( $id_libro_licencia );
+
         # verificamos si no se ha ingresado previamente
-        $sql =  "SELECT numero_aero FROM libro_relatorio where estado_evento = TRUE AND numero_aero = '$numero_aero'".                
+        $sql =  "SELECT numero_aero FROM libro_relatorio where estado_evento = TRUE AND numero_aero = '$numero_aero'";
         $arr = $this->array_query( $sql, 'numero_aero' );
         if ( !empty( $arr ) )
             return 'Elemento ingresado previamente';
 
-        # creamos consulta de inserción
-        $sql = $sin_licencia == 'false' ?
-            "insert into libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, secuencia_licencia, ".
-            "fecha_inicio_evento, hora_inicio_evento, trabajador_solicito, trabajador_autorizo, id_orden_trabajo, ".
-            "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', $secuencia_licencia, ".
-            "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', '$trabajador_solicito', '$trabajador_autorizo', ".
-            "$id_orden_trabajo, '$descripcion_evento' )" :
+        # creamos consulta de inserción 
+        switch ( $sin_licencia ) {
+            case 'false':
+                $sql = $trabajador_autorizo !== $this->root ?
+                "insert into libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
+                "fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, trabajador_solicito, trabajador_autorizo, id_orden_trabajo, ".
+                "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', $consecutivo_licencia, ".
+                "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', $fecha_termino_estimado, '$trabajador_solicito', '$trabajador_autorizo', ".
+                "$id_orden_trabajo, '$descripcion_evento' )" :
 
-            "insert into libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, ".
-            "fecha_inicio_evento, hora_inicio_evento, trabajador_solicito, trabajador_autorizo, ".
-            "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', ".
-            "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', '$trabajador_solicito', ".
-            "'$trabajador_autorizo', '$descripcion_evento' )";
-        
+                "insert into libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
+                "fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, trabajador_solicito, id_orden_trabajo, ".
+                "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', $consecutivo_licencia, ".
+                "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', $fecha_termino_estimado, '$trabajador_solicito', ".
+                "$id_orden_trabajo, '$descripcion_evento' )";
+                break;
+            
+            case 'true':
+                $sql = $trabajador_autorizo !== $this->root ?
+                "INSERT INTO libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
+                "fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, trabajador_solicito, trabajador_autorizo, ".
+                "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', $consecutivo_licencia, ".
+                "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', $fecha_termino_estimado, '$trabajador_solicito', ".
+                "'$trabajador_autorizo', '$descripcion_evento' )" :
+
+                "INSERT INTO libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
+                "fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, trabajador_solicito, ".
+                "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', $consecutivo_licencia, ".
+                "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', $fecha_termino_estimado, '$trabajador_solicito', ".
+                "'$descripcion_evento' )";
+                break;
+        }
+
         // return $sql;
         
         #insertamos un nuevo evento
@@ -388,18 +654,12 @@ class operacion extends sigesop
         $query = $this->__cambiar_estado_generador( $numero_aero, 'MTTO', $fecha_inicio_evento );
         if( $query != 'OK' ) return $query.". Error al cambiar condicion operativa";
 
-        if ( $sin_licencia == 'false' )
-        {
-            # cambiamos la orden de trabajo a un estado activo
-            $sql = "update orden_trabajo set estado_asignado = true where id_orden_trabajo = $id_orden_trabajo";
-            $query = $this->insert_query( $sql );
-            if ( $query != 'OK' ) return $query;
-        }
-
         return 'OK';
     }
 
     private function __cambiar_estado_generador ( $gen, $estado, $fecha_operacion ){
+        if ( empty( $gen ) ) return "Número de aerogenerador es nulo.";
+
         $sql =  "update aeros set estado_licencia = '$estado', ".
                 "fecha_operacion = STR_TO_DATE( '$fecha_operacion', '%d-%m-%Y' ) ".
                 " where numero_aero = '$gen'";
@@ -410,45 +670,409 @@ class operacion extends sigesop
         return $change_state;        
     }
 
-    # -----------------------------------------------
+    # resuelve y retorna el numero consecutivo de un evento
+    private function resolve_consecutivo_licencia( $id_libro_licencia ) {
+        #verificamos si existe un consecutivo inicializador
+        # registrado en libro_licencia.inicializador
+        $sql = 
+        "SELECT inicializador FROM libro_licencia ".
+        "WHERE id_libro_licencia = $id_libro_licencia";
+        $init = $this->query( $sql, 'inicializador', NULL );
 
-    public function obtener_historial_eventos( $get ) {
-        $conexion = $this->conexion;
-        $id_libro_relatorio = $get[ 'id_libro_relatorio' ];
+        # si es NULL el autoincrement inicializa
+        # desde el ultimo registro        
+        # si no es NULL el autoincrement inicializa
+        # a partir del inicializador de la licencia
+        
+        if ( !empty( $init ) ) {
+            $sql = 
+            "SELECT consecutivo_licencia FROM libro_relatorio ".
+            "WHERE id_libro_licencia = $id_libro_licencia ".
+            "AND consecutivo_licencia >= $init ".
+            "ORDER BY consecutivo_licencia ASC";
 
-        if ( !empty( $id_libro_relatorio ) ) 
-        {
-            $sql =  "select id_libro_relatorio, DATE_FORMAT(fecha_evento, '%d-%m-%Y' ) as fecha_evento, hora, descripcion_evento from ".
-                    "libro_relatorio_historial where id_libro_relatorio = $id_libro_relatorio";
-            $query = $this->array_query( $sql ); //return $sql;
-            return $query;
+            $arr = $this->array_query( $sql, 'consecutivo_licencia', NULL );
+
+            # si es NULL no existen registros a partir de ese
+            # numero por lo tanto es el primer registro a partir
+            # de dicho numero
+            if ( !empty( $arr ) ) {
+                return $arr[ sizeof( $arr ) - 1 ] + 1;
+            }
+            else return $init;
         }
-
-        else return null;
+        else {
+            $sql =
+            "SELECT consecutivo_licencia FROM libro_relatorio ".
+            "WHERE id_libro_licencia = $id_libro_licencia ".
+            "ORDER BY consecutivo_licencia ASC";
+            return $this->autoincrement( $sql, 'consecutivo_licencia' );
+        }            
     }
 
-    public function obtener_libro_licencia () {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL";
-        $conexion = $this->conexion;
+    private function __unique_consecutivo_licencia( $id_libro_licencia, $consecutivo_licencia ){
+        $sql =
+        "SELECT id_libro_relatorio FROM libro_relatorio ".
+        "WHERE id_libro_licencia = $id_libro_licencia ".
+        "AND consecutivo_licencia = $consecutivo_licencia";
 
-        $sql =  "select * from libro_licencia";
-        $query = $this->array_query( $sql );
+        $query = $this->query( $sql, 'id_libro_relatorio', NULL );
+        return empty( $query ) ? TRUE : FALSE;
+    }
+
+    # actualizar_relatorio ----------------------
+    public function actualizar_relatorio( $post ) {
+        $rsp = array( 'status' => array(), 'eventos' => array() );
+
+        $validar = 
+            $this->verificaDatosNulos( $post, array(
+                'id_libro_relatorio_update', 'id_libro_licencia',
+                'hora_inicio_evento', 'fecha_inicio_evento', 'condicion_operativa',
+                'trabajador_solicito', 'trabajador_autorizo', 'descripcion_evento'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        // return 'OK';
+        //         
+        $condicion_operativa = $post[ 'condicion_operativa' ][ 'valor' ];
+
+        if ( $condicion_operativa == 'MTTO' ) {
+            $query = $this->__update_mantto_por_aero( $post, $numero_aero );
+            if ( $query === 'OK' ) {
+                $this->conexion->commit();
+                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+                $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
+            }
+
+            else {
+                $this->conexion->rollback();
+                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+                $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar mantenimiento.' );
+            }  
+        }
+
+        else {
+            // $query = $this->__update_evento_por_aero( $post, $numero_aero, $condicion_operativa );
+            $query = $this->__update_evento_por_aero( $post, $condicion_operativa );
+            if ( $query === 'OK' ) {
+                $this->conexion->commit();
+                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+                $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
+            }
+
+            else {
+                $this->conexion->rollback();
+                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+                $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar evento.' );
+            }
+        }
+            
+        return $rsp;
+    }
+
+    private function __update_evento_por_aero ( $data, $condicion_operativa ){
+        $id_libro_relatorio_update = $data[ 'id_libro_relatorio_update' ][ 'valor' ];
+        // $reporte_por = $data[ 'reporte_por' ][ 'valor' ];
+        $id_libro_licencia = $data[ 'id_libro_licencia' ][ 'valor' ];        
+        $fecha_inicio_evento = $data[ 'fecha_inicio_evento' ][ 'valor' ];
+        $hora_inicio_evento = $data[ 'hora_inicio_evento' ][ 'valor' ];
+        $fecha_termino_estimado = $data[ 'fecha_termino_estimado' ][ 'valor' ];
+        $fecha_termino_estimado = !empty( $fecha_termino_estimado ) ? 
+            "STR_TO_DATE( '$fecha_termino_estimado', '%d-%m-%Y' )" : 'NULL';
+
+        $condicion_operativa = $data[ 'condicion_operativa' ][ 'valor' ]; 
+        $trabajador_solicito = $data[ 'trabajador_solicito' ][ 'valor' ];
+        
+        $trabajador_autorizo = $data[ 'trabajador_autorizo' ][ 'valor' ];
+        $descripcion_evento = $data[ 'descripcion_evento' ][ 'valor' ];            
+
+        $consecutivo_licencia = $data[ 'consecutivo_licencia' ][ 'valor' ];
+        
+        # verificamos si nos han enviado un consecutivo desde la 
+        # interfaz del navegador.
+        # si [consecutivo_licencia] es NULL asignamos 
+        # automaticamente un consecutivo
+        if ( empty( $consecutivo_licencia ) )
+        $consecutivo_licencia = $this->resolve_consecutivo_licencia( $id_libro_licencia );
+
+        # verificamos si es un usuario root para evitar el campo
+        # [trabajador_autorizo] y dejarlo NULL
+        $sql = $trabajador_autorizo !== $this->root ?
+        "UPDATE libro_relatorio SET ".
+        // "id_libro_relatorio = $id_libro_relatorio, ".
+        // "reporte_por = '$reporte_por', ".
+        // "numero_aero = '$numero_aero', ".
+        "id_libro_licencia = $id_libro_licencia, ".
+        "condicion_operativa = '$condicion_operativa', ".
+        "consecutivo_licencia = $consecutivo_licencia, ".
+        "fecha_inicio_evento = STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+        "hora_inicio_evento = '$hora_inicio_evento', ".
+        "fecha_termino_estimado = $fecha_termino_estimado, ".
+        "trabajador_solicito = '$trabajador_solicito', ".
+        "trabajador_autorizo = '$trabajador_autorizo', ".
+        "descripcion_evento = '$descripcion_evento', ".
+        "id_orden_trabajo = NULL ".
+        "WHERE id_libro_relatorio = $id_libro_relatorio_update":
+
+        "UPDATE libro_relatorio SET ".
+        // "id_libro_relatorio = $id_libro_relatorio, ".
+        // "reporte_por = '$reporte_por', ".
+        // "numero_aero = '$numero_aero', ".
+        "id_libro_licencia = $id_libro_licencia, ".
+        "condicion_operativa = '$condicion_operativa', ".
+        "consecutivo_licencia = $consecutivo_licencia, ".
+        "fecha_inicio_evento = STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+        "hora_inicio_evento = '$hora_inicio_evento', ".
+        "fecha_termino_estimado = $fecha_termino_estimado, ".
+        "trabajador_solicito = '$trabajador_solicito', ".
+        "descripcion_evento = '$descripcion_evento', ".
+        "id_orden_trabajo = NULL ".
+        "WHERE id_libro_relatorio = $id_libro_relatorio_update";
+        
+        // return $sql;
+        
+        $query = $this->insert_query( $sql );
+        if( $query != 'OK' ) return $query;
+
+        # buscar el [numero_aero]
+        $sql = "SELECT numero_aero from libro_relatorio WHERE id_libro_relatorio = $id_libro_relatorio_update";
+        $numero_aero = $this->query( $sql, 'numero_aero', NULL );
+
+        $query = $this->__cambiar_estado_generador( $numero_aero, $condicion_operativa, $fecha_inicio_evento );
+        if( $query != 'OK' ) return $query.". Error al cambiar condicion operativa";
+
+        return 'OK';
+    }
+
+    private function __update_mantto_por_aero ( $data, $numero_aero ){        
+        $id_libro_relatorio_update = $data[ 'id_libro_relatorio_update' ][ 'valor' ];
+        $id_libro_licencia = $data[ 'id_libro_licencia' ][ 'valor' ];
+        $fecha_inicio_evento = $data[ 'fecha_inicio_evento' ][ 'valor' ];
+
+        $fecha_termino_estimado = $data[ 'fecha_termino_estimado' ][ 'valor' ];
+        $fecha_termino_estimado = !empty( $fecha_termino_estimado ) ? 
+            "STR_TO_DATE( '$fecha_termino_estimado', '%d-%m-%Y' )" : 'NULL';
+        
+        $hora_inicio_evento = $data[ 'hora_inicio_evento' ][ 'valor' ];          
+        $trabajador_solicito = $data[ 'trabajador_solicito' ][ 'valor' ];
+        $trabajador_autorizo = $data[ 'trabajador_autorizo' ][ 'valor' ];
+        $descripcion_evento = $data[ 'descripcion_evento' ][ 'valor' ];
+
+        $mantto = $data[ 'condicion_operativa' ][ 'mantenimiento' ];
+        $id_orden_trabajo = $mantto[ 0 ][ 'id_orden_trabajo' ];        
+        $sin_licencia = $mantto[ 0 ][ 'sin_licencia' ];
+
+        $consecutivo_licencia = $data[ 'consecutivo_licencia' ][ 'valor' ];
+        
+        # verificamos si nos han enviado un consecutivo desde la 
+        # interfaz del navegador.
+        # si [consecutivo_licencia] es NULL asignamos 
+        # automaticamente un consecutivo
+        if ( empty( $consecutivo_licencia ) )
+        $consecutivo_licencia = $this->resolve_consecutivo_licencia( $id_libro_licencia );
+
+        # creamos consulta de inserción 
+        switch ( $sin_licencia ) {
+            case 'false':
+                # NO ROOT
+                $sql = $trabajador_autorizo !== $this->root ?
+                "UPDATE libro_relatorio SET ".
+                // "id_libro_relatorio = $id_libro_relatorio, ".
+                // "numero_aero = '$numero_aero', ".
+                "id_libro_licencia = $id_libro_licencia, ".
+                "condicion_operativa = 'MTTO', ".
+                "consecutivo_licencia = $consecutivo_licencia, ".
+                "fecha_inicio_evento = STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+                "hora_inicio_evento = '$hora_inicio_evento', ".
+                "fecha_termino_estimado = $fecha_termino_estimado, ".
+                "trabajador_solicito = '$trabajador_solicito', ".
+                "trabajador_autorizo = '$trabajador_autorizo', ".
+                "id_orden_trabajo = $id_orden_trabajo, ".
+                "descripcion_evento = '$descripcion_evento' ".
+                "WHERE id_libro_relatorio = $id_libro_relatorio_update":
+
+                # SI ROOT
+                "UPDATE libro_relatorio SET ".
+                // "id_libro_relatorio = $id_libro_relatorio, ".
+                // "numero_aero = '$numero_aero', ".
+                "id_libro_licencia = $id_libro_licencia, ".
+                "condicion_operativa = 'MTTO', ".
+                "consecutivo_licencia = $consecutivo_licencia, ".
+                "fecha_inicio_evento = STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+                "hora_inicio_evento = '$hora_inicio_evento', ".
+                "fecha_termino_estimado = $fecha_termino_estimado, ".
+                "trabajador_solicito = '$trabajador_solicito', ".
+                "id_orden_trabajo = $id_orden_trabajo, ".
+                "descripcion_evento = '$descripcion_evento' ".
+                "WHERE id_libro_relatorio = $id_libro_relatorio_update";
+                break;
+            
+            case 'true':
+                $sql = $trabajador_autorizo !== $this->root ?
+                "UPDATE libro_relatorio SET ".
+                // "id_libro_relatorio = $id_libro_relatorio, ".
+                // "numero_aero = '$numero_aero', ".
+                "id_libro_licencia = $id_libro_licencia, ".
+                "condicion_operativa = 'MTTO', ".
+                "consecutivo_licencia = $consecutivo_licencia, ".
+                "fecha_inicio_evento = STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+                "hora_inicio_evento = '$hora_inicio_evento', ".
+                "fecha_termino_estimado = $fecha_termino_estimado, ".
+                "trabajador_solicito = '$trabajador_solicito', ".
+                "trabajador_autorizo = '$trabajador_autorizo', ".
+                "id_orden_trabajo = NULL, ".
+                "descripcion_evento = '$descripcion_evento' ".
+                "WHERE id_libro_relatorio = $id_libro_relatorio_update":
+
+                "UPDATE libro_relatorio SET ".
+                // "id_libro_relatorio = $id_libro_relatorio, ".
+                // "numero_aero = '$numero_aero', ".
+                "id_libro_licencia = $id_libro_licencia, ".
+                "condicion_operativa = 'MTTO', ".
+                "consecutivo_licencia = $consecutivo_licencia, ".
+                "fecha_inicio_evento = STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+                "hora_inicio_evento = '$hora_inicio_evento', ".
+                "fecha_termino_estimado = $fecha_termino_estimado, ".
+                "trabajador_solicito = '$trabajador_solicito', ".
+                "id_orden_trabajo = NULL, ".
+                "descripcion_evento = '$descripcion_evento' ".
+                "WHERE id_libro_relatorio = $id_libro_relatorio_update";
+                break;
+        }
+
+        // return $sql;
+        
+        #insertamos un nuevo evento
+        $query = $this->insert_query( $sql );
+        if( $query != 'OK' ) return $query;
+
+        # buscar el [numero_aero]
+        $sql = "SELECT numero_aero from libro_relatorio WHERE id_libro_relatorio = $id_libro_relatorio_update";
+        $numero_aero = $this->query( $sql, 'numero_aero', NULL );
+
+        # cambiamos la condicion operativa del generador
+        $query = $this->__cambiar_estado_generador( $numero_aero, 'MTTO', $fecha_inicio_evento );
+        if( $query != 'OK' ) return $query.". Error al cambiar condicion operativa";
+
+        return 'OK';
+    }
+
+    # -----------------------------------------------
+
+    public function actualizar_evento_relatorio ( $post ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $post, array(
+                'id_libro_relatorio_historial',
+                'fecha_inicio_evento', 'hora_inicio_evento', 
+                'fecha_termino_estimado_evento', 'hora_termino_estimado_evento',
+                'fecha_termino_evento', 'hora_termino_evento', 
+                'descripcion_evento'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $id_libro_relatorio_historial = $post[ 'id_libro_relatorio_historial' ][ 'valor' ];
+        
+        $fecha_inicio_evento = $post[ 'fecha_inicio_evento' ][ 'valor' ];
+        $hora_inicio_evento = $post[ 'hora_inicio_evento' ][ 'valor' ];         
+
+        $fecha_termino_estimado_evento = $post[ 'fecha_termino_estimado_evento' ][ 'valor' ];
+        $hora_termino_estimado_evento = $post[ 'hora_termino_estimado_evento' ][ 'valor' ];
+
+        $fecha_termino_evento = $post[ 'fecha_termino_evento' ][ 'valor' ];
+        $hora_termino_evento = $post[ 'hora_termino_evento' ][ 'valor' ];
+        
+        $descripcion_evento = $post[ 'descripcion_evento' ][ 'valor' ];
+
+        $sql =  
+        "UPDATE libro_relatorio_historial SET ".
+        "fecha_inicio_evento = STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), ".
+        "hora_inicio_evento = '$hora_inicio_evento', ".
+        "fecha_termino_estimado_evento = STR_TO_DATE( '$fecha_termino_estimado_evento', '%d-%m-%Y' ), ".
+        "hora_termino_estimado_evento = '$hora_termino_estimado_evento', ".
+        "fecha_termino_evento = STR_TO_DATE( '$fecha_termino_evento', '%d-%m-%Y' ), ".
+        "hora_termino_evento = '$hora_termino_evento', ".
+        "descripcion_evento = '$descripcion_evento' ".
+        "WHERE id_libro_relatorio_historial = $id_libro_relatorio_historial";
+
+        // return $sql;
+
+        $query = $this->insert_query( $sql );
+        if ( $query == 'OK' ) {
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento actualizado satisfactoriamente' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'msj' => 'OK' );
+            $this->conexion->commit();
+            return $rsp;
+        } else {
+            $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => $query );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'msj' => 'Error al actualizar evento' );
+            $this->conexion->rollback();
+            return $rsp;
+        } 
+    }
+
+    public function obtener_historial_eventos( $get ) {
+        $id_libro_relatorio = $get[ 'id_libro_relatorio' ];
+
+        if ( empty( $id_libro_relatorio ) ) return null;
+        
+        // $sql =  
+        // "SELECT id_libro_relatorio_historial, id_libro_relatorio, ".
+        // "DATE_FORMAT(fecha_inicio_evento, '%d-%m-%Y' ) as fecha_inicio_evento, ".
+        // "hora_inicio_evento, ".
+        // "DATE_FORMAT(fecha_termino_estimado_evento, '%d-%m-%Y' ) as fecha_termino_estimado_evento, ".
+        // "hora_termino_estimado_evento, ".        
+        // "DATE_FORMAT(fecha_termino_evento, '%d-%m-%Y' ) as fecha_termino_evento, ".
+        // "hora_termino_evento, condicion_operativa, descripcion_evento ".
+        // "FROM libro_relatorio_historial ".
+        // "WHERE id_libro_relatorio = $id_libro_relatorio";
+        
+        $sql =  
+        "SELECT id_libro_relatorio_historial, ".
+        "id_libro_relatorio, ".
+        "DATE_FORMAT(fecha_inicio_evento, '%d-%m-%Y' ) as fecha_inicio_evento, ".
+        "hora_inicio_evento, ".
+        "DATE_FORMAT(fecha_termino_estimado_evento, '%d-%m-%Y' ) as fecha_termino_estimado_evento, ".
+        "hora_termino_estimado_evento, ".
+        "DATE_FORMAT(fecha_termino_evento, '%d-%m-%Y' ) as fecha_termino_evento, ".
+        "hora_termino_evento, condicion_operativa, descripcion_evento ".
+        "FROM libro_relatorio_historial ".
+        "WHERE id_libro_relatorio = $id_libro_relatorio";
+
+        // return $sql;
+
+        $query = $this->array_query( $sql ); 
         return $query;
     }
     
     public function obtener_libro_relatorio ( $get ) {
         $option = $get[ 'option' ];
 
-        $sql =  "SELECT t_a.numero_unidad, t_lr.numero_aero, t_lr.condicion_operativa, ".
-                "t_lr.descripcion_evento, t_lr.id_libro_relatorio, fecha_inicio_evento, ".
-                "t_lr.hora_inicio_evento, fecha_termino_evento, t_lr.hora_termino_evento, ".
-                "DATE_FORMAT( fecha_termino_estimado, '%d-%m-%Y' ) as fecha_termino_estimado, ".
-                "t_lr.trabajador_solicito, t_lr.trabajador_autorizo ".
-                "FROM aeros t_a INNER JOIN libro_relatorio t_lr on t_a.numero_aero = t_lr.numero_aero ";
+        $sql =  
+        "SELECT t_a.numero_unidad, t_lr.reporte_por, ".
+        "t_lr.id_orden_trabajo, ".
+        "t_lr.numero_aero, t_lr.condicion_operativa, ".
+        "t_lr.consecutivo_licencia, t_lr.descripcion_evento, ".
+        "t_lr.id_libro_relatorio, t_lr.id_libro_licencia, ".
+        "fecha_inicio_evento, t_lr.hora_inicio_evento, ".
+        "fecha_termino_evento, t_lr.hora_termino_evento, ".
+        "DATE_FORMAT( fecha_termino_estimado, '%d-%m-%Y' ) as fecha_termino_estimado, ".
+        "t_lr.trabajador_solicito, t_lr.trabajador_autorizo ".
+        "FROM aeros t_a INNER JOIN libro_relatorio t_lr ".
+        "ON t_a.numero_aero = t_lr.numero_aero ";
 
-        switch ( $option ) 
-        {
+        switch ( $option ) {
             case 'rango_fechas': # retorna reportes dentro de un rango de fechas
                 $fecha_inf = $get[ 'fecha_inf' ];
                 $fecha_sup = $get[ 'fecha_sup' ];
@@ -517,15 +1141,16 @@ class operacion extends sigesop
         $arr = array();        
 
         # calculamos las horas para cada evento
-        foreach ( $query as $val )
-        {
+        foreach ( $query as $val ) {
             $fecha_termino_evento = $val [ 'fecha_termino_evento' ];
             $hora_termino_evento = $val [ 'hora_termino_evento' ];
-            $estado_evento = $val [ 'estado_evento' ];            
+            $estado_evento = $val [ 'estado_evento' ]; 
 
-            if( empty( $fecha_termino_evento ) && empty( $hora_termino_evento ) ) // si el evento no esta finalizado
-            {
-                #------------
+            $id_libro_licencia = $val[ 'id_libro_licencia' ];
+            $consecutivo_licencia = $val[ 'consecutivo_licencia' ];
+
+            if( empty( $fecha_termino_evento ) 
+                && empty( $hora_termino_evento ) ) { // si el evento no esta finalizado
 
                 $fecha_inicio = Carbon::parse( $val[ 'fecha_inicio_evento' ]." ".$val[ 'hora_inicio_evento' ], 'America/Mexico_City' );
                 $fecha_final = $dia_reporte != '7AM' ?
@@ -544,8 +1169,7 @@ class operacion extends sigesop
                 $val[ 'horas_acumuladas_evento' ] = $horas.':'.$min;
             }
 
-            else // si el evento esta finalizado
-            {
+            else { // si el evento esta finalizado            
                 $val[ 'fecha_termino_evento' ] = Carbon::parse( $fecha_termino_evento, 'America/Mexico_City' )->format( 'd-m-Y' );
                 $val[ 'horas_dia_reporte' ] = null;
 
@@ -560,51 +1184,23 @@ class operacion extends sigesop
                 $val[ 'horas_acumuladas_evento' ] = $horas.':'.$min;
             }
 
-            $val[ 'fecha_inicio_evento' ] = Carbon::parse( $val[ 'fecha_inicio_evento' ], 'America/Mexico_City' )->format( 'd-m-Y' );            
+            $val[ 'fecha_inicio_evento' ] = Carbon::parse( $val[ 'fecha_inicio_evento' ], 'America/Mexico_City' )->format( 'd-m-Y' );
+            $val[ 'numero_licencia' ] = $this->__get_numero_licencia( $id_libro_licencia, $consecutivo_licencia );
 
             $arr[] = $val;
         }
 
         return $arr;
     }
-  
-    private function struct_tabla ( $head, $data ) {
-        $html = 
-            '<table cellspacing="0" cellpadding="1" border="1" >'.
-                '<thead>'.
-                '<tr style="background-color:#009300;color:#000000;">';
-            foreach ( $head as $row ) {
-                $width = empty( $row[ 'x' ] ) ? '' : ' width="'.$row[ 'x' ].'" ';
-                $titulo = $row[ 'titulo' ];
-                $html .= 
-                    '<th '.$width.'>'.$titulo.'</th>';
-            }
-        $html .=
-                '</tr>'.
-                '</thead>'.
-                '<tbody>';
 
-        if ( empty( $data ) ) return $html." <tbody></tbody></table>";
+    private function __get_numero_licencia ( $id_libro_licencia, $consecutivo_licencia ) {
+        if ( empty( $consecutivo_licencia ) ) return NULL;
 
-        foreach( $data as $fila ) 
-        {
-            $html .=
-                '<tr>';
-            foreach ( $head as $row ) {
-                $campo = $row[ 'campo' ];
-                $texto = $fila[ $campo ];
-                $width = empty( $row[ 'x' ] ) ? '' : ' width="'.$row[ 'x' ].'" ';
-                $html .= 
-                    '<td '.$width.'>'.$texto.'</td>';
-            }
-            $html .=
-                '</tr>';
-        }
-
-        $html .=
-                '</tbody>'.
-            '</table>';
-        return $html;
+        $sql = 
+        "SELECT anio_licencia FROM libro_licencia ".
+        "WHERE id_libro_licencia = $id_libro_licencia";
+        $query = $this->query( $sql, 'anio_licencia', NULL );
+        return $query.'-'.$consecutivo_licencia;
     }
 
     public function imprimir ( $get ) {
@@ -660,11 +1256,13 @@ class operacion extends sigesop
         foreach ( $datos as $row ) {
             $id_libro_relatorio = $row[ 'id_libro_relatorio' ];
             $sql =
-                "SELECT descripcion_evento, DATE_FORMAT( fecha_evento, '%d-%m-%Y') ".
-                "AS fecha_evento, hora ".
+                "SELECT descripcion_evento, ".
+                "DATE_FORMAT( fecha_inicio_evento, '%d-%m-%Y') AS fecha_inicio_evento, ".
+                "DATE_FORMAT( fecha_termino_evento, '%d-%m-%Y') AS fecha_termino_evento, ".
+                "hora_inicio_evento, hora_termino_evento, condicion_operativa ".
                 "FROM libro_relatorio_historial ".
                 "WHERE id_libro_relatorio = $id_libro_relatorio ".
-                "ORDER BY fecha_evento ASC, hora ASC";
+                "ORDER BY fecha_inicio_evento ASC, hora_inicio_evento ASC";
 
             $string = 
                 $row[ 'descripcion_evento' ]."<br><br><b>HISTORIAL:</b><br><br>";
@@ -673,7 +1271,15 @@ class operacion extends sigesop
             if ( !empty( $query ) ) {
                 foreach ( $query as $log ) {
                     $string .= 
-                        $log[ 'fecha_evento' ]." ".$log[ 'hora' ]."<br>".
+                        "INICIO: <br>".
+                        $log[ 'fecha_inicio_evento' ]." ".$log[ 'hora_inicio_evento' ]."<br>".
+                        
+                        "TERMINO: <br>".
+                        $log[ 'fecha_termino_evento' ]." ".$log[ 'hora_termino_evento' ]."<br>".
+
+                        "CONDICION OPERATIVA: ".$log[ 'condicion_operativa' ]."<br>".
+                        
+                        "DESCRIPCIÓN: <br>".
                         $log[ 'descripcion_evento' ]."<br><br>";
                 }
                 $datos[ $i ][ 'descripcion_evento' ] = $string;
@@ -710,5 +1316,109 @@ class operacion extends sigesop
         // reset pointer to the last page
         $pdf->lastPage();
         $pdf->Output('/Reporte_Mantenimiento.pdf', 'I');
+    } 
+
+    public function eliminar_libro_relatorio ( $get ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $get, array(
+                'id_libro_relatorio'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        $id_libro_relatorio = $get[ 'id_libro_relatorio' ];
+
+        # eliminar el historial de eventos secundarios
+        // $sql =
+        // "DELETE FROM libro_relatorio_historial ".
+        // "WHERE id_libro_relatorio = $id_libro_relatorio";
+
+        // $query = $this->insert_query( $sql );
+        // if ( $query !== 'OK' ) {
+        //     $this->conexion->rollback();
+        //     $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar historial' );
+        //     $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'key' => 'id_libro_relatorio', 'msj' => $query );
+        //     return $rsp;
+        // }
+
+        $sql =
+        "DELETE FROM libro_relatorio ".
+        "WHERE id_libro_relatorio = $id_libro_relatorio";
+
+        $query = $this->insert_query( $sql );
+        if ( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Evento eliminado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'msj' => 'Correcto' );
+            return $rsp;
+        }
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar Evento' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'key' => 'id_libro_relatorio', 'msj' => $query );
+            return $rsp;
+        }
     }
+
+    public function eliminar_libro_relatorio_historial ( $get ) {
+        $rsp = array();
+
+        $validar = 
+            $this->verificaDatosNulos( $get, array(
+                'id_libro_relatorio_historial'
+            ));
+
+        if( $validar !== 'OK' ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            return $rsp;
+        }
+
+        # eliminamos el evento
+        $id_libro_relatorio_historial = $get[ 'id_libro_relatorio_historial' ];
+        $sql = 
+        "DELETE FROM libro_relatorio_historial ".
+        "WHERE id_libro_relatorio_historial = $id_libro_relatorio_historial";        
+        $query = $this->insert_query( $sql );
+
+        # buscamos el id_libro_relatorio para resolver el estado del
+        # generador
+        $sql = 
+        "SELECT id_libro_relatorio FROM libro_relatorio ".
+        "WHERE id_libro_relatorio_historial = $id_libro_relatorio_historial";
+        $id_libro_relatorio = $this->query( $sql, 'id_libro_relatorio', NULL );
+
+        # resolvemos la 
+
+        if ( $query === 'OK' ) {
+            $this->conexion->commit();
+            $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Evento adicional eliminado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'msj' => 'Correcto' );
+            return $rsp;
+        }
+        else {
+            $this->conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar Evento adicional.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'key' => 'id_libro_relatorio', 'msj' => $query );
+            return $rsp;
+        }
+    }
+
+    # verifica si existen relatorios asociados a un año especifico
+    // public function verifica_anio_licencia ( $id_libro_licencia ) {
+    //     if ( empty( $consecutivo_licencia ) ) return NULL;
+
+    //     $sql =
+    //     "SELECT anio_licencia FROM libro_licencia ".
+    //     "WHERE id_libro_licencia = $id_libro_licencia";
+        
+    //     $query = $this->query( $sql, 'anio_licencia', NULL );
+    //     return !empty( $query ) ? 'OK' : NULL;
+    // }  
 }

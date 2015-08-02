@@ -38,7 +38,12 @@ class unidades extends sigesop
 	        case 'obtenerUnidades':
 	            $obtenerUnidades = $this->obtenerUnidades();
 	            echo json_encode($obtenerUnidades);
-	            break;                
+	            break; 
+
+            case 'imprimir':
+                $query = $this->imprimir( );
+                echo json_encode( $query );
+                break; 
 
             default:
                 echo json_encode('Funcion no registrada en la clase unidades');
@@ -163,5 +168,74 @@ class unidades extends sigesop
             $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Unidad ".$numero_unidad, 'msj' => $query );
             return $rsp;
         }
+    }
+
+    public function imprimir () {
+        require_once('../tcpdf/tcpdf.php');
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte  de unidades' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        $datos = $this->obtenerUnidades(  );
+      
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'Numero unidad', 'campo'=> 'numero_unidad', ),
+                    array( 'titulo' => 'Capacidad instalada', 'campo'=> 'capacidad_instalada',  ),
+                    array( 'titulo' => 'capacidad efectiva de unidad', 'campo'=> 'capacidad_efectiva_unidad', )
+                    
+                ), 
+
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_Unidades.pdf', 'I');
     }
 }

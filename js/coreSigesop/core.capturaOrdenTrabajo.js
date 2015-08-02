@@ -1,6 +1,5 @@
 sigesop.capturaOrdenTrabajo = {
-	document: function( opt )
-	{
+	document: function( opt ) {
 		var suf = opt.suf || '';
 
 		var 
@@ -34,7 +33,7 @@ sigesop.capturaOrdenTrabajo = {
 			            	name: 'Insertar datos', 
 			            	icon: 'user',
 			        		callback: function ( key, _opt ) {
-			        			var index = $( this ).index();
+			        			var index = $( this ).attr( 'table-index' );
 			        			typeof opt.table.actions.insertData == 'function' ?
 			        				opt.table.actions.insertData( index ):
 			        				console.log( 'function insertData is null' );
@@ -44,7 +43,7 @@ sigesop.capturaOrdenTrabajo = {
 			            	name: 'Leer datos capturados',
 			            	icon: 'copy',
 			        		callback: function ( key, _opt ) {
-			        			var index = $( this ).index();
+			        			var index = $( this ).attr( 'table-index' );
 			        			typeof opt.table.actions.readData == 'function' ?
 			        				opt.table.actions.readData( index ):
 			        				console.log( 'function readData is null' );
@@ -72,8 +71,7 @@ sigesop.capturaOrdenTrabajo = {
 		return doc;
 	},
 
-	documentInsertData: function ( opt )
-	{
+	documentInsertData: function ( opt ){
 		/*
 		 * name
 		 * suf
@@ -90,8 +88,7 @@ sigesop.capturaOrdenTrabajo = {
 
 		var 
 		update_accordion = function ( arr ) {
-			if ( $.isEmptyObject( arr ) )
-			{
+			if ( $.isEmptyObject( arr ) ) {
 				console.log( '[arr] es nulo' );
 				return null;
 			}
@@ -121,8 +118,7 @@ sigesop.capturaOrdenTrabajo = {
 			// 	}
 			// }
 
-			for( var i = 0, lon = arr.length; i < lon; i++ )
-			{
+			for( var i = 0, lon = arr.length; i < lon; i++ ) {
 				html +=
 				'	<h3>' + arr[ i ][ opt.campo ] + '</h3>' +
 				'	<div data-value="' + arr[ i ][ opt.dataValue ] + '"></div>' ;
@@ -232,14 +228,16 @@ sigesop.capturaOrdenTrabajo = {
 			datos: {},
 			IDS: {
 				id_accordion: '#' + opt.name
+			},
+			update_table: function ( arr ) {
+
 			}
 		};
 
 		return doc;
 	},
 
-	documentActivity: function ( opt )
-	{
+	documentActivity: function ( opt ) {
 		/*
 		 * obj
 		 * suf
@@ -292,8 +290,7 @@ sigesop.capturaOrdenTrabajo = {
 
 		    /* iteracion del objeto para estructurar las propiedades
 		     */
-			for( j ; j < lon_j ; j++ )
-			{
+			for( j ; j < lon_j ; j++ ) {
 				/* creacion del objeto datosAct
 				 */
 				var 
@@ -309,22 +306,20 @@ sigesop.capturaOrdenTrabajo = {
 					};
 
 	            tabla += '<tr>' +     
-	            		'<td class="active col-lg-2 col-sm-2 text-justify">' + fila.actividad_verificar + '</td>';
+	            		'<td class="active col-lg-2 col-sm-2">' + fila.actividad_verificar + '</td>';
 
 	            /* iteracion de parametros
 	             */
-	            tabla += '<td class="success col-lg-2 col-sm-2 text-justify">';
+	            tabla += '<td class="success col-lg-2 col-sm-2">';
 
 	            var 
 	            	k = 0,
 	            	lon_k = fila.parametro_actividad.length;
 
-	            for( k ; k < lon_k; k++ )
-	            {
+	            for( k ; k < lon_k; k++ ) {
 	            	var mtz = fila.parametro_actividad[ k ];
 
-	            	switch ( mtz.tipo_dato )
-	            	{
+	            	switch ( mtz.tipo_dato ) {
 	            		case 'BINARIO':
 	            			tabla += mtz.parametro + '&nbsp;' + mtz.dato + '<br><br>';
 	            			break;
@@ -372,8 +367,7 @@ sigesop.capturaOrdenTrabajo = {
 	            	k = 0,
 	            	lon_k = fila.lectura_actual.length;
 
-	            for( k ; k < lon_k; k++ )
-	            {
+	            for( k ; k < lon_k; k++ ) {
 	            	var mtz = fila.lectura_actual[ k ],
 	            		secuencia = 'actual_' + obj.id_orden_trabajo + '_' + fila.id_actividad_verificar + 
 	            			mtz.secuencia_datos + '_' + k + suf,
@@ -457,8 +451,7 @@ sigesop.capturaOrdenTrabajo = {
 	            	k = 0,
 	            	lon_k = fila.lectura_posterior.length;
 
-	            for( k ; k < lon_k; k++ )
-	            {
+	            for( k ; k < lon_k; k++ ) {
 	            	var mtz = fila.lectura_posterior[ k ],
 	            		secuencia = 'post_' + obj.id_orden_trabajo + '_' + fila.id_actividad_verificar +
 	            			fila.lectura_posterior[ k ].secuencia_datos + '_' + k + suf,
@@ -561,28 +554,25 @@ sigesop.capturaOrdenTrabajo = {
 
 		    /* iteracion del objeto para estructurar las propiedades
 		     */
-			for( j ; j < lon_j ; j++ )
-			{
+			for( j ; j < lon_j ; j++ ) {
 				var fila = obj.actividades[ j ];
 
 	            tabla += 
 	            	'<tr>' +     
-	            		'<td class="active col-lg-2 col-sm-2 text-justify">' + fila.actividad_verificar + '</td>';
+	            		'<td class="active col-lg-2 col-sm-2">' + fila.actividad_verificar + '</td>';
 
 	            /* iteracion de parametros
 	             */
-	            tabla += '<td class="success col-lg-2 col-sm-2 text-justify">';
+	            tabla += '<td class="success col-lg-2 col-sm-2">';
 
 	            var 
 	            	k = 0,
 	            	lon_k = fila.parametro_actividad.length;
 
-	            for( k ; k < lon_k; k++ )
-	            {
+	            for( k ; k < lon_k; k++ ) {
 	            	var parametro = fila.parametro_actividad[ k ];
 
-	            	switch ( parametro.tipo_dato )
-	            	{
+	            	switch ( parametro.tipo_dato ) {
 	            		case 'BINARIO':
 	            			tabla += parametro.parametro + '&nbsp;' + 
 	            			parametro.dato + '<br><br>';
@@ -635,8 +625,7 @@ sigesop.capturaOrdenTrabajo = {
 	            	k = 0,
 	            	lon_k = fila.lectura_actual.length;
 
-	            for( k ; k < lon_k; k++ )
-	            {
+	            for( k ; k < lon_k; k++ ) {
 	            	var lectura_actual = fila.lectura_actual[ k ];
 	            	
 	            	html += 
@@ -646,8 +635,7 @@ sigesop.capturaOrdenTrabajo = {
 
 					/* definimos tipo de [input] ( radio || text )
 					 */
-					if( lectura_actual.tipo_dato == 'Binario' ) 
-					{
+					if( lectura_actual.tipo_dato == 'Binario' ) {
 						/* rellenamos de datos si la bandera [con_datos]
 						 * es activada						
 						 */

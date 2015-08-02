@@ -7,10 +7,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 		<script type="text/javascript">
 			document.write('<link rel="stylesheet" href="css/login.css">');
-		</script>		
+		</script>				
+		<link rel="stylesheet" href="css/bootstrap.min.css">
 		<link rel="stylesheet" href="css/cfe/jquery.ui.all.css">
-		<link rel="stylesheet" href="css/bootstrap.css">
-		
+		<link rel="stylesheet" href="css/style.css">
 		<link rel="stylesheet" href="js/pnotify/pnotify.custom.min.css">		
 		<link rel="stylesheet" href="js/formValidation/formValidation.min.css">
 	</head>

@@ -27,8 +27,7 @@ function getData() {
 		data: { usuario: window.localStorage.usuario },
 		class: 'mantenimiento',
 		query: 'obtenerOrdenTrabajo',
-		success: function ( data )
-		{
+		success: function ( data ) {
 			window.sesion.matrizOrdenTrabajo = data;
 			document.getElementById( 'badge_OT' ).innerHTML = data != null ? data.length : 0 ;
 			
@@ -47,9 +46,9 @@ function struct_data( index, con_datos ) {
 		throw new Error('function insertarDatos: elemento es indefinido');
 	}
 
-	var 
-	activate_equipos = function ( id, value )
-	{
+	var
+	 
+	activate_equipos = function ( id, value ) {
 		var data = {
 			id_mantenimiento: elemento.id_mantenimiento, 
 			id_sistema_aero: value,
@@ -66,10 +65,8 @@ function struct_data( index, con_datos ) {
 			data: data,
 			class: 'mantenimiento',
 			query: 'equipo_into_systems_mantto',
-			success: function ( data )
-			{	
-				if ( data != null )					
-				{
+			success: function ( data ) {	
+				if ( data != null )	{
 					// ---------- creamos la estructura para la edicion de el usuario en la ventana
 
 					docEM = sigesop.capturaOrdenTrabajo.documentInsertData({
@@ -90,8 +87,7 @@ function struct_data( index, con_datos ) {
 		});
 	},
 
-	activate_actividades = function ( id, value )
-	{
+	activate_actividades = function ( id, value ) {
 		var 
 			elem = document.getElementById( id ),
 			data = { 
@@ -148,8 +144,7 @@ function struct_data( index, con_datos ) {
 		});
 	},
 
-	showBsModal = function ()			
-	{
+	onshown = function ( dialog ) {
 		var data = {
 			id_mantenimiento: elemento.id_mantenimiento,
 			id_orden_trabajo: elemento.id_orden_trabajo		
@@ -167,6 +162,7 @@ function struct_data( index, con_datos ) {
 			query: 'systems_into_mantto',
 			success: function ( data ) {						
 				if ( !$.isEmptyObject( data ) ) {
+					var 
 					docSM = sigesop.capturaOrdenTrabajo.documentInsertData({
 						arr: data, 
 						name: 'sistemas',
@@ -175,29 +171,37 @@ function struct_data( index, con_datos ) {
 						activate: activate_equipos
 					});
 
-					document.getElementById( win.idBody.flushChar('#') )
-						.innerHTML = docSM.html;
+					// document.getElementById( win.idBody.flushChar('#') )
+					// 	.innerHTML = docSM.html;
+					
+					dialog.setMessage( docSM.html );
 					docSM.javascript();
 				}
 
-				else $( win.idBody ).html( '<h3 class=" text-center ">SIN LISTAS DE VERIFICACION POR CAPTURAR...</h3>' );
+				else dialog.setMessage( '<h3 class=" text-center ">SIN LISTAS DE VERIFICACION POR CAPTURAR...</h3>' );
 			}
 		});
 	},
 
-	win = sigesop.ventanaEmergente({
-		idDiv: '__divInsertarDatosListaV',
-		titulo: 'Datos lista de verificación',
-		clickAceptar: function ( event )
-		{
-			event.preventDefault();
-			$( win.idDiv ).modal( 'hide' );
-		},
-		showBsModal: showBsModal
-	});
+    win = BootstrapDialog.show({
+        title: 'Datos lista de verificación',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        onshown: onshown,
+        size: BootstrapDialog.SIZE_WIDE,
+        closable: true,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
 }
 
 function insertarDatos ( index ) { struct_data( index, false ); }
+
 function readData ( index ) { struct_data( index, true ); }
 
 function leerDatos ( datos ) {

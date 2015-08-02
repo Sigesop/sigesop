@@ -23,6 +23,11 @@ class gestionCentral extends sigesop
 	            echo json_encode($nuevaCentral);
 	            break;
 
+            case 'imprimir':
+                $query = $this->imprimir(  );
+                echo json_encode( $query );
+                break; 
+
             // Obtiene los todos los datos de la central
             case 'obtenerDatosCentral':
                 $obtenerDatosCentral = $this->obtenerDatosCentral();
@@ -143,5 +148,79 @@ class gestionCentral extends sigesop
         }
 
         return $rsp;      
-    }   
+    }
+
+    public function imprimir () {
+        require_once('../tcpdf/tcpdf.php');
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de central' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+       $datos = array( $this->obtenerDatosCentral() );
+      
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'Clave', 'campo'=> 'clave_20', 'x'=>50),
+                    array( 'titulo' => 'Clave sap', 'campo'=> 'clave_sap', 'x'=>50 ),
+                    array( 'titulo' => 'Centro de costo', 'campo'=> 'centro_costo', 'x'=>50 ),
+                    array( 'titulo' => 'Nombre de la central', 'campo'=> 'nombre_central','x'=>200 ),
+                    array( 'titulo' => 'Direccion de la central', 'campo'=> 'direccion', 'x'=>200),
+                    array( 'titulo' => 'Telefono de la central', 'campo'=> 'telefono', 'x'=>200 ),
+                    array( 'titulo' => 'Codigo postal de la central', 'campo'=> 'cp', 'x'=>50),
+                    array( 'titulo' => 'Superintendente de la central', 'campo'=> 'superintendente', 'x'=>50),
+                    array( 'titulo' => 'Capacidad instalada de la central', 'campo'=> 'capacidad_instalada',  )
+                   
+                ),
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte de la central.pdf', 'I');
+    }
 }

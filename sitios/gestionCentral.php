@@ -21,11 +21,12 @@ if ( !$obj->accesoPagina( 'gestionCentral.php' ) ) {
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-		<link rel="stylesheet" href="../css/bootstrap.css">
+		<link rel="stylesheet" href="../css/bootstrap.min.css">
 		<link rel="stylesheet" href="../css/style.css">		
 		<link rel="stylesheet" href="../css/cfe/jquery.ui.all.css">	
 		<link rel="stylesheet" href="../js/pnotify/pnotify.custom.min.css">
 		<link rel="stylesheet" href="../js/formValidation/formValidation.min.css">
+		<link rel="stylesheet" href="../js/bootstrap-dialog/bootstrap-dialog.min.css">
 	</head>
 
 	<body>
@@ -42,6 +43,7 @@ if ( !$obj->accesoPagina( 'gestionCentral.php' ) ) {
 
 		<script type="text/javascript" src="../js/jquery.js"></script>
 		<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="../js/bootstrap-dialog/bootstrap-dialog.min.js"></script>
 		<!-- // <script type="text/javascript" src="../js/ui/jquery-ui.custom.min.js"></script> -->
 		<script type="text/javascript" src="../js/pnotify/pnotify.custom.min.js"></script>
 

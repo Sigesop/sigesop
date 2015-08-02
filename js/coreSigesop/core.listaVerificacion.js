@@ -1,16 +1,35 @@
+/* Cache de datos
+ * window.sesion.lista_verificacion
+ */ 
+
+/* Verificando dependencias
+ */
+if ( !BootstrapDialog )
+throw new Error('dependencia [BootstrapDialog] es indefinida');
+
 sigesop.listaVerificacion = {
-	document: function ( opt )
-	{
+	document: function ( opt ) {
+		/* 
+		 * suf
+		 * obj		
+		 * vista -> [ undefined || editar_lista_verificacion || agregar_actividad ]
+		 */
+
 		var
+
 		suf = opt.suf || '',
 
-		obj = opt.obj || {},
+		vista = opt.vista || null,		
 
-		html =
+		struct_html = function ( vista ) {
+			var html =
 			'<div class="panel panel-success">' +
-				'<div class="panel-heading">ASOCIACIÓN</div><br>' +
-				
-				'<form id="form-lista-verificacion-' + suf + '" class="form-horizontal" role="form">' +
+			'<div class="panel-heading">ASOCIACIÓN</div><br>' +
+			'<form id="form-lista-verificacion-' + suf + '" class="form-horizontal" role="form">';
+
+			switch( vista ) {
+				case 'editar_lista_verificacion':
+					html +=
 					'<div class="form-group">' +
 						'<label class="col-sm-3 col-md-3 control-label">Tipo Mantenimiento:</label>' +
 						'<div class="col-sm-7 col-md-7">' +
@@ -21,7 +40,34 @@ sigesop.listaVerificacion = {
 					'<div class="form-group">' +
 						'<label class="col-sm-3 control-label">Descripción:</label>' +
 						'<div class="col-sm-7">' +
-							'<textarea name="descripcion_lista_verificacion" id="descripcion_lista' + suf + '" class="form-control input-sm eventoCambioMayuscula" placeholder="Ingrese descripcion de la lista de verificación"></textarea>' +
+							'<textarea name="lista_verificacion" id="descripcion_lista' + suf + '" class="form-control input-sm eventoCambioMayuscula" placeholder="Ingrese descripcion de la lista de verificación"></textarea>' +
+						'</div>' +
+					'</div>';
+					break;
+
+				case 'agregar_actividad':
+					html +=
+					'<div class="form-group">' +
+						'<div id="lista-actividades-' + suf + '" class="col-sm-offset-3 col-sm-7"></div>' +
+						'<p class="col-sm-2">' +
+							'<button id="btn-nueva-actividad-' + suf + '" class="btn btn-info"> <span class="glyphicon glyphicon-plus"></span></button> ' +
+						'</p>' +
+					'</div>';
+					break;
+
+				default:
+					html +=
+					'<div class="form-group">' +
+						'<label class="col-sm-3 col-md-3 control-label">Tipo Mantenimiento:</label>' +
+						'<div class="col-sm-7 col-md-7">' +
+							'<select name="id_mantenimiento" id="tipoMantto' + suf + '" class="form-control" ><option value="" >' + sigesop.sinRegistros + '</option></select>' +
+						'</div>' +
+					'</div>' +
+
+					'<div class="form-group">' +
+						'<label class="col-sm-3 control-label">Descripción:</label>' +
+						'<div class="col-sm-7">' +
+							'<textarea name="lista_verificacion" id="descripcion_lista' + suf + '" class="form-control input-sm eventoCambioMayuscula" placeholder="Ingrese descripcion de la lista de verificación"></textarea>' +
 						'</div>' +
 					'</div>' +
 
@@ -30,59 +76,73 @@ sigesop.listaVerificacion = {
 						'<p class="col-sm-2">' +
 							'<button id="btn-nueva-actividad-' + suf + '" class="btn btn-info"> <span class="glyphicon glyphicon-plus"></span></button> ' +
 						'</p>' +
-					'</div>' +
+					'</div>';
+					break;
+			}
 
-					'<div class="form-group">' +
-						'<p class="col-sm-offset-3 col-sm-8">' +
-							'<button id="btn-guardar-lista-' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
-							'<button id="btn-limpiar-lista-' + suf + '" type="reset"  class="btn btn-success"> <span class="glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
-						'</p>' +
-					'</div>' +
-				'</form>' +
-			'</div>',		
+			html +=
+			'<div class="form-group">' +
+				'<p class="col-sm-offset-3 col-sm-8">' +
+					'<button id="btn-guardar-lista-' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
+					'<button id="btn-limpiar-lista-' + suf + '" type="reset"  class="btn btn-success"> <span class="glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
+				'</p>' +
+			'</div>' +
+			'</form>' +
+			'</div>';
+
+			return html;
+		},
+
+		html = struct_html ( vista ),
 
 		nueva_actividad = function () {
 			var
+			IDS = this.IDS,
 			doc = this,
 
 			success = function ( datos ) {
 				doc.datos.actividad_verificar.push( datos );
 				doc.update_table( doc.datos.actividad_verificar );
-				$( win.idDiv ).modal( 'hide' );
+				IDS.$form.formValidation( 'resetForm' ); // habilitamos boton success al agregar una nueva actividad
+				win.close();
 			},
 
 			activity = sigesop.listaVerificacion.activity({
-				suf: 'win1',
-				error: error,
+				suf: 'win1-' + suf,
+				error: sigesop.completeCampos,
 				success: success
 			}),
-
-			showBsModal = function () {
-				document.getElementById( this.idBody )
-				.innerHTML = activity.html;
-				activity.javascript();
-			},
-
-			win = sigesop.ventanaEmergente({
-				idDiv: 'win-nueva-actividad',
-				titulo: 'Nueva actividad',
-				keyboard: false,
-				clickAceptar: function ( event ){ event.preventDefault(); $( win.idBody ).modal( 'hide' ); },
-				showBsModal: showBsModal
+		
+			win = BootstrapDialog.show({
+			    title: 'Nueva actividad',
+			    type: BootstrapDialog.TYPE_DEFAULT,
+			    message: activity.html,
+			    onshown: function ( dialog ) {
+			    	activity.javascript();
+			    },
+			    size: BootstrapDialog.SIZE_WIDE,
+			    closable: false,
+			    draggable: true,
+			    buttons: [{
+			        label: 'Cancelar',
+			        cssClass: 'btn-danger',
+			        action: function( dialog ) {
+			            dialog.close();
+			        }
+			    }]
 			});
 		},
 
-		limpiarCampos = function ()
-		{
+		limpiarCampos = function () {
 			$( doc.datos.id_mantenimiento.idHTML ).val( '' );
-			$( doc.datos.descripcion_lista_verificacion.idHTML ).val( '' );
+			$( doc.datos.lista_verificacion.idHTML ).val( '' );
 			
 			vaciarDatos.call( doc );
 		},
 
 		vaciarDatos = function () {
 			this.datos.id_mantenimiento.valor = null;
-			this.datos.descripcion_lista_verificacion.valor = null;
+			this.datos.lista_verificacion.valor = null;
 			this.datos.actividad_verificar.length = 0;
 
 			$( this.IDS.idBody ).empty();
@@ -110,26 +170,35 @@ sigesop.listaVerificacion = {
 				success: success
 			}),
 
-			showBsModal = function () {
-				document.getElementById( this.idBody )
-				.innerHTML = edit.html;
-				edit.javascript();
-			},
-
-			win = sigesop.ventanaEmergente({
-				idDiv: 'win-edicion-actividad',
-				titulo: 'Edicion actividad',
-				keyboard: false,
-				clickAceptar: function ( event ){ event.preventDefault(); $( win.idBody ).modal( 'hide' ); },
-				showBsModal: showBsModal
+			win = BootstrapDialog.show({
+			    title: 'Editar actividad',
+			    type: BootstrapDialog.TYPE_DEFAULT,
+			    message: edit.html,
+			    onshown: function ( dialog ) {
+			    	edit.javascript();
+			    },
+			    size: BootstrapDialog.SIZE_WIDE,
+			    closable: false,
+			    draggable: true,
+			    buttons: [{
+			        label: 'Cancelar',
+			        cssClass: 'btn-danger',
+			        action: function( dialog ) {
+			            dialog.close();
+			        }
+			    }]
 			});
 		},
 
 		javascript = function() {
 			var
 			doc = this,
-			form = doc.IDS.form,
-			$botonActividad = $( doc.IDS.botonActividad ),
+			datos = doc.datos,
+			IDS = doc.IDS,
+			form = doc.IDS.form,			
+			$id_mantenimiento = $( datos.id_mantenimiento.idHTML ),
+			$lista_verificacion = $( datos.lista_verificacion.idHTML ),
+			$botonLimpiar = $( IDS.botonLimpiar ),
 			$form = $( form )
 			.formValidation({
 		        icon: {
@@ -140,14 +209,26 @@ sigesop.listaVerificacion = {
 
 		        onSuccess: function ( e ) {
 		        	e.preventDefault();
-		        	if ( !$.isEmptyObject( doc.datos.actividad_verificar ) )
-		        	{
+		        	/* Si no es edicion de lista
+		        	 * de verificacion no validamos las actividades		        	
+		        	 */
+		        	if ( vista === null || vista === 'agregar_actividad' ) {
+		        		/* verificamos que existan actividades agregadas
+		        		 */
+			        	if ( !$.isEmptyObject( doc.datos.actividad_verificar ) ) {
+				        	typeof opt.success == 'function' ?
+				        		opt.success( doc.datos, doc.IDS, limpiarCampos = limpiarCampos.bind( doc ) ) :
+				        		console.log( 'success is null' );
+				        }
+				        else
+				        	sigesop.msg( 'Info', 'No se han agregado actividades' );
+		        	}
+
+		        	else if( vista === 'editar_lista_verificacion' ) {
 			        	typeof opt.success == 'function' ?
-			        		opt.success( doc.datos, doc.IDS, limpiarCampos ) :
+			        		opt.success( datos, IDS, limpiarCampos ) :
 			        		console.log( 'success is null' );
-			        }
-			        else
-			        	sigesop.msg( 'Info', 'No se han agregado actividades' );
+		        	}
 		        },
 
 		        onError: function ( e ) {
@@ -164,10 +245,14 @@ sigesop.listaVerificacion = {
 		                    }
 		                }
 		            },
-		            descripcion_lista_verificacion: {
+		            lista_verificacion: {
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
+		                    },
+		                    stringLength: {
+		                    	max: 100,
+		                    	message: 'Máximo 100 caracteres'
 		                    },
 		                    regexp: {
 		                        regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]*$/i,
@@ -179,53 +264,94 @@ sigesop.listaVerificacion = {
 			})
 			.on( 'success.field.fv', function( e, data ) {
 				data.fv.disableSubmitButtons( false );
+			})
+			.on( 'err.fields.fv', function ( event ) {
+				data.fv.disableSubmitButtons( false );
 			});
 
-			doc.IDS.$form = $form;
-
-			/* tabla de registro de las actividades
+			/* Enlazar vista publica			
 			 */
-			var 
-			table = sigesop.tablaRegistro({
-				head: 'ACTIVIDAD',
-				campo: "actividad_verificar.valor",
-				suf: '_actividades'
-			});
+			IDS.$form = $form;
+			IDS.$id_mantenimiento = $id_mantenimiento;
+			IDS.$lista_verificacion = $lista_verificacion;
+			IDS.$botonLimpiar = $botonLimpiar;
 
-			doc.update_table = table.update_table; // enlazamos el enlace de actualizar tabla de actividades
-			document.getElementById( doc.IDS.listaActividades.flushChar( '#' ) )
-			.innerHTML = table.html;
-			doc.IDS.idBody = table.IDS.body;
+			/* si se trata de un documento principal
+			 */
+			if ( vista === null || vista === 'agregar_actividad' ) {
+				/* tabla de registro de las actividades
+				 */
+				var 
+				$botonActividad = $( IDS.botonActividad ),
+				table = sigesop.tablaRegistro({
+					head: 'ACTIVIDAD',
+					campo: "actividad_verificar.valor",
+					suf: 'actividades-' + suf
+				});
 
-			$( table.IDS.body ).contextMenu({
-				selector: 'tr',
-				items: {
-		            editar: 
-		            {
+				IDS.$botonActividad = $botonActividad;
+				doc.update_table = table.update_table; // enlazamos el enlace de actualizar tabla de actividades
+				document.getElementById( doc.IDS.listaActividades.flushChar( '#' ) )
+				.innerHTML = table.html;
+				doc.IDS.idBody = table.IDS.body;
+
+				var items = {
+		            editar: {
 		            	name: 'Editar', 
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			edit_activity.call( doc.datos.actividad_verificar, index )
 		        		}
 		            },
-		            eliminar: 
-		            {
+		            eliminar: {
 		            	name: 'Eliminar', 
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
+		        			var index = $( this ).attr( 'table-index' );
 		        			drop_activity.call( doc.datos.actividad_verificar, index, table.update_table );
 		        		}
 		            }
-				}
-			});
+				};
 
-			$botonActividad.on( 'click', function ( event ) { 
-				event.preventDefault();
-				nueva_actividad.call( doc ); 
-			});
-			$( this.IDS.botonLimpiar ).on( 'click', function ( event ) { vaciarDatos.call( doc ); });
+				$( table.IDS.body ).contextMenu({
+					selector: 'tr',
+					items: items
+				});
+
+				$botonActividad.on( 'click', function ( event ) { 
+					event.preventDefault();
+					nueva_actividad.call( doc ); 
+				});
+			}
+
+			/* si se trata de un documento de edicion
+			 */
+			else if( vista === 'editar_lista_verificacion' ) {
+				var obj = opt.obj;
+
+				datos.id_lista_verificacion_update.valor =
+				obj.id_lista_verificacion;
+
+				sigesop.query ({
+					class: 'listaVerificacion',
+					query: 'obtenerTipoMantenimiento',
+					success: function ( data ) {
+						window.sesion.matrizTipoMantto = data;						
+						$id_mantenimiento.combo({
+							arr: data, 							
+							campo: 'nombre_mantenimiento',
+							campoValor: 'id_mantenimiento'
+						})
+						.val( obj.id_mantenimiento );
+					}
+				});
+
+				$lista_verificacion
+				.val( obj.lista_verificacion );
+			}
+
+			$botonLimpiar.on( 'click', function ( event ) { vaciarDatos.call( doc ); });
 
 			$( '.eventoCambioMayuscula' ).eventoCambioMayuscula();
 		},
@@ -236,10 +362,12 @@ sigesop.listaVerificacion = {
 				idHTML: '#tipoMantto' + suf
 			},
 
-			descripcion_lista_verificacion: {
+			lista_verificacion: {
 				valor: null,
 				idHTML: '#descripcion_lista' + suf					
 			},
+
+			id_lista_verificacion_update: { valor: null },
 
 			actividad_verificar: []
 		},
@@ -250,7 +378,10 @@ sigesop.listaVerificacion = {
 			botonActividad: '#btn-nueva-actividad-' + suf,
 			listaActividades: '#lista-actividades-' + suf,				
 			form: '#form-lista-verificacion-' + suf,
-			$form: null			
+			$form: null,
+			$id_mantenimiento: null,
+			$lista_verificacion: null,
+			$botonLimpiar: null
 		},
 
 		doc = {
@@ -269,11 +400,47 @@ sigesop.listaVerificacion = {
 
 		suf = opt.suf || '',
 
-		html =
+		vista = opt.vista || null,
+
+		struct_html = function ( vista ) {
+			var html = 
 			'<div class="panel panel-success">' +
-				'<div class="panel-heading"></div><br>' +
-				
-				'<form id="form-nueva-actividad-' + suf + '" class="form-horizontal" role="form">' +
+			'<div class="panel-heading"></div><br>' +				
+			'<form id="form-nueva-actividad-' + suf + '" class="form-horizontal" role="form">';
+
+			switch ( vista ) {
+				case 'editar_parametros':
+					html +=
+					'<div class="form-group">' +
+						'<label class="col-sm-3 col-md-3 control-label">Parámetro de Aceptación:</label>' +
+						'<div class="col-sm-7 col-md-7">' +
+							'<select name="tipo_parametro_aceptacion" id="parametro-aceptacion-' + suf + '" class="form-control">' +
+								'<option value="">' + sigesop.seleccioneOpcion + '</option>' +
+								'<option value="TEXTO">TEXTO</option>' +
+								'<option value="COMPARACION">COMPARACION</option>' +
+								'<option value="RANGO">RANGO</option>' +
+								'<option value="TOLERANCIA">TOLERANCIA</option>' +
+							'</select>' +
+						'</div>' +
+					'</div>' +
+
+					'<div class="form-group">' +
+						'<label class="col-sm-3 col-md-3 control-label">Lectura actual:</label>' +
+						'<div class="col-sm-7 col-md-7">' +
+							'<select name="tipo_lectura_actual" id="tipo-dato-lectura-actual-' + suf + '" class="form-control" disabled></select>' +
+						'</div>' +
+					'</div>' +
+
+					'<div class="form-group">' +
+						'<label class="col-sm-3 col-md-3 control-label">Lectura posterior:</label>' +
+						'<div class="col-sm-7 col-md-7">' +
+							'<select name="tipo_lectura_posterior" id="tipo-dato-lectura-posterior-' + suf + '" class="form-control" disabled></select>' +							
+						'</div>' +
+					'</div>';
+					break;
+
+				default:
+					html +=
 					'<div class="form-group">' +
 						'<label class="col-sm-3 col-md-3 control-label">Sistema:</label>' +
 						'<div class="col-sm-7 col-md-7">' +
@@ -321,26 +488,28 @@ sigesop.listaVerificacion = {
 						'<div class="col-sm-7 col-md-7">' +
 							'<select name="tipo_lectura_posterior" id="tipo-dato-lectura-posterior-' + suf + '" class="form-control" disabled></select>' +							
 						'</div>' +
+					'</div>';
+					break;
+			}
+
+			html += 
+				'<div class="form-group">' +
+					'<div class="col-sm-3 col-md-3"></div>' +
+					'<div class="col-sm-9">' +
+						'<p>' +
+							'<button id="btn-agregar-actividad-' + suf + '" type="submit" class="btn btn-success" disabled><span class="glyphicon glyphicon-plus"></span> Guardar actividad</button> ' +
+							'<button id="btn-limpiar-actividad-' + suf + '" type="reset" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Reiniciar Actividad</button>' +
+						'</p>' +
 					'</div>' +
+				'</div><br>' +
 
-					'<div class="form-group">' +
-						'<div class="col-sm-3 col-md-3"></div>' +
-						'<div class="col-sm-9">' +
-							'<p>' +
-								'<button id="btn-agregar-actividad-' + suf + '" type="submit" class="btn btn-success" disabled><span class="glyphicon glyphicon-plus"></span> Agregar actividad</button> ' +
-								'<button id="btn-limpiar-actividad-' + suf + '" type="reset" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Reiniciar Actividad</button>' +
-							'</p>' +
-						'</div>' +
-					'</div><br>' +
-				'</form>' +
-			'</div>',
+			'</form>' +
+			'</div>';
 
-		leerDatos = function () {
-			var doc = this;
-			doc.datos.id_sistema_aero.valor = $( doc.datos.id_sistema_aero.idHTML ).val();
-			doc.datos.id_equipo_aero.valor = $( doc.datos.id_equipo_aero.idHTML ).val();
-			doc.datos.actividad_verificar.valor = $( doc.datos.actividad_verificar.idHTML ).val().trim();
+			return html;
 		},
+
+		html = struct_html( vista ),
 
 		lecturaActual = function ( obj ) {
 			var doc = this;
@@ -473,13 +642,15 @@ sigesop.listaVerificacion = {
 		javascript = function () {
 			var
 			doc = this,
+			datos = this.datos,
+			IDS = this.IDS,
 			form = doc.IDS.form,
-			$id_sistema_aero = $( doc.datos.id_sistema_aero.idHTML ),
-			$id_equipo_aero = $( doc.datos.id_equipo_aero.idHTML ),
-			$actividad_verificar = $( doc.datos.actividad_verificar.idHTML ),
-			$tipo_parametro_aceptacion = $( doc.datos.tipo_parametro_aceptacion.idHTML ),
-			$tipo_lectura_actual = $( doc.datos.tipo_lectura_actual.idHTML ),
-			$tipo_lectura_posterior = $( doc.datos.tipo_lectura_posterior.idHTML ),
+			$id_sistema_aero = $( datos.id_sistema_aero.idHTML ),
+			$id_equipo_aero = $( datos.id_equipo_aero.idHTML ),
+			$actividad_verificar = $( datos.actividad_verificar.idHTML ),
+			$tipo_parametro_aceptacion = $( datos.tipo_parametro_aceptacion.idHTML ),
+			$tipo_lectura_actual = $( datos.tipo_lectura_actual.idHTML ),
+			$tipo_lectura_posterior = $( datos.tipo_lectura_posterior.idHTML ),
 			$form = $( form )
 			.formValidation({
 		        icon: {
@@ -490,7 +661,6 @@ sigesop.listaVerificacion = {
 
 		        onSuccess: function ( e ) {
 		        	e.preventDefault();
-		        	leerDatos.call( doc );
 
 		        	/* verificamos que los arreglos de datos no esten
 		        	 * vacios [parametro_actividad, lectura_actual, lectura_posterior]
@@ -511,7 +681,7 @@ sigesop.listaVerificacion = {
 		        	}
 
 		        	typeof opt.success == 'function' ?
-		        		opt.success( doc.datos ) :
+		        		opt.success( datos, IDS ) :
 		        		console.log( 'success is null' );
 		        },
 
@@ -523,6 +693,16 @@ sigesop.listaVerificacion = {
 
 		        fields: {
 		            id_sistema_aero: {
+		            	onSuccess: function ( e, data ) {
+		            		datos.id_sistema_aero.valor = data.element.val();
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.id_sistema_aero.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.id_sistema_aero.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -530,6 +710,16 @@ sigesop.listaVerificacion = {
 		                }
 		            },
 		            id_equipo_aero: {
+		            	onSuccess: function ( e, data ) {
+		            		datos.id_equipo_aero.valor = data.element.val();
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.id_equipo_aero.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.id_equipo_aero.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -537,6 +727,18 @@ sigesop.listaVerificacion = {
 		                }
 		            },
 		            actividad_verificar: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.actividad_verificar.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.actividad_verificar.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.actividad_verificar.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
@@ -657,8 +859,7 @@ sigesop.listaVerificacion = {
 
 			/* eventos			
 			 */
-			$id_sistema_aero.change( function ( event )
-			{
+			$id_sistema_aero.change( function ( event ) {
 				$id_equipo_aero.empty();
 				$form.formValidation( 'revalidateField', 'id_equipo_aero' );
 
@@ -683,8 +884,7 @@ sigesop.listaVerificacion = {
 				}				
 			});
 
-			$tipo_parametro_aceptacion.change( function ( event ) 
-			{
+			$tipo_parametro_aceptacion.change( function ( event ) {
 				/* removemos la validaciones previas
 				 */ 
 				$form.formValidation( 'resetField', 'tipo_lectura_actual' );
@@ -716,62 +916,63 @@ sigesop.listaVerificacion = {
 				if ( !val ) return null;
 					
 				var
-					success = function ( datos ) {
-						/* secuencia grafica del documento y reinicio de datos de la seccion
-						 * paramentro de aceptacion
-						 */
-						doc.datos.parametro_actividad.length = 0;
-						doc.datos.parametro_actividad = datos; // enlazamos datos con el documento actividad
-						
-						sigesop.combo({
-							arr: combo_tipo_parametro( $tipo_parametro_aceptacion.val() ),
-							elem: doc.datos.tipo_lectura_actual.idHTML,
-							campo: 'string',
-							campoValor: 'val'
-						});
 
-						sigesop.combo({
-							arr: combo_tipo_parametro( $tipo_parametro_aceptacion.val() ),
-							elem: doc.datos.tipo_lectura_posterior.idHTML,
-							campo: 'string',
-							campoValor: 'val'
-						});
-
-						$tipo_lectura_actual.prop( 'disabled', false );
-						$( win.idDiv ).modal( 'hide' );
-					},
-
-					obj = sigesop.listaVerificacion.__retornaFuncion( val,
-						{
-							suf: 'param',
-							error: error,
-							success: success							
-						}
-					),
+				success = function ( datos ) {
+					/* secuencia grafica del documento y reinicio de datos de la seccion
+					 * paramentro de aceptacion
+					 */
+					doc.datos.parametro_actividad.length = 0;
+					doc.datos.parametro_actividad = datos; // enlazamos datos con el documento actividad
 					
-					showBsModal = function () {
-						document.getElementById( this.idBody )
-						.innerHTML = obj.html;
-						obj.javascript();
-					},
-
-					cancelar = function ( event ) { 
-						event.preventDefault(); $( win.idDiv ).modal( 'hide' );
-						$tipo_parametro_aceptacion.val('');
-						$form.formValidation( 'revalidateField', 'tipo_parametro_aceptacion' );
-					},
-
-					win = sigesop.ventanaEmergente({
-						idDiv: 'win-parametro-aceptacion',
-						titulo: 'Agregar parámetro de aceptación',
-						clickAceptar: cancelar,
-						clickCerrar: cancelar,
-						showBsModal: showBsModal
+					sigesop.combo({
+						arr: combo_tipo_parametro( $tipo_parametro_aceptacion.val() ),
+						elem: doc.datos.tipo_lectura_actual.idHTML,
+						campo: 'string',
+						campoValor: 'val'
 					});
+
+					sigesop.combo({
+						arr: combo_tipo_parametro( $tipo_parametro_aceptacion.val() ),
+						elem: doc.datos.tipo_lectura_posterior.idHTML,
+						campo: 'string',
+						campoValor: 'val'
+					});
+
+					$tipo_lectura_actual.prop( 'disabled', false );
+					win.close();
+				},
+
+				obj = sigesop.listaVerificacion.__retornaFuncion( val,
+					{
+						suf: 'param',
+						error: error,
+						success: success							
+					}
+				),
+
+				win = BootstrapDialog.show({
+				    title: 'Agregar parámetro de aceptación',
+				    type: BootstrapDialog.TYPE_DEFAULT,
+				    message: obj.html,
+				    onshown: function ( dialog ) {
+				    	obj.javascript();
+				    },
+				    size: BootstrapDialog.SIZE_WIDE,
+				    closable: false,
+				    draggable: true,
+				    buttons: [{
+				        label: 'Cancelar',
+				        cssClass: 'btn-danger',
+				        action: function( dialog ) {							
+							$tipo_parametro_aceptacion.val('');
+							$form.formValidation( 'revalidateField', 'tipo_parametro_aceptacion' );					
+				            dialog.close();
+				        }
+				    }]
+				});
 			});
 
-			$tipo_lectura_actual.change( function ( event )
-			{
+			$tipo_lectura_actual.change( function ( event ) {
 				/* removemos la validaciones previas
 				 */ 					
 				$form.formValidation( 'resetField', 'tipo_lectura_posterior' );
@@ -805,7 +1006,7 @@ sigesop.listaVerificacion = {
 						doc.datos.lectura_actual = datos; // enlazamos datos con el documento actividad
 						$tipo_lectura_posterior.val('');
 						$tipo_lectura_posterior.prop( 'disabled', false );
-						$( win.idDiv ).modal( 'hide' );
+						win.close();
 					},
 
 					obj = sigesop.listaVerificacion.__retornaFuncion( val,
@@ -817,30 +1018,30 @@ sigesop.listaVerificacion = {
 							numero_filas: doc.datos.parametro_actividad.length								
 						}
 					),
-					
-					showBsModal = function () {
-						document.getElementById( this.idBody )
-						.innerHTML = obj.html;
-						obj.javascript();
-					},
 
-					cancelar = function ( event ) { 
-						event.preventDefault(); $( win.idDiv ).modal( 'hide' );
-						$tipo_lectura_actual.val('');
-						$form.formValidation( 'revalidateField', 'tipo_lectura_actual' );
-					},
-
-					win = sigesop.ventanaEmergente({
-						idDiv: 'win-lectura-actual',
-						titulo: 'Agregar lectura actual',
-						clickAceptar: cancelar,
-						clickCerrar: cancelar,
-						showBsModal: showBsModal
+					win = BootstrapDialog.show({
+					    title: 'Agregar lectura actual',
+					    type: BootstrapDialog.TYPE_DEFAULT,
+					    message: obj.html,
+					    onshown: function ( dialog ) {
+					    	obj.javascript();
+					    },
+					    size: BootstrapDialog.SIZE_WIDE,
+					    closable: false,
+					    draggable: true,
+					    buttons: [{
+					        label: 'Cancelar',
+					        cssClass: 'btn-danger',
+					        action: function( dialog ) {
+					        	$tipo_lectura_actual.val('');
+								$form.formValidation( 'revalidateField', 'tipo_lectura_actual' );
+					            dialog.close();
+					        }
+					    }]
 					});
 			});
 
-			$tipo_lectura_posterior.change( function ( event )
-			{
+			$tipo_lectura_posterior.change( function ( event ) {
 				/* secuencia grafica del documento y reinicio de datos de la seccion
 				 * lectura posterior
 				 */
@@ -855,45 +1056,67 @@ sigesop.listaVerificacion = {
 				if ( !val ) return null;
 					
 				var
-					success = function ( datos ) {
-						/* secuencia grafica del documento y reinicio de datos de la seccion
-						 * paramentro de aceptacion
-						 */
-						doc.datos.lectura_posterior.length = 0;
-						doc.datos.lectura_posterior = datos; // enlazamos datos con el documento actividad
-						$( doc.IDS.botonGuardar ).prop( 'disabled', false );
-						$( win.idDiv ).modal( 'hide' );
-					},
 
-					obj = sigesop.listaVerificacion.__retornaFuncion( val,
-						{
-							suf: 'post',
-							success: success,
-							error: error,
-							tipo_parametro: doc.datos.lectura_actual[ 0 ].tipo_dato,
-							numero_filas: doc.datos.lectura_actual.length								
-						}
-					),
-					
-					showBsModal = function () {
-						document.getElementById( this.idBody )
-						.innerHTML = obj.html;
-						obj.javascript();
-					},
+				success = function ( datos ) {
+					/* secuencia grafica del documento y reinicio de datos de la seccion
+					 * paramentro de aceptacion
+					 */
+					doc.datos.lectura_posterior.length = 0;
+					doc.datos.lectura_posterior = datos; // enlazamos datos con el documento actividad
+					$( doc.IDS.botonGuardar ).prop( 'disabled', false );
+					win.close();
+				},
 
-					cancelar = function ( event ) { 
-						event.preventDefault(); $( win.idDiv ).modal( 'hide' );
-						$tipo_lectura_posterior.val('');
-						$form.formValidation( 'revalidateField', 'tipo_lectura_posterior' );
-					},
+				obj = sigesop.listaVerificacion.__retornaFuncion( val,
+					{
+						suf: 'post',
+						success: success,
+						error: error,
+						tipo_parametro: doc.datos.lectura_actual[ 0 ].tipo_dato,
+						numero_filas: doc.datos.lectura_actual.length								
+					}
+				),
+				
+				// showBsModal = function () {
+				// 	document.getElementById( this.idBody )
+				// 	.innerHTML = obj.html;
+				// 	obj.javascript();
+				// },
 
-					win = sigesop.ventanaEmergente({
-						idDiv: 'win-lectura-posterior',
-						titulo: 'Agregar lectura posterior',
-						clickAceptar: cancelar,
-						clickCerrar: cancelar,
-						showBsModal: showBsModal
-					});
+				// cancelar = function ( event ) { 
+				// 	event.preventDefault(); $( win.idDiv ).modal( 'hide' );
+				// 	$tipo_lectura_posterior.val('');
+				// 	$form.formValidation( 'revalidateField', 'tipo_lectura_posterior' );
+				// },
+
+				// win = sigesop.ventanaEmergente({
+				// 	idDiv: 'win-lectura-posterior',
+				// 	titulo: 'Agregar lectura posterior',
+				// 	clickAceptar: cancelar,
+				// 	clickCerrar: cancelar,
+				// 	showBsModal: showBsModal
+				// });
+
+				win = BootstrapDialog.show({
+				    title: 'Agregar lectura actual',
+				    type: BootstrapDialog.TYPE_DEFAULT,
+				    message: obj.html,
+				    onshown: function ( dialog ) {
+				    	obj.javascript();
+				    },
+				    size: BootstrapDialog.SIZE_WIDE,
+				    closable: false,
+				    draggable: true,
+				    buttons: [{
+				        label: 'Cancelar',
+				        cssClass: 'btn-danger',
+				        action: function( dialog ) {
+				        	$tipo_lectura_posterior.val('');
+							$form.formValidation( 'revalidateField', 'tipo_lectura_posterior' );
+				            dialog.close();
+				        }
+				    }]
+				});
 			});
 
 			$( doc.IDS.botonLimpiar ).on( 'click', function ( event ) { vaciarDatos.call( doc ); });
@@ -964,8 +1187,8 @@ sigesop.listaVerificacion = {
 			var
 			doc = this,
 			table = sigesop.tablaRegistro({
-				head: 'LISTA DE VERIFICACION, ACTIVIDADES REGISTRADAS',
-				campo: "lista_verificacion, num_actividades",
+				head: 'LISTA DE VERIFICACION, TIPO MANTENIMIENTO, ACTIVIDADES REGISTRADAS',
+				campo: "lista_verificacion, nombre_mantenimiento, num_actividades",
 				suf: 'lista-verificacion'
 			});
 
@@ -974,20 +1197,55 @@ sigesop.listaVerificacion = {
 			document.getElementById( doc.IDS.idTabla.flushChar('#') )
 			.innerHTML = '<br>' + table.html;
 
+			var items = {
+	            actividades: {
+	            	name: 'Ver actividades', 
+	            	icon: 'ok',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).attr( 'table-index' );
+	        			typeof opt.table.actions.actividades == 'function' ?
+	        				opt.table.actions.actividades( index ):
+	        				console.log('function actividades is null' );
+	        		}
+	            },
+
+	            agregar: {
+	            	name: 'Agregar actividades', 
+	            	icon: 'add',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).attr( 'table-index' );
+	        			typeof opt.table.actions.agregar == 'function' ?
+	        				opt.table.actions.agregar( index ):
+	        				console.log('function agregar is null' );
+	        		}
+	            },
+
+	            editar: {
+	            	name: 'Editar', 
+	            	icon: 'edit',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).attr( 'table-index' );
+	        			typeof opt.table.actions.editar == 'function' ?
+	        				opt.table.actions.editar( index ):
+	        				console.log('function editar is null' );
+	        		}
+	            },
+
+	            eliminar: {
+	            	name: 'Eliminar', 
+	            	icon: 'delete',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).attr( 'table-index' );
+	        			typeof opt.table.actions.eliminar == 'function' ?
+	        				opt.table.actions.eliminar( index ):
+	        				console.log('function eliminar is null' );
+	        		}
+	            }
+			}
+
 			$( table.IDS.body ).contextMenu({
 				selector: 'tr',
-				items: {
-		            actividades: {
-		            	name: 'Ver actividades', 
-		            	icon: 'edit',
-		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).index();
-		        			typeof opt.table.actions.actividades == 'function' ?
-		        				opt.table.actions.actividades( index ):
-		        				console.log('function actividades is null' );
-		        		}
-		            }
-				}
+				items: items
 			});
 		},
 
@@ -1008,6 +1266,153 @@ sigesop.listaVerificacion = {
 
 		return doc;
 	},
+
+	documentFiltro: function ( opt ) {
+		/* obj
+		 * suf
+		 * arr_areaAcceso
+		 * arr_permisoAcceso
+		 * success
+		 * error
+		 */ 
+
+		var 
+		suf = opt.suf || '',
+		obj = opt.obj || {
+				
+			};
+
+		var
+
+		html =
+			'<form id="form-filtro-lista-verificacion-' + suf + '" class="form-horizontal" role="form">' +
+				'<div class="form-group">' +
+					'<label for="" class="control-label col-sm-3">Listra de verificación: </label>' +				
+					'<div id="divListaVerificacion' + suf + '" class="col-sm-7"></div>'+
+				'</div>' +
+				
+				'<div class="form-group">' +
+					'<div class="col-sm-2 col-md-2 control-label"></div>' +
+					'<p class="col-sm-9 col-md-9">' +
+						'<button id="btn-consulta-reporte-' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte</button> ' +
+						'<button id="botonLimpiar' + suf + '" type="reset" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button> ' +
+						'</p>' +
+				'</div>' +
+			'</form>',
+
+
+		tabla = sigesop.tabla({
+			head: {
+				campo: 'Lista verificación'
+			},
+			body: {
+				campo: 'lista_verificacion',
+				campoValor: 'id_lista_verificacion',
+			},
+			tipo: 'checkbox'
+		}),
+
+		check_arr = function ( arr ) {
+			var 
+				i = 0,
+				lon = arr.length;
+
+			for ( i ; i < lon ; i++ )
+				if ( arr[ i ].valor !== null ) return true;
+
+			return false;
+		},
+
+		javascript = function () {
+			var
+			doc = this,
+			form = doc.IDS.form,
+			$form = $( form ).formValidation({
+		        icon: {
+		            valid: 'glyphicon glyphicon-ok',
+		            invalid: 'glyphicon glyphicon-remove',
+		            validating: 'glyphicon glyphicon-refresh'
+		        },
+
+		        onSuccess: function ( e ) {
+		        	e.preventDefault();
+
+		        	/* verificamos que la matriz [mtz_auxiliar] tenga seleccionado
+		        	 * por lo menos a un elemento
+		        	 */ 
+		        	if ( check_arr( doc.IDS.mtz_auxiliar ) ) {
+			        	typeof opt.success == 'function' ?
+			        		opt.success( doc.datos, doc.IDS, limpiarCampos ) :
+			        		console.log( 'success is null' );
+			        }
+
+			        else 
+			        sigesop.msg( 'Advertencia', 'Seleccione una lista', 'warning' );
+		        },
+
+		        onError: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.error == 'function' ?
+		        		opt.error() : console.log( 'error is null' );			        	
+		        },
+
+		        fields: {			            
+		            responsable: {
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Campo requerido'
+		                    }
+		                }
+		            }				            
+		        }
+			})
+			.on( 'success.field.fv', function( e, data ) {
+				data.fv.disableSubmitButtons( false );
+			});
+			
+			doc.IDS.$form = $form;
+
+			document.getElementById( doc.IDS.divListaVerificacion.flushChar('#') )
+			.innerHTML = tabla.html;
+			doc.IDS.mtz_auxiliar = tabla.matrizInput;
+
+			doc.update_table = tabla.update_table;
+
+			$( doc.IDS.botonLimpiar ).on( 'click', function ( event ) { vaciarDatos(); });
+		},
+
+		datos = {
+			id_lista_verificacion: []
+		},
+
+		limpiarCampos = function () {
+			$( doc.datos.responsable.idHTML ).val( '' );
+			vaciarDatos();
+		},
+
+		vaciarDatos = function () {
+			tabla.reset();
+			doc.IDS.$form.formValidation( 'resetForm' );		
+		},
+
+		IDS = {
+			botonImprimir: '#btn-consulta-reporte-' + suf,
+			botonLimpiar: '#botonLimpiar' + suf,
+			form: '#form-filtro-lista-verificacion-' + suf,
+			$form: null,
+			divListaVerificacion: '#divListaVerificacion' + suf,
+			mtz_auxiliar: []
+		},
+
+		doc = {
+			html: html,
+			javascript: javascript,
+			datos: datos,
+			IDS: IDS
+		};
+
+		return doc;
+	},	
 
 	__retornaFuncion: function ( val, opt ) {
 		if ( val )
@@ -1030,7 +1435,7 @@ sigesop.listaVerificacion = {
 		html = 
 			'<form id="form-parametro-texto-' + suf + '" class="form-horizontal" role="form">' +
 				'<div class="form-group">' +
-					'<label class="col-sm-3 col-md-3 control-label"> Parámetro de aceptación:</label>'+
+					'<label class="col-sm-3 col-md-3 control-label">Descripción:</label>'+
 					'<div class="col-sm-7 col-md-7">'+
 						'<textarea name="parametro_aceptacion" id="textarea-parametro-aceptacion-texto-' + suf +'" class="form-control input-sm eventoCambioMayuscula" placeholder="Parámetro"></textarea>'+
 					'</div>'+
@@ -1046,8 +1451,7 @@ sigesop.listaVerificacion = {
 				'</div>' +
 			'</form>',
 
-		leerDatos = function ()
-		{
+		leerDatos = function () {
 			this.datos.length = 0; // vaciar los campos anteriores de la propiedad publica
 
 			this.datos.push({
@@ -1060,7 +1464,9 @@ sigesop.listaVerificacion = {
 		javascript = function () {
 			var 
 			doc = this,
+			IDS = this.IDS,
 			form = doc.IDS.form,
+			$botonLimpiar = $( IDS.botonLimpiar ),
 			$form = $( form ).formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',
@@ -1107,7 +1513,12 @@ sigesop.listaVerificacion = {
 				data.fv.disableSubmitButtons( false );
 			});
 
-			doc.IDS.$form = $form;
+			IDS.$form = $form;
+			IDS.$botonLimpiar = $botonLimpiar;
+
+			$botonLimpiar.on( 'click', function ( e ) {
+				$form.formValidation( 'resetForm' );
+			});
 
 			$( '.eventoCambioMayuscula' ).eventoCambioMayuscula();
 		},			
@@ -1117,6 +1528,7 @@ sigesop.listaVerificacion = {
 			botonLimpiar: '#btn-limpiar-parametro-texto-' + suf,
 			form: '#form-parametro-texto-' + suf,
 			$form: null,
+			$botonLimpiar: null,
 			ids: [ { idHTML: '#textarea-parametro-aceptacion-texto-' + suf } ] // donde se guardaran los ids html de las cajas de texto
 		},
 
@@ -1156,7 +1568,7 @@ sigesop.listaVerificacion = {
 					'<div class="col-sm-9 col-md-9">'+
 						'<div class="table-responsive">'+
 							'<table class="table table-bordered">'+
-								'<thead><tr><th>Parámetro</th><th>Dato</th><th>Tipo de Dato</th></tr></thead>'+
+								'<thead><tr><th>Descripción</th><th>Dato</th><th>Tipo de Dato</th></tr></thead>'+
 								'<tbody id="tabla-comparacion-' + suf + '"></tbody>'+
 							'</table>'+
 						'</div>'+
@@ -1265,38 +1677,24 @@ sigesop.listaVerificacion = {
 
 			/* descargar los datos de tipo de unidad de medida
 			 */ 
-			if ( !$.isEmptyObject( window.sesion.matrizUnidadMedida ) )
-			{
-				var
-					i = 0,
-					lon = IDS.ids.length;
+			sigesop.query({
+				class: 'listaVerificacion',
+				query: 'obtenerUnidadMedida',
+				success: function ( data ) 
+				{
+					window.sesion.matrizUnidadMedida = data;
+					var
+						i = 0,
+						lon = IDS.ids.length;
 
-				for ( i ; i < lon ; i++ ) 
-					sigesop.combo({
-						arr: window.sesion.matrizUnidadMedida, 
-						elem: IDS.ids[ i ].unidad_medida, 
-						campo: 'unidad_medida'
-					});
-			}
-			else
-				sigesop.query({
-					class: 'listaVerificacion',
-					query: 'obtenerUnidadMedida',
-					success: function ( data ) 
-					{
-						window.sesion.matrizUnidadMedida = data;
-						var
-							i = 0,
-							lon = IDS.ids.length;
-
-						for ( i ; i < lon ; i++ ) 
-							sigesop.combo({
-								arr: window.sesion.matrizUnidadMedida, 
-								elem: IDS.ids[ i ].unidad_medida, 
-								campo: 'unidad_medida'
-							});
-					}
-				});
+					for ( i ; i < lon ; i++ ) 
+						sigesop.combo({
+							arr: window.sesion.matrizUnidadMedida, 
+							elem: IDS.ids[ i ].unidad_medida, 
+							campo: 'unidad_medida'
+						});
+				}
+			});
 		},
 
 		vaciarDatos = function () {
@@ -1448,7 +1846,7 @@ sigesop.listaVerificacion = {
 					'<div class="col-sm-9 col-md-9">'+
 						'<div class="table-responsive">'+
 							'<table class="table table-bordered">'+
-								'<thead><tr><th>Parámetro</th><th>Dato inferior</th><th>Dato superior</th><th>Tipo de Dato</th></tr></thead>'+
+								'<thead><tr><th>Descripción</th><th>Dato inferior</th><th>Dato superior</th><th>Tipo de Dato</th></tr></thead>'+
 								'<tbody id="tabla-comparacion-' + suf + '"></tbody>'+
 							'</table>'+
 						'</div>'+
@@ -1563,38 +1961,24 @@ sigesop.listaVerificacion = {
 
 			/* descargar los datos de tipo de unidad de medida
 			 */ 
-			if ( !$.isEmptyObject( window.sesion.matrizUnidadMedida ) )
-			{
-				var
-					i = 0,
-					lon = IDS.ids.length;
+			sigesop.query({
+				class: 'listaVerificacion',
+				query: 'obtenerUnidadMedida',
+				success: function ( data ) 
+				{
+					window.sesion.matrizUnidadMedida = data;
+					var
+						i = 0,
+						lon = IDS.ids.length;
 
-				for ( i ; i < lon ; i++ ) 
-					sigesop.combo({
-						arr: window.sesion.matrizUnidadMedida, 
-						elem: IDS.ids[ i ].unidad_medida, 
-						campo: 'unidad_medida'
-					});
-			}
-			else
-				sigesop.query({
-					class: 'listaVerificacion',
-					query: 'obtenerUnidadMedida',
-					success: function ( data ) 
-					{
-						window.sesion.matrizUnidadMedida = data;
-						var
-							i = 0,
-							lon = IDS.ids.length;
-
-						for ( i ; i < lon ; i++ ) 
-							sigesop.combo({
-								arr: window.sesion.matrizUnidadMedida, 
-								elem: IDS.ids[ i ].unidad_medida, 
-								campo: 'unidad_medida'
-							});
-					}
-				});
+					for ( i ; i < lon ; i++ ) 
+						sigesop.combo({
+							arr: window.sesion.matrizUnidadMedida, 
+							elem: IDS.ids[ i ].unidad_medida, 
+							campo: 'unidad_medida'
+						});
+				}
+			});
 		},
 
 		vaciarDatos = function () {
@@ -1750,7 +2134,7 @@ sigesop.listaVerificacion = {
 						'<div class="table-responsive">'+
 							'<table class="table table-bordered">'+
 								'<thead><tr>' +
-									'<th>Parámetro</th><th>Dato</th>' +
+									'<th>Descripción</th><th>Dato</th>' +
 									'<th>Tolerancia <span class="glyphicon glyphicon-plus"></span><span class="glyphicon glyphicon-minus"></span></th>' +
 									'<th>Tipo de Dato</th>' +
 								'</tr></thead>'+
@@ -1868,38 +2252,24 @@ sigesop.listaVerificacion = {
 
 			/* descargar los datos de tipo de unidad de medida
 			 */ 
-			if ( !$.isEmptyObject( window.sesion.matrizUnidadMedida ) )
-			{
-				var
-					i = 0,
-					lon = IDS.ids.length;
+			sigesop.query({
+				class: 'listaVerificacion',
+				query: 'obtenerUnidadMedida',
+				success: function ( data ) 
+				{
+					window.sesion.matrizUnidadMedida = data;
+					var
+						i = 0,
+						lon = IDS.ids.length;
 
-				for ( i ; i < lon ; i++ ) 
-					sigesop.combo({
-						arr: window.sesion.matrizUnidadMedida, 
-						elem: IDS.ids[ i ].unidad_medida, 
-						campo: 'unidad_medida'
-					});
-			}
-			else
-				sigesop.query({
-					class: 'listaVerificacion',
-					query: 'obtenerUnidadMedida',
-					success: function ( data ) 
-					{
-						window.sesion.matrizUnidadMedida = data;
-						var
-							i = 0,
-							lon = IDS.ids.length;
-
-						for ( i ; i < lon ; i++ ) 
-							sigesop.combo({
-								arr: window.sesion.matrizUnidadMedida, 
-								elem: IDS.ids[ i ].unidad_medida, 
-								campo: 'unidad_medida'
-							});
-					}
-				});
+					for ( i ; i < lon ; i++ ) 
+						sigesop.combo({
+							arr: window.sesion.matrizUnidadMedida, 
+							elem: IDS.ids[ i ].unidad_medida, 
+							campo: 'unidad_medida'
+						});
+				}
+			});
 		},
 
 		vaciarDatos = function () {
@@ -2068,7 +2438,7 @@ sigesop.listaVerificacion = {
 					'<div class="col-sm-9 col-md-9">'+
 						'<div class="table-responsive">'+
 							'<table class="table table-bordered">'+
-								'<thead><tr><th>Parámetro</th><th>Dato</th></tr></thead>'+
+								'<thead><tr><th>Descripción</th><th>Dato</th></tr></thead>'+
 								'<tbody id="tabla-binario-' + suf + '"></tbody>'+
 							'</table>'+
 						'</div>'+
@@ -2315,7 +2685,7 @@ sigesop.listaVerificacion = {
 					'<div class="col-sm-9 col-md-9">'+
 						'<div class="table-responsive">'+
 							'<table class="table table-bordered">'+
-								'<thead><tr><th>Parámetro</th><th>Dato</th><th>Tipo de Dato</th></tr></thead>'+
+								'<thead><tr><th>Descripción</th><th>Dato</th><th>Tipo de Dato</th></tr></thead>'+
 								'<tbody id="tabla-comparacion-' + suf + '"></tbody>'+
 							'</table>'+
 						'</div>'+
@@ -2408,38 +2778,24 @@ sigesop.listaVerificacion = {
 
 			/* descargar los datos de tipo de unidad de medida
 			 */ 
-			if ( !$.isEmptyObject( window.sesion.matrizUnidadMedida ) )
-			{
-				var
-					i = 0,
-					lon = IDS.ids.length;
+			sigesop.query({
+				class: 'listaVerificacion',
+				query: 'obtenerUnidadMedida',
+				success: function ( data ) 
+				{
+					window.sesion.matrizUnidadMedida = data;
+					var
+						i = 0,
+						lon = IDS.ids.length;
 
-				for ( i ; i < lon ; i++ ) 
-					sigesop.combo({
-						arr: window.sesion.matrizUnidadMedida, 
-						elem: IDS.ids[ i ].unidad_medida, 
-						campo: 'unidad_medida'
-					});
-			}
-			else
-				sigesop.query({
-					class: 'listaVerificacion',
-					query: 'obtenerUnidadMedida',
-					success: function ( data ) 
-					{
-						window.sesion.matrizUnidadMedida = data;
-						var
-							i = 0,
-							lon = IDS.ids.length;
-
-						for ( i ; i < lon ; i++ ) 
-							sigesop.combo({
-								arr: window.sesion.matrizUnidadMedida, 
-								elem: IDS.ids[ i ].unidad_medida, 
-								campo: 'unidad_medida'
-							});
-					}
-				});
+					for ( i ; i < lon ; i++ ) 
+						sigesop.combo({
+							arr: window.sesion.matrizUnidadMedida, 
+							elem: IDS.ids[ i ].unidad_medida, 
+							campo: 'unidad_medida'
+						});
+				}
+			});
 		},
 
 		vaciarDatos = function () {
@@ -2590,7 +2946,6 @@ sigesop.listaVerificacion = {
 
 	/* Objetos para edicion de listas de verificacion
 	 */
-	
 	actividadVerificar: function ( opt ) {
 		var
 
@@ -2696,6 +3051,98 @@ sigesop.listaVerificacion = {
 			javascript: javascript,
 			datos     : datos,
 			IDS       : IDS
+		};
+
+		return doc;
+	},
+
+	documentAcordion: function ( opt ){
+		/*
+		 * name
+		 * suf
+		 * arr
+		 * sortable
+		 * activate
+		 * campo
+		 * dataValue
+		 */
+
+		opt.suf = opt.suf || '';
+		opt.name = opt.name + opt.suf || 'accordion' + opt.suf;
+		opt.activate = opt.activate || function () {};
+		opt.arr = !$.isEmptyObject( opt.arr ) ? opt.arr : [];
+
+		var 
+
+		struct_html = function ( arr ) {
+			var 
+			html = '<div id="' + opt.name + '">' +  struct_accordion( arr ) +
+			'</div>'
+
+			return html;
+		},
+
+		struct_accordion = function ( arr ) {
+			var html = '';
+			if ( !$.isEmptyObject( arr ) ) {
+				for( var i = 0, lon = arr.length; i < lon; i++ ) {
+					html +=
+					'	<h3>' + arr[ i ][ opt.campo ] + '</h3>' +
+					'	<div data-value="' + arr[ i ][ opt.dataValue ] + '"></div>' ;
+				}	
+			}
+
+			return html;
+		},
+
+		javascript = function () {
+			$( '#' + opt.name ).accordion({
+				collapsible: true,
+				active: false,
+				heightStyle: 'content',
+				icons: {
+					header: "ui-icon-circle-arrow-e",
+					activeHeader: "ui-icon-circle-arrow-s"
+				},
+				beforeActivate: function( event, ui ) {
+					// _ui = ui;
+					// _event = event;
+					var elem = typeof ui.newPanel[0] !== 'undefined' ?
+						document.getElementById( ui.newPanel[0].id ) : null;
+
+					if ( elem ) {			
+						/* vaciar div						
+						 */
+						// elem.innerHTML = '';
+						ui.oldPanel.empty();
+
+						var
+							id = ui.newPanel[0].id,
+							value = elem.getAttribute('data-value');
+
+						typeof opt.activate === 'function' ? 
+							opt.activate( id, value ): null;
+					}
+				}
+			});
+		},
+
+		doc = {
+			html: struct_html( opt.arr ),
+			javascript: javascript,
+			update_accordion: function ( data ) {
+				if ( !$.isEmptyObject( data ) ) {
+					document.getElementById( opt.name )				
+					.innerHTML = struct_accordion( data );
+
+					javascript();
+				}
+			},
+			activate: opt.activate,
+			datos: {},
+			IDS: {
+				id_accordion: '#' + opt.name
+			}
 		};
 
 		return doc;

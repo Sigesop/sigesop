@@ -22,6 +22,9 @@ window.sesion = {
 	// matrizUnidadMedida            : null,
 	// matrizUnidades                : null,
 	// matrizUsuario                 : null
+
+	// matrizMateriales
+	// matrizOrdenTrabajoMaterial
 };
 
 (function () {
@@ -417,33 +420,42 @@ window.sesion = {
 		cargandoDatos: 'CARGANDO DATOS...',
 
 		cerrarSesion: function () {
-			this.ventanaEmergente({
-			 	idDiv: '_cs',
-			 	titulo: 'Cierre de sesión',
-			 	clickAceptar: function ( event )
-			 	{
-			 		event.preventDefault();
-			 		sigesop.msgBlockUI( 'Cerrando sesion...', 'loading', 'blockUI' );
-					sigesop.query({
-						class: 'sistema',
-						query: 'requestCloseSesion',
-						success: function( data )
-						{
-							if ( data == 'OK' ) {
-								window.localStorage.removeItem( 'rpe' );
-								window.localStorage.removeItem( 'usuario' );
-								window.localStorage.removeItem( 'indexUsuario' );
-								document.location.href = "../index.php"
-							}
-							// else console.log( data );
+			var 
+
+			action = function ( dialog ){		 		
+		 		sigesop.msgBlockUI( 'Cerrando sesion...', 'loading', 'blockUI' );
+				sigesop.query({
+					class: 'sistema',
+					query: 'requestCloseSesion',
+					success: function( data ) {
+						if ( data == 'OK' ) {
+							window.localStorage.removeItem( 'rpe' );
+							window.localStorage.removeItem( 'usuario' );
+							window.localStorage.removeItem( 'indexUsuario' );
+							document.location.href = "../index.php"
 						}
-					});
-			 	},
-			 	showBsModal: function ()
-			 	{
-			 		$( '#' + this.idBody ).html( '<div class="alert alert-warning text-center"><p><h4>¿Está seguro de cerrar sesión?</h4></p></div>' );
-			 	}
-			});
+					}
+				});
+		 	},
+
+		    win = BootstrapDialog.show({
+		        title: 'Cierre de sesión',
+		        type: BootstrapDialog.TYPE_DEFAULT,
+		        message: '<div class="alert alert-warning text-center"><p><h4>¿Está seguro de cerrar sesión?</h4></p></div>',
+		        size: BootstrapDialog.SIZE_NORMAL,
+		        closable: true,
+		        draggable: true,
+		        buttons: [{
+		            label: 'Cancelar',
+		            action: function( dialog ) {
+		                dialog.close();
+		            }
+		        },{
+		            label: 'Aceptar',
+		            cssClass: 'btn-danger',
+		            action: action
+		        }]
+		    });
 		},
 
 		completeCampos: function () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); },
@@ -1057,6 +1069,8 @@ window.sesion = {
 			return valor.trim();
 		},
 
+		root: 'root',
+
 		tabla: function ( opt ) {
 			/*
 			 * head.campo  	 			- {string} cadena de campos
@@ -1078,260 +1092,247 @@ window.sesion = {
 			 *				  			color de la fila que ha sido seleccionada
 			 */
 
-			if ( typeof opt.body.campo !== 'string' )
-			{
+			if ( typeof opt.body.campo !== 'string' ) {
 				console.log( '[body.campo] is not valid' );
 				return null;
 			}
 
+			// default settings
 			var
-				tipo = 			opt.tipo || 'radio',
-				suf = 			opt.suf || '_',
-				color_fila = 	opt.color_fila || '',
-				color_select = 	opt.color_select || 'success',
-				campo =			opt.body.campo,
-				campoValor = 	opt.body.campoValor ||
-								campo.splitParametros( ',' )[0],
-				addName =		opt.body.addName || '';
+			tipo = 			opt.tipo || 'radio',
+			suf = 			opt.suf || '_',
+			color_fila = 	opt.color_fila || '',
+			color_select = 	opt.color_select || 'success',
+			campo =			opt.body.campo,
+			campoValor = 	opt.body.campoValor ||
+							campo.splitParametros( ',' )[0],
+			addName =		opt.body.addName || '';
 
 			var
-				matriz_input = 	[],
+			matriz_input = 	[],
 
-				elem_anterior = null,
+			elem_anterior = null,
 
-				tipo_input = function ( tipo, secuencia, full )
+			tipo_input = function ( tipo, secuencia, full ) {
+				if ( typeof full == 'undefined' ) full = true; // bandera para retornar sólo ID o cadena completa.
+
+				switch ( tipo )
 				{
-					if ( typeof full == 'undefined' ) full = true; // bandera para retornar sólo ID o cadena completa.
+					case 'radio':
+						return full ?
+							'name="name_seleccion_' + suf +'"' :
+							'name_seleccion_' + suf;
 
-					switch ( tipo )
-					{
-						case 'radio':
-							return full ?
-								'name="name_seleccion_' + suf +'"' :
-								'name_seleccion_' + suf;
+					case 'checkbox':
+						return full ?
+							'id="id_seleccion_' + secuencia + '"' :
+							'id_seleccion_' + secuencia;
 
-						case 'checkbox':
-							return full ?
-								'id="id_seleccion_' + secuencia + '"' :
-								'id_seleccion_' + secuencia;
+					default: // si es un valor invalido retorna un "radio" por defecto
+						return full ?
+							'name="name_seleccion_' + suf +'"' :
+							'name_seleccion_' + suf;
+				}
+			},
 
-						default: // si es un valor invalido retorna un "radio" por defecto
-							return full ?
-								'name="name_seleccion_' + suf +'"' :
-								'name_seleccion_' + suf;
-					}
-				},
+			__disabled = function ( obj, campo, campoValor ) {
+				var valor = sigesop.lecturaDeep( obj, campo );
+				return valor == campoValor ?
+					'disabled' : '';
+			},
 
-				__disabled = function ( obj, campo, campoValor )
+			struct_head = function ( campo_head ) {
+				if ( !jQuery.isEmptyObject( campo_head ) )
 				{
-					var valor = sigesop.lecturaDeep( obj, campo );
-					return valor == campoValor ?
-						'disabled' : '';
-				},
+					var
+						m = campo_head.splitParametros( ',' ),
+						i = 0,
+						lon = m.length,
+						head = '<tr><th></th>';
 
-				struct_head = function ( campo_head )
-				{
-					if ( !jQuery.isEmptyObject( campo_head ) )
-					{
-						var
-							m = campo_head.splitParametros( ',' ),
-							i = 0,
-							lon = m.length,
-							head = '<tr><th></th>';
+					for( i; i < lon; i++ )
+						head += '<th>' + m[ i ] + '</th>';
 
-						for( i; i < lon; i++ )
-							head += '<th>' + m[ i ] + '</th>';
+					head += '</th>';
 
-						head += '</th>';
-
-						return head;
-					}
-
-					else
-					{
-						console.log( '[campo_head] es nulo' );
-						return '';
-					}
-				},
-
-				struct_body = function ( arr, campo )
-				{
-					if ( !jQuery.isEmptyObject( arr ) && campo )
-					{
-						matriz_input.length = 0; // vaciar la matriz
-
-						var
-							m = campo.splitParametros( ',' ),
-							body = '',
-							i = 0,
-							lon_i = arr.length;
-
-						for( i ; i < lon_i ; i++ )
-						{
-							var
-								fila = arr[ i ];
-								disabled = 	typeof opt.body.disabled === 'object' ?
-									( typeof opt.body.disabled.campo === 'string' &&
-									typeof opt.body.disabled.campoValor === 'string' ?
-									__disabled( fila, opt.body.disabled.campo, opt.body.disabled.campoValor ) : '' ) : '';
-
-							/* creamos la estructura del input
-							 */
-							body += '<tr class="' + color_fila + '"><td><center><input type="' + tipo +
-									'" ' + tipo_input( tipo, i ) + ' value="' + sigesop.lecturaDeep( fila, campoValor ) +
-									'" ' + disabled + '/></center></td>';
-
-							/* guardamos los ID'S o NAME en matriz pública
-							 */
-							matriz_input.push({
-								index: tipo_input( tipo, i, false ),
-								valor: null
-							}); //
-
-							/* rellenamos los datos de las celdas restantes
-							 */
-							var
-								j = 0,
-								lon_j = m.length;
-
-							for ( j ; j < lon_j ; j++ )
-								body += '<td>' + sigesop.lecturaDeep( fila, m[ j ] ) + '</td>';
-
-							body += '</tr>';
-						}
-
-						return body;
-					}
-
-					else
-					{
-						console.log( '[arr || campo] es nulo' );
-						return '';
-					}
-				},
-
-				update_table = function ( arr )
-				{
-					var body = struct_body( arr, campo )
-					$( '#tablaBody_seleccion_' + suf ).html( body );
-					run_javascript( matriz_input );
-				},
-
-				change_radio = function ( event )
-				{
-					if ( elem_anterior )
-					{
-						// console.log( 'OK [change_radio]' );
-						elem_anterior.removeClass();
-						elem_anterior.addClass( color_fila );
-					}
-
-					// else console.log( '[elem_anterior] es nulo' );
-
-					$( this ).parents( 'tr' ).addClass( color_select );
-					elem_anterior = $( this ).parents( 'tr' );
-				},
-
-				change_checkbox = function ( event )
-				{
-					var $this = $( this );
-
-					if ( $this.prop( 'checked' ) )
-					{
-						$this.parents( 'tr' ).addClass( color_select ); // cambia color
-
-						/* Añade valor a matriz publica
-						 */
-						var index = sigesop.indexOfObjeto( matriz_input, 'index', $this[0].id );
-						if ( index != -1 ) matriz_input[ index ].valor = $this.val();
-					}
-
-					else
-					{
-						/* quita color
-						 */
-						$this.parents( 'tr' ).removeClass();
-						$this.parents( 'tr' ).addClass( color_fila );
-
-						/* Elimina valor a matriz publica
-						 */
-						var index = sigesop.indexOfObjeto( matriz_input, 'index', $this[0].id );
-						if ( index != -1 ) matriz_input[ index ].valor = null;
-					}
-
-					if ( typeof opt.body.callback === 'function' )
-						opt.body.callback( $this.prop( 'checked' ), $this.val(), $this );
-				},
-
-				run_javascript = function ( mtz )
-				{
-					if ( !jQuery.isEmptyObject( mtz ) )
-					{
-						if ( tipo === 'radio' )
-							$( 'input[name="' + mtz[ 0 ].index + '"]' ).change( change_radio );
-
-						else if ( tipo === 'checkbox' )
-						{
-								for( var i = 0, lon = mtz.length; i < lon; i++ )
-									$( '#' + mtz[ i ].index ).change( change_checkbox );
-						}
-
-						else console.log( 'tipo de elemento no válido para efecto [change]' );
-					}
-
-					else console.log( 'Matriz [matrizInput] es nula' );
-				},
-
-				reset = function ()
-				{
-					if ( tipo == 'radio' )
-					{
-						// var $elem = $( '#' + this.matrizInput[ i ].index );
-						// $elem.val('');
-						// $elem.parents( 'tr' ).removeClass();
-					}
-					else if ( tipo == 'checkbox' )
-					{
-						if ( jQuery.isEmptyObject( this.matrizInput ) ) return null;
-						var
-							i = 0,
-							lon = this.matrizInput.length;
-
-						for ( i ; i < lon ; i++ )
-						{
-							this.matrizInput[ i ].valor = null;
-							var $elem = $( '#' + this.matrizInput[ i ].index );
-							// $elem.val('');
-							$elem.parents( 'tr' ).removeClass();
-						}
-					}
+					return head;
 				}
 
-			var
-				head = struct_head ( opt.head.campo ),
+				else
+				{
+					console.log( '[campo_head] es nulo' );
+					return '';
+				}
+			},
 
-				body = struct_body ( opt.body.arr, campo ),
+			struct_body = function ( arr, campo ) {
+				if ( !$.isEmptyObject( arr ) && campo ) {
+					matriz_input.length = 0; // vaciar la matriz
 
-				html =
-					'<div class="panel panel-default">' +
-					'<div class="table-responsive">' +
-					'	<table class="table  table-bordered table-hover">' +
-					'		<thead id="tablaHead_seleccion_' + suf + '" >' + head + '</thead>' +
-					'		<tbody id="tablaBody_seleccion_' + suf + '" >' + body + '</tbody>' +
-					'	</table>' +
-					'</div></div><br>',
+					var
+						m = campo.splitParametros( ',' ),
+						body = '',
+						i = 0,
+						lon_i = arr.length;
 
-				doc = {
-					html: html,
-					update_table: update_table,
-					IDS:
+					for( i ; i < lon_i ; i++ ) {
+						var
+							fila = arr[ i ];
+							disabled = 	typeof opt.body.disabled === 'object' ?
+								( typeof opt.body.disabled.campo === 'string' &&
+								typeof opt.body.disabled.campoValor === 'string' ?
+								__disabled( fila, opt.body.disabled.campo, opt.body.disabled.campoValor ) : '' ) : '';
+
+						/* creamos la estructura del input
+						 */
+						body += '<tr table-index="' + i + '" class="' + color_fila + '"><td><center><input type="' + tipo +
+								'" ' + tipo_input( tipo, i ) + ' value="' + sigesop.lecturaDeep( fila, campoValor ) +
+								'" ' + disabled + '/></center></td>';
+
+						/* guardamos los ID'S o NAME en matriz pública
+						 */
+						matriz_input.push({
+							index: tipo_input( tipo, i, false ),
+							valor: null
+						}); //
+
+						/* rellenamos los datos de las celdas restantes
+						 */
+						var
+							j = 0,
+							lon_j = m.length;
+
+						for ( j ; j < lon_j ; j++ )
+							body += '<td>' + sigesop.lecturaDeep( fila, m[ j ] ) + '</td>';
+
+						body += '</tr>';
+					}
+
+					return body;
+				}
+
+				else {
+					console.log( '[arr || campo] es nulo' );
+					return '';
+				}
+			},
+
+			update_table = function ( arr ) {
+				var body = struct_body( arr, campo )
+				$( '#tablaBody_seleccion_' + suf ).html( body );
+				run_javascript( matriz_input );
+			},
+
+			change_radio = function ( event ) {
+				if ( elem_anterior )
+				{
+					// console.log( 'OK [change_radio]' );
+					elem_anterior.removeClass();
+					elem_anterior.addClass( color_fila );
+				}
+
+				// else console.log( '[elem_anterior] es nulo' );
+
+				$( this ).parents( 'tr' ).addClass( color_select );
+				elem_anterior = $( this ).parents( 'tr' );
+			},
+
+			change_checkbox = function ( event ) {
+				var $this = $( this );
+
+				if ( $this.prop( 'checked' ) )
+				{
+					$this.parents( 'tr' ).addClass( color_select ); // cambia color
+
+					/* Añade valor a matriz publica
+					 */
+					var index = sigesop.indexOfObjeto( matriz_input, 'index', $this[0].id );
+					if ( index != -1 ) matriz_input[ index ].valor = $this.val();
+				}
+
+				else
+				{
+					/* quita color
+					 */
+					$this.parents( 'tr' ).removeClass();
+					$this.parents( 'tr' ).addClass( color_fila );
+
+					/* Elimina valor a matriz publica
+					 */
+					var index = sigesop.indexOfObjeto( matriz_input, 'index', $this[0].id );
+					if ( index != -1 ) matriz_input[ index ].valor = null;
+				}
+
+				if ( typeof opt.body.callback === 'function' )
+					opt.body.callback( $this.prop( 'checked' ), $this.val(), $this );
+			},
+
+			run_javascript = function ( mtz ) {
+				if ( !jQuery.isEmptyObject( mtz ) )
+				{
+					if ( tipo === 'radio' )
+						$( 'input[name="' + mtz[ 0 ].index + '"]' ).change( change_radio );
+
+					else if ( tipo === 'checkbox' )
 					{
-						head: '#tablaHead_seleccion_' + suf,
-						body: '#tablaBody_seleccion_' + suf
-					},
-					reset: reset,
-					matrizInput: matriz_input
-				};
+							for( var i = 0, lon = mtz.length; i < lon; i++ )
+								$( '#' + mtz[ i ].index ).change( change_checkbox );
+					}
+
+					else console.log( 'tipo de elemento no válido para efecto [change]' );
+				}
+
+				else console.log( 'Matriz [matrizInput] es nula' );
+			},
+
+			reset = function () {
+				if ( tipo == 'radio' )
+				{
+					// var $elem = $( '#' + this.matrizInput[ i ].index );
+					// $elem.val('');
+					// $elem.parents( 'tr' ).removeClass();
+				}
+				else if ( tipo == 'checkbox' )
+				{
+					if ( jQuery.isEmptyObject( this.matrizInput ) ) return null;
+					var
+						i = 0,
+						lon = this.matrizInput.length;
+
+					for ( i ; i < lon ; i++ )
+					{
+						this.matrizInput[ i ].valor = null;
+						var $elem = $( '#' + this.matrizInput[ i ].index );
+						// $elem.val('');
+						$elem.parents( 'tr' ).removeClass();
+					}
+				}
+			};
+
+			var
+			head = struct_head ( opt.head.campo ),
+
+			body = struct_body ( opt.body.arr, campo ),
+
+			html =
+				'<div class="panel panel-default">' +
+				'<div class="table-responsive">' +
+					'<table class="table  table-bordered table-hover">' +
+						'<thead id="tablaHead_seleccion_' + suf + '" >' + head + '</thead>' +
+						'<tbody id="tablaBody_seleccion_' + suf + '" >' + body + '</tbody>' +
+					'</table>' +
+				'</div></div><br>',
+
+			doc = {
+				html: html,
+				update_table: update_table,
+				IDS: {
+					head: '#tablaHead_seleccion_' + suf,
+					body: '#tablaBody_seleccion_' + suf
+				},
+				reset: reset,
+				matrizInput: matriz_input
+			};
 
 			return doc;
 		},
@@ -1345,151 +1346,154 @@ window.sesion = {
 			 * color_fila
 			 */
 
-			 opt.suf = opt.suf || '_';
-			 opt.color_fila = opt.color_fila || 'success'
-			 opt.addClass = opt.addClass || {};
+			opt.suf = opt.suf || '';
+			opt.color_fila = opt.color_fila || 'success'
+			opt.addClass = opt.addClass || {};
 
 			var
-				struct_head = function ( arr )
-				{
-					if ( !jQuery.isEmptyObject( arr ) )
-					{
-						var
-							m = arr.splitParametros( ',' ),
-							i = 0,
-							lon = m.length,
-							head = '<tr>';
+			struct_head = function ( arr ) {
+				if ( !jQuery.isEmptyObject( arr ) ) {
+					var
+						m = arr.splitParametros( ',' ),
+						i = 0,
+						lon = m.length,
+						head = '',
+						filter = ''
 
-						for( i; i < lon; i++ )
-							head += '<th><center>' + m[ i ] + '</center></th>';
+					for( i; i < lon; i++ ) {
+						head += 
+							'<th >' + m[ i ] +
+								'<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>' +
+								'<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>' +
+							'</th>';
 
-						head += '</th>';
-
-						return head;
+						filter +=
+							'<th>' +
+								'<input class="js-filter form-control" type="text" value="">' +
+							'</th>';
 					}
 
-					else
-					{
-						// console.log( '[arr] es nulo' );
-						return '';
-					}
-				},
+					return '<tr>' + head + '</tr>' + '<tr>' + filter + '</tr>';
+				}
 
-				struct_body = function ( arr, campo, addClass )
-				{
-					if ( !jQuery.isEmptyObject( arr ) && campo )
-					{
-						/*
-						 *
-						 */
-						var
-							color_fila = opt.color_fila || 'success',
+				else {
+					// console.log( '[arr] es nulo' );
+					return '';
+				}
+			},
 
-							flag_ = true,
+			struct_body = function ( arr, campo, addClass ) {
+				if ( !jQuery.isEmptyObject( arr ) && campo ) {
+					/*
+					 *
+					 */
+					var
+						color_fila = opt.color_fila || 'success',
 
-							returnClass = function ( mtz_class, mtz_campo, mtz_valor, fila )
+						flag_ = true,
+
+						returnClass = function ( mtz_class, mtz_campo, mtz_valor, fila ) {
+							for ( var i = 0, lon = mtz_campo.length; i < lon; i++ )
 							{
-								for ( var i = 0, lon = mtz_campo.length; i < lon; i++ )
-								{
-									var
-									index = mtz_valor.indexOf(
-										sigesop.lecturaDeep( fila, mtz_campo[ i ] ) );
+								var
+								index = mtz_valor.indexOf(
+									sigesop.lecturaDeep( fila, mtz_campo[ i ] ) );
 
-									if ( eval != -1 )
-										return mtz_class[ index ];
-								}
+								if ( eval != -1 )
+									return mtz_class[ index ];
+							}
 
-								return '';
-							};
+							return '';
+						};
 
-						if ( typeof addClass.body == 'object' )
-						{
-							var
-								mtz_class = addClass.body.class.splitParametros( ',' ),
-								mtz_campo = addClass.body.campo.splitParametros( ',' ),
-								mtz_valor = addClass.body.valor.splitParametros( ',' );
-
-							// console.log( 'mtz_class: ' + mtz_class.length + ' campo: ' + mtz_campo.length + ' valor: ' + mtz_valor.length );
-
-							if ( mtz_class.length == mtz_campo.length && // silogismo hipotético
-							 	 mtz_campo.length == mtz_valor.length ) flag_ = false;
-							else console.log( 'Matrices [mtz_class], [mtz_campo], [mtz_valor] no son de la misma longitud' );
-						}
-
-						/*
-						 * estructurar los tokens de los campos, las cadenas validas para su lectura
-						 * son del formato:
-						 * 'campo_1, campo_2, campo_3' y 'campo_1.sub_1, campo_2.sub_1, campo_3.sub_1'
-						 */
-
+					if ( typeof addClass.body == 'object' ) {
 						var
-							m = campo.splitParametros( ',' ), // filtramos los campos
-							body = '';
+							mtz_class = addClass.body.class.splitParametros( ',' ),
+							mtz_campo = addClass.body.campo.splitParametros( ',' ),
+							mtz_valor = addClass.body.valor.splitParametros( ',' );
 
-						// ----------------------------------------------------
+						// console.log( 'mtz_class: ' + mtz_class.length + ' campo: ' + mtz_campo.length + ' valor: ' + mtz_valor.length );
 
-						for ( var k = 0, lon_k = arr.length; k < lon_k; k++ )
-						{
-							color_fila = flag_ ? // si es false es por que existe un addClass
-								opt.color_fila :
-								returnClass( mtz_class, mtz_campo, mtz_valor, arr[ k ] );
-
-							// -------------------
-
-							body += '<tr class="' + color_fila + '">';
-
-							for ( var i = 0, lon_i = m.length; i < lon_i; i++ ) // recorremos los campos
-								body += '<td>' + sigesop.lecturaDeep( arr[ k ], m[ i ] ) + '</td>';
-
-							body += '</tr>';
-						}
-
-						return body;
+						if ( mtz_class.length == mtz_campo.length && // silogismo hipotético
+						 	 mtz_campo.length == mtz_valor.length ) flag_ = false;
+						else console.log( 'Matrices [mtz_class], [mtz_campo], [mtz_valor] no son de la misma longitud' );
 					}
 
-					else
-					{
-						// console.log( '[arr || campo] es nulo' );
-						return '';
+					/*
+					 * estructurar los tokens de los campos, las cadenas validas para su lectura
+					 * son del formato:
+					 * 'campo_1, campo_2, campo_3' y 'campo_1.sub_1, campo_2.sub_1, campo_3.sub_1'
+					 */
+
+					var
+						m = campo.splitParametros( ',' ), // filtramos los campos
+						body = '';
+
+					// ----------------------------------------------------
+
+					for ( var k = 0, lon_k = arr.length; k < lon_k; k++ ) {
+						color_fila = flag_ ? // si es false es por que existe un addClass
+							opt.color_fila :
+							returnClass( mtz_class, mtz_campo, mtz_valor, arr[ k ] );
+
+						// -------------------
+
+						body += '<tr table-index="' + k + '" class="' + color_fila + '">';
+
+						for ( var i = 0, lon_i = m.length; i < lon_i; i++ ) // recorremos los campos
+							body += '<td>' + sigesop.lecturaDeep( arr[ k ], m[ i ] ) + '</td>';
+
+						body += '</tr>';
 					}
-				},
 
-				update_table = function ( arr )
-				{
-					var body = struct_body( arr, opt.campo, opt.addClass )
-					$( '#tablaBody_registro_' + opt.suf ).html( body );
-				};
+					return body;
+				}
 
-			var
-				html =
-					'<div class="panel panel-default">' +
-					'<div class="table-responsive">' +
-					'	<table class="table  table-bordered table-hover">' +
-					'		<thead id="tablaHead_registro_' + opt.suf + '" >' +
-								struct_head ( opt.head ) + '</thead>' +
-					'		<tbody id="tablaBody_registro_' + opt.suf + '" >' +
-								struct_body ( opt.body, opt.campo, opt.addClass ) + '</tbody>' +
-					'	</table>' +
-					'</div></div><br>',
+				else {
+					// console.log( '[arr || campo] es nulo' );
+					return '';
+				}
+			},
 
-				doc = {
-					html: html,
+			update_table = function ( arr ) {
+				var body = struct_body( arr, opt.campo, opt.addClass )
+				$( '#id-body-table-registro-' + opt.suf ).html( body );
 
-					// javascript: function ()
-					// {
+				/* Se inicializa el plugin de ordenacion y
+				 * filtracion
+				 */ 
+			    $(document).find('.js-dynamitable').each(function(){			    
+			        $(this).dynamitable()
+			            .addFilter('.js-filter')
+			            .addSorter('.js-sorter-asc', 'asc')
+			            .addSorter('.js-sorter-desc', 'desc')
+			        ;
+			    });
+			},
 
-					// },
+			html =
+				'<div class="panel panel-default">' +
+				'<div class="table-responsive">' +
+					'<table id="id-tabla-registro-' + opt.suf + '" class="js-dynamitable table table-bordered table-hover">' +
+						'<thead id="id-head-table-registro-' + opt.suf + '" >' +
+							struct_head ( opt.head ) + '</thead>' +
+						'<tbody id="id-body-table-registro-' + opt.suf + '" >' +
+							struct_body ( opt.body, opt.campo, opt.addClass ) + '</tbody>' +
+					'</table>' +
+				'</div></div><br>',
 
-					update_table: update_table,
+			table = {
+				html: html,				
+				IDS: {
+					table: '#id-tabla-registro-' + opt.suf,
+					$table: null, 					
+					head: '#id-head-table-registro-' + opt.suf,
+					body: '#id-body-table-registro-' + opt.suf
+				}
+			};
 
-					IDS:
-					{
-						head: '#tablaHead_registro_' + opt.suf,
-						body: '#tablaBody_registro_' + opt.suf
-					}
-				};
-
-			return doc;
+			table.update_table = update_table.bind( table );
+			return table;
 		},
 
 		tablaSeleccion: function ( opt ) {
@@ -1853,9 +1857,7 @@ window.sesion = {
 			 *	keyboard {Boolean} : 		bandera de configuracion que permite a la ventana
 			 *								emergente cerrar con el boton [esc]
 			 */
-
-			 // --------- valores por defecto
-
+			 
 			 // opt.suf = opt.suf || '_suf';
 			 opt.idDiv = opt.idDiv || '__win_idDiv_';
 			 opt.idBtnCerrar = opt.idBtnCerrar || opt.idDiv + '__btnCerrar';
@@ -1866,26 +1868,24 @@ window.sesion = {
 			 opt.keyboard = opt.keyboard || false;
 
 			var
-				ventana =
-					'<div class="modal fade" id="' + opt.idDiv + '" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">'+
-					'	<div class="modal-dialog modal-lg">'+
-					'    	<div id="' + opt.idModal + '" class="modal-content">'+
+			ventana =
+				'<div class="modal fade" id="' + opt.idDiv + '" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">'+
+					'<div class="modal-dialog modal-lg">'+
+						'<div id="' + opt.idModal + '" class="modal-content">'+
+							'<div class="modal-header">'+
+				// '        		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'+
+								'<h4 class="modal-title" >' + opt.titulo + '</h4>'+
+							'</div>'	+
 
-					'    		<div class="modal-header">'+
-					// '        		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'+
-					'        		<h4 class="modal-title" >' + opt.titulo + '</h4>'+
-					'	    	</div>'	+
+							'<div id="' + opt.idBody + '" class="modal-body"></div>'+
 
-					'	    	<div id="' + opt.idBody + '" class="modal-body"></div>'+
-
-					'		    <div class="modal-footer">'+
-					'		        <button id="' + opt.idBtnCerrar + '" type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>'+
-					'		        <button id="' + opt.idBtnOK + '" type="button" class="btn btn-success">Aceptar</button>'+
-					'		    </div>'+
-
-					'    	</div>'+
-					'	</div>'+
-					'</div>';
+							'<div class="modal-footer">'+
+								'<button id="' + opt.idBtnCerrar + '" type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>'+
+								'<button id="' + opt.idBtnOK + '" type="button" class="btn btn-success">Aceptar</button>'+
+							'</div>'+
+						'</div>'+
+					'</div>'+
+				'</div>';
 
 			$( 'body' ).append( ventana );
 
@@ -1911,6 +1911,7 @@ window.sesion = {
 			// lanzamos la ventana
 			$( '#' + opt.idDiv ).modal({
 				keyboard: opt.keyboard,
+				// backdrop: true
 				backdrop: 'static'
 			});
 
@@ -1951,231 +1952,159 @@ window.sesion = {
 					console.log( "Funcion: verificaRoot()\n" + "Estado: " + estado + "\nError: " + error );
 				}
 			});
-		}
+		},
 
 		// /*** DEPRECATED ***/ 
-		// validacion: function ( array, opt )
-		// {
-		// 	if ( !jQuery.isEmptyObject( array ) )
-		// 	{
-		// 		var mtz = [],
-		// 			i = 0,
-		// 			lon = array.length;
+		validacion: function ( array, opt ) {
+			if ( !jQuery.isEmptyObject( array ) )
+			{
+				var mtz = [],
+					i = 0,
+					lon = array.length;
 
-		// 		for( i; i < lon; i++ )
-		// 		{
-		// 			var fila = array[ i ];		
+				for( i; i < lon; i++ )
+				{
+					var fila = array[ i ];		
 
-		// 			// ---------- validacion cuando se trata de un objeto con propiedades
+					// ---------- validacion cuando se trata de un objeto con propiedades
 
-		// 			if ( jQuery.isPlainObject( fila ) )
-		// 			{			
-		// 				var propObj = Object.getOwnPropertyNames( fila );
+					if ( jQuery.isPlainObject( fila ) )
+					{			
+						var propObj = Object.getOwnPropertyNames( fila );
 
-		// 				// ---------- verificar que sea un objeto terminal
+						// ---------- verificar que sea un objeto terminal
 
-		// 				if 	( propObj.indexOf( 'valor' ) !== -1 )
-		// 				{
-		// 					if ( fila.valor ) 
-		// 					{
-		// 						if ( typeof fila.regexp !== 'undefined' )
-		// 						{
-		// 							// var regexp = fila.regexp;
-		// 							if ( fila.regexp.test( fila.valor ) ) 
-		// 							{
-		// 								$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
-		// 								sigesop.vaciarPopover( [ fila ] );
-		// 								mtz [ i ] = true;
-		// 							}
-		// 							else
-		// 							{
-		// 								fila.idValidacion ? $( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ) : null;
-		// 								mtz[ i ] = false;
+						if 	( propObj.indexOf( 'valor' ) !== -1 )
+						{
+							if ( fila.valor ) 
+							{
+								if ( typeof fila.regexp !== 'undefined' )
+								{
+									// var regexp = fila.regexp;
+									if ( fila.regexp.test( fila.valor ) ) 
+									{
+										$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
+										sigesop.vaciarPopover( [ fila ] );
+										mtz [ i ] = true;
+									}
+									else
+									{
+										fila.idValidacion ? $( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ) : null;
+										mtz[ i ] = false;
 
-		// 								// ---------- agrega un popover a la validacion
+										// ---------- agrega un popover a la validacion
 
-		// 								sigesop.agregarPopover( [ fila ] );
-		// 								console.log( 'Expresion Regular no valida: ' + fila.idHTML );
-		// 							}
-		// 						}
-		// 						else
-		// 						{	
-		// 							$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
-		// 							sigesop.vaciarPopover( [ fila ] );
-		// 							mtz [ i ] = true;
-		// 						}
-		// 					}
-		// 					else
-		// 					{
-		// 						typeof opt.tipoValidacion !== 'undefined' ?
-		// 							$( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ): null;
+										sigesop.agregarPopover( [ fila ] );
+										console.log( 'Expresion Regular no valida: ' + fila.idHTML );
+									}
+								}
+								else
+								{	
+									$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
+									sigesop.vaciarPopover( [ fila ] );
+									mtz [ i ] = true;
+								}
+							}
+							else
+							{
+								typeof opt.tipoValidacion !== 'undefined' ?
+									$( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ): null;
 
-		// 						mtz[ i ] = false;
+								mtz[ i ] = false;
 
-		// 						// ---------- agrega un popover a la validacion
+								// ---------- agrega un popover a la validacion
 
-		// 						sigesop.agregarPopover( [ fila ] );
+								sigesop.agregarPopover( [ fila ] );
 
-		// 						console.log( 'Elemento no valido: ' + fila.idHTML );
-		// 					} 					
-		// 				}
+								console.log( 'Elemento no valido: ' + fila.idHTML );
+							} 					
+						}
 
-		// 				// --------- inicia recursividad del objeto
+						// --------- inicia recursividad del objeto
 
-		// 				else if ( fila ) // descartamos un objeto vacio
-		// 				{				
-		// 					// ---------- capturamos los objetos que contiene el objeto superior
+						else if ( fila ) // descartamos un objeto vacio
+						{				
+							// ---------- capturamos los objetos que contiene el objeto superior
 								
-		// 					var m = [],
-		// 						j = 0,
-		// 						lon_j = propObj.length;
+							var m = [],
+								j = 0,
+								lon_j = propObj.length;
 
-		// 					for ( j; j < lon_j; j++ ) m.push( fila[ propObj[ j ] ] ); 
+							for ( j; j < lon_j; j++ ) m.push( fila[ propObj[ j ] ] ); 
 
-		// 					mtz [ i ] = this.validacion( m , opt );					
-		// 				} else console.log( 'Objeto [' + fila + '] esta vacio');
-		// 			}
+							mtz [ i ] = this.validacion( m , opt );					
+						} else console.log( 'Objeto [' + fila + '] esta vacio');
+					}
 
-		// 			// ---------- validacion cuando se trata de un array
+					// ---------- validacion cuando se trata de un array
 
-		// 			else if( jQuery.isArray( fila ) )
-		// 			{
-		// 				var estado = jQuery.isEmptyObject( fila );				
-		// 				if ( estado ) 
-		// 				{						
-		// 					mtz[ i ] = false;
-		// 					console.log( 'Matriz [' + fila + '] no valida' );
-		// 				} 
-		// 				else mtz [ i ] = true;
-		// 			}
+					else if( jQuery.isArray( fila ) )
+					{
+						var estado = jQuery.isEmptyObject( fila );				
+						if ( estado ) 
+						{						
+							mtz[ i ] = false;
+							console.log( 'Matriz [' + fila + '] no valida' );
+						} 
+						else mtz [ i ] = true;
+					}
 
-		// 			// ---------- si no corresponde a un objeto o a una matriz; es un elemento no valido y se descarta
+					// ---------- si no corresponde a un objeto o a una matriz; es un elemento no valido y se descarta
 
-		// 			// else
-		// 			// {
-		// 			// 	console.log( 'Elemento: [' + fila + '] ignorado' );
-		// 			// 	mtz[ i ] = true;
-		// 			// }
-		// 		}
+					// else
+					// {
+					// 	console.log( 'Elemento: [' + fila + '] ignorado' );
+					// 	mtz[ i ] = true;
+					// }
+				}
 
-		// 		// ----------- si no verificó ningun elemento es falso
+				// ----------- si no verificó ningun elemento es falso
 
-		// 		if ( jQuery.isEmptyObject( mtz ) ) return false;
+				if ( jQuery.isEmptyObject( mtz ) ) return false;
 
-		// 		// ----------------- verifica si el arreglo tiene algun false
+				// ----------------- verifica si el arreglo tiene algun false
 			
-		// 		for ( var i = 0; i < mtz.length; i++ ) 
-		// 			if ( mtz[ i ] === false ) return false;
+				for ( var i = 0; i < mtz.length; i++ ) 
+					if ( mtz[ i ] === false ) return false;
 
-		// 		return true;
-		// 	}	
+				return true;
+			}	
 
-		// 	console.log( 'matriz por validar es nula' );
-		// 	return false;
-		// },
+			console.log( 'matriz por validar es nula' );
+			return false;
+		},
 
 		// /*** DEPRECATED ***/ 
-		// agregarPopover: function( array )
-		// {
-		// 	for ( var i = 0, lon = array.length; i < lon; i++ )
-		// 	{
-		// 		if ( typeof array[ i ].popover != 'undefined' ) 
-		// 		{
-		// 			$( array[ i ].idHTML ).popover({
-		// 				title: array [ i ].popover.title,
-		// 				content: array [ i ].popover.content,
-		// 				placement: array [ i ].popover.placement,
-		// 				html: true,
-		// 				// template: '<div bgcolor="#FF0000" class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title">test</h3><div class="popover-content" ></div></div>'
-		// 			});
+		agregarPopover: function( array )
+		{
+			for ( var i = 0, lon = array.length; i < lon; i++ )
+			{
+				if ( typeof array[ i ].popover != 'undefined' ) 
+				{
+					$( array[ i ].idHTML ).popover({
+						title: array [ i ].popover.title,
+						content: array [ i ].popover.content,
+						placement: array [ i ].popover.placement,
+						html: true,
+						// template: '<div bgcolor="#FF0000" class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title">test</h3><div class="popover-content" ></div></div>'
+					});
 
-		// 			$( array[ i ].idHTML ).popover( 'show' );
-		// 		}
-		// 	}
-		// },
+					$( array[ i ].idHTML ).popover( 'show' );
+				}
+			}
+		},
 
 		// /*** DEPRECATED ***/ 
-		// vaciarPopover: function( array )
-		// {
-		// 	for( var i in array )
-		// 	{
-		// 		if ( typeof array [ i ].popover != 'undefined' ) 
-		// 		{
-		// 			$( array [ i ].idHTML ).popover( 'destroy' );
-		// 		}
-		// 	}
-		// },
-
-		// /*** DEPRECATED ***/
-		// solicitarDatosSistema: function ( opt ) 
-		// {
-		// 	// clase
-		// 	// solicitud
-		// 	// sincrono
-		// 	// respuesta
-		// 	// errorRespuesta
-		// 	// ________________
-		// 	var rutaSolicitud = this.raizServidor + opt.clase + '.php?action=' + opt.solicitud;
-
-		// 	$.ajax({
-		// 		type: opt.type || 'GET',
-		// 		dataType: "json",
-		// 		async: opt.sincrono,
-		// 		url: rutaSolicitud,
-		// 		success: opt.respuesta,
-		// 		error: function(jpXHR, estado, error)
-		// 		{
-		// 			console.log( "Funcion: " + opt.solicitud +"()\n" + "Estado: " + estado + "\nError: " + error);
-		// 			sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error' );
-		// 			jQuery.isFunction( opt.errorRespuesta ) ? opt.errorRespuesta() : null;
-		// 		}
-
-		// 	});
-		// },
-
-		// /*** DEPRECATED ***/
-		// insertarDatosSistema: function ( opt )
-		// {
-		// 	// Datos
-		// 	// clase
-		// 	// solicitud
-		// 	// sincrono			
-			
-		// 	// errorRespuesta
-		// 	// ________________
-		// 	var rutaSolicitud = this.raizServidor+opt.clase+'.php?action='+opt.solicitud;
-
-		// 	$.ajax({
-		// 		data: opt.Datos,
-		// 		type: opt.type || 'GET',
-		// 		dataType: "json",
-		// 		async: opt.sincrono,
-		// 		url: rutaSolicitud,
-		// 		beforeSend: opt.antesEnviar,
-		// 		success: function ( data )
-		// 		{
-		// 			switch( data )
-		// 			{
-		// 				case 'OK':
-		// 					jQuery.isFunction( opt.OK ) ? opt.OK() : null;
-		// 					break;
-		// 				case 'NA':
-		// 					jQuery.isFunction( opt.NA ) ? opt.NA() : null;
-		// 					break;
-		// 				default:
-		// 					jQuery.isFunction( opt.DEFAULT ) ? opt.DEFAULT( data ) : null;
-		// 					break;
-		// 			}
-		// 		},
-		// 		error: function( jpXHR, estado, error )
-		// 		{
-		// 			sigesop.msgBlockUI( 'Comunicación al servidor abortada', 'error' );
-		// 			console.log( "Funcion: " + opt.solicitud + "()\n" + "Estado: " + estado + "\nError: " + error);			
-		// 			jQuery.isFunction( opt.errorRespuesta ) ? opt.errorRespuesta() : null;
-		// 		}
-
-		// 	});
-		// }
+		vaciarPopover: function( array )
+		{
+			for( var i in array )
+			{
+				if ( typeof array [ i ].popover != 'undefined' ) 
+				{
+					$( array [ i ].idHTML ).popover( 'destroy' );
+				}
+			}
+		}
 	}
 })();
 

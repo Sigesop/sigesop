@@ -29,7 +29,7 @@ class equiposGenerador extends sigesop
 	            break;
 
 	        case 'obtenerEquipoGenerador':
-	            $query = $this->obtenerEquipoGenerador();
+	            $query = $this->obtenerEquipoGenerador( $get );
 	            echo json_encode( $query );
 	            break;
 
@@ -37,6 +37,11 @@ class equiposGenerador extends sigesop
                 $query = $this->obtenerEquipoGeneradorPorSistema( $get );
                 echo json_encode( $query );
                 break;
+
+            case 'imprimir':
+                $query = $this->imprimir( $get );
+                echo json_encode( $query );
+                break; 
 
             default:
                 echo json_encode('Funcion no registrada en la clase equiposGenerador');
@@ -82,24 +87,37 @@ class equiposGenerador extends sigesop
         }
     }    
 
-    public function obtenerEquipoGenerador() {
-        $sql = "SELECT * FROM equipo_aero";
-        $mtz = $this->array_query( $sql );
-        $arr = array(); // matriz de retorno
+    public function obtenerEquipoGenerador( $get ) {
+        $id_sistema_aero = $get[ 'id_sistema_aero' ];
+        $option = $get[ 'option' ];
 
-        // ---------- buscar nombre del sistema, correspondiente en el equipo
+        if ( !empty( $id_sistema_aero ) ) $opt = 'sistema';
+        else $opt = null;
 
-        foreach ( $mtz as $equipo )
-        {
-            $id_sistema_aero = $equipo[ 'id_sistema_aero' ];
-            $sql = "select nombre_sistema_aero from sistema_aero where id_sistema_aero = '$id_sistema_aero'";
-            $query = $this->array_query( $sql, 'nombre_sistema_aero', null );
+        switch( $opt ) {
+            case 'sistema':
+                if( $id_sistema_aero == 'ALL' ) $sql = "SELECT * FROM equipo_aero";
+                else $sql = "SELECT * FROM equipo_aero WHERE id_sistema_aero = '$id_sistema_aero'";
+                break;
 
-            $equipo[ 'nombre_sistema_aero' ] = $query[0];
-            $arr [] = $equipo;
+            default:
+                $sql = "SELECT * FROM equipo_aero";
+                break;
         }
 
-        return $arr;
+        $mtz = $this->array_query( $sql );
+        $arr = array(); // matriz de retorno
+        
+        foreach ( $mtz as $equipo ) {
+            $id_sistema_aero = $equipo[ 'id_sistema_aero' ];
+            $sql = 
+            "select nombre_sistema_aero from sistema_aero where id_sistema_aero = '$id_sistema_aero'";
+            $query = $this->query( $sql, 'nombre_sistema_aero', NULL );
+
+            $equipo[ 'nombre_sistema_aero' ] = $query;
+            $arr [] = $equipo;
+        }
+        return $arr; 
     }
 
     public function obtenerEquipoGeneradorPorSistema( $data )  {
@@ -184,5 +202,73 @@ class equiposGenerador extends sigesop
             $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $nombre_equipo_aero, 'msj' => $query );
             return $rsp;
         }
+    }
+
+    public function imprimir ( $get ) {
+        require_once('../tcpdf/tcpdf.php');
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de equipos generadores' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        $datos = $this->obtenerEquipoGenerador( $get );
+       
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'Id equipo aero', 'campo'=> 'id_equipo_aero', ),
+                    array( 'titulo' => 'Nombre del equipo', 'campo'=> 'nombre_equipo_aero', ),
+                    array( 'titulo' => 'Nombredel sistema aero', 'campo'=> 'nombre_sistema_aero', )
+                     ), 
+
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_equiposGenerador.pdf', 'I');
     }
 }

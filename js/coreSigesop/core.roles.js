@@ -1,6 +1,5 @@
 sigesop.roles = {
-	document: function ( opt ) 
-	{
+	document: function ( opt ) {
 		/* obj
 		 * suf
 		 * arr_areaAcceso
@@ -358,8 +357,7 @@ sigesop.roles = {
 		return doc; 
 	},	
 	
-	documentoRegistro: function ( opt )
-	{
+	documentoRegistro: function ( opt ) {
 		var suf = opt.suf || '';
 
 		var 
@@ -372,6 +370,13 @@ sigesop.roles = {
 						'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 					'</div>' +
 
+					'<div class="form-group">'+
+						'<div class="col-sm-5 control-label"></div>'+
+						'<p class="col-sm-7">'+
+							'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de roles</button>'+					
+						'</p>'+
+					'</div>'+
+
 					'<div class="form-group">' +					
 						'<div class="col-sm-12 col-md-12" id="tabla_registro_roles' + suf + '"></div>' +
 					'</div>' +
@@ -382,7 +387,8 @@ sigesop.roles = {
 				tabla_roles = sigesop.tablaRegistro({
 					head: 'CLAVE ROL, DESCRICION ROL',
 					campo: 'clave_rol, descripcion_areaTrabajo'
-				});
+				}),
+				$botonImprimir = $( doc.IDS.botonImprimir );
 				
 				this.table.update_table = tabla_roles.update_table; // enlazamos a vista publica
 				this.table.body = tabla_roles.IDS.body;
@@ -397,7 +403,7 @@ sigesop.roles = {
 			            	name: 'Editar', 
 			            	icon: 'edit',
 			        		callback: function ( key, _opt ) {
-			        			var index = $( this ).index();
+			        			var index = $( this ).attr( 'table-index' );
 			        			typeof opt.table.actions.editar == 'function' ?
 			        				opt.table.actions.editar( index ):
 			        				console.log( 'function editar is null' );
@@ -408,7 +414,7 @@ sigesop.roles = {
 			            	name: 'Eliminar', 
 			            	icon: 'delete',
 			        		callback: function ( key, _opt ) {
-			        			var index = $( this ).index();
+			        			var index = $( this ).attr( 'table-index' );
 			        			typeof opt.table.actions.eliminar == 'function' ?
 			        				opt.table.actions.eliminar( index ):
 			        				console.log( 'function eliminar is null' );
@@ -416,11 +422,21 @@ sigesop.roles = {
 			            }
 					}
 				});
+
+				$botonImprimir.on( 'click', function ( event ) { 
+					var 
+					url = sigesop.raizServidor + 'ajax.php?class=usuarios' +
+						'&action=imprimirR',
+						win = window.open( url );
+
+					win.focus();
+				});
 			},
 
 			IDS = {
 				idTabla: '#tabla_registro_roles' + suf,
-				form: '#formRegistroRoles' + suf
+				form: '#formRegistroRoles' + suf,
+				botonImprimir: '#btn-imprimir-reporte-' + suf
 			},
 
 			doc = {
@@ -434,5 +450,5 @@ sigesop.roles = {
 			};
 
 		return doc;
-	},
+	}
 }

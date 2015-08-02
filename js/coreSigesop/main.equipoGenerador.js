@@ -24,6 +24,17 @@ function main () {
 	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
 	docR.javascript();
 
+	/* documento de impresion de reportes
+	 */
+	docRR = sigesop.equipoGenerador.registroReporte({ 
+		success: consultaReporteI,
+		error: function () {
+			sigesop.msg( 'Info', 'existe campo vacio', 'info' )
+		}
+	});
+	document.getElementById( 'main3' ).innerHTML = '<br>' + docRR.html;
+	docRR.javascript();
+
 	/* Descarga de datos
 	 */
 
@@ -33,16 +44,32 @@ function main () {
 
 function getData() {
 	sigesop.query({
+		class: 'sistemasGenerador',
+		query: 'obtenerSistemas',
+		success: function( data ) {
+			data.push({
+				nombre_sistema_aero: 'TODOS LOS SISTEMAS',
+				id_sistema_aero: 'ALL'
+			});
+			sigesop.combo({
+				arr: data,
+				elem: docRR.datos.sistema.idHTML,
+				campo: 'nombre_sistema_aero',
+				campoValor: 'id_sistema_aero'
+			});
+		}
+	});
+
+	sigesop.query({
 		class: 'equiposGenerador',
 		query: 'obtenerEquipoGenerador',
-		success: function( data )
-		{
+		success: function( data ) {
 			window.sesion.matrizEquipos = data;				
 			document.getElementById( 'badge_equipoGenerador' ).innerHTML =
 				!$.isEmptyObject( data ) ? data.length : '0';
 			docR.table.update_table( data );
 		}
-	})
+	});
 }
 
 function nuevoElemento ( datos, IDS, limpiarCampos ) {
@@ -119,12 +146,32 @@ function editarElemento( index ) {
 	/* creamos documento para la edicion de el usuario en la ventana	
 	 */
 	var 
-		_doc = sigesop.equipoGenerador.document ({
-			obj: elem,  
-			suf: '_update',
-			error: sigesop.completeCampos,
-			success: actualizarElemento
-		});
+
+	success = function ( datos, IDS, limpiarCampos ) {
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		sigesop.query({
+			data: datos,
+			class: 'equiposGenerador',
+			query: 'actualizarEquipoGenerador',
+			queryType: 'sendData',
+			type: 'POST',
+			OK: function ( msj, eventos ) {
+				$.unblockUI();
+				win.close();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+		}) ;
+	},
+
+	_doc = sigesop.equipoGenerador.document ({
+		obj: elem,  
+		suf: '_update',
+		error: sigesop.completeCampos,
+		success: success
+	});
 
 	/* guardamos la llave primaria para la actualizacion de datos	
 	 */
@@ -136,36 +183,41 @@ function editarElemento( index ) {
 	 */
 	var 
 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'win-edicion-equipos-aero-',
-		titulo: 'Edicion de equipo',
-		clickAceptar: function ( event ) {
-			event.preventDefault();
-			$( win.idDiv ).modal( 'hide' );
-		},
-		showBsModal: function () {
-			document.getElementById( this.idBody )
-			.innerHTML = _doc.html;
-			_doc.javascript();
-		}
-	});
+    win = BootstrapDialog.show({
+        title: 'Edicion de equipo',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: _doc.html,
+        onshown: function ( dialog ) {
+        	_doc.javascript();
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
 }
 
-function actualizarElemento( datos, IDS, limpiarCampos ) {
-	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+function consultaReporteI ( datos ) {
+	$( docRR.table.body ).empty();
+	var
+	id_sistema_aero = $( datos.sistema.idHTML ).val();
+
 	sigesop.query({
-		data: datos,
-		class: 'equiposGenerador',
-		query: 'actualizarEquipoGenerador',
-		queryType: 'sendData',
-		type: 'POST',
-		OK: function ( msj, eventos ) {
-			$.unblockUI();
-			$( '#win-edicion-equipos-aero-' ).modal( 'hide' );
-			getData();
-			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+		data: {
+			id_sistema_aero: id_sistema_aero,
 		},
-		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
-		DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
-	}) ;
+		class: 'equiposGenerador',
+		query: 'obtenerEquipoGenerador',
+		queryType: 'sendGetData',
+		success: function ( data ) { 
+			data.length > 0 ?
+				docRR.table.update_table( data ):
+				sigesop.msg( 'Advertencia', 'No hay registros...', 'warning' );
+		}
+	});
 }
