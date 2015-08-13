@@ -1,7 +1,6 @@
 $( document ).on( 'ready', main );
 
-function main ()
-{
+function main () {
 	/* Documento principal
 	 */ 
 	doc = sigesop.roles.document({
@@ -32,8 +31,7 @@ function main ()
 
 // ---------- funcion que servira tanto para un nuevo elemento como para actualizar un elemento
 
-function getData ()
-{
+function getData () {
 	sigesop.query({
 		class: 'usuarios',
 		query: 'obtenerAreasAcceso',
@@ -71,8 +69,7 @@ function getData ()
 
 function error () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); }
 
-function nuevoElemento( datos, IDS, limpiarCampos )
-{
+function nuevoElemento( datos, IDS, limpiarCampos ) {
 	/* capturamos todos los datos del formulario
 	 */
 	leerDatos ( datos, IDS );
@@ -111,8 +108,7 @@ function nuevoElemento( datos, IDS, limpiarCampos )
 	}) ;
 }
 
-function leerDatos ( datos, IDS )
-{
+function leerDatos ( datos, IDS ) {
 	/* capturamos los accesos seleccionados
 	 */
 	datos.matrizAreaAcceso.length = 0; // vaciamos el arreglo para evitar repetidos
@@ -144,8 +140,7 @@ function leerDatos ( datos, IDS )
 	datos.descripcionRol.valor = $( datos.descripcionRol.idHTML ).val().trim();	
 }
 
-function eliminarElemento( index )
-{
+function eliminarElemento( index ) {
 	var 
 		elemento = window.sesion.matrizTipoRol[ index ];
 
@@ -186,80 +181,98 @@ function eliminarElemento( index )
 		sigesop.msg( 'info', 'Seleccione un elemento para continuar', 'info' );
 }
 
-function editarElemento( index )
-{
-	var elemento = window.sesion.matrizTipoRol[ index ];
+function editarElemento( index ) {
+	if ( index < 0 ) 
+		throw new Error( 'function editarElemento: index fuera de rango' );
 
-	if( elemento )
-	{	
-		var
-		_doc = sigesop.roles.document({
-			obj: elemento,
-			arr_areaAcceso: window.sesion.matrizAreaAcceso, 
-			arr_permisoAcceso: window.sesion.matrizPermisoAcceso, 
-			suf: '_',
-			error: error,
-			success: actualizarElemento
-		});
+	var elem = window.sesion.matrizTipoRol[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function editarElemento: elem es indefinido');
+	}
 
-		/* guardamos la llave primaria para la actualizacion de datos
+	var
+
+	success = function( datos, IDS ) {
+		/* capturamos todos los datos del formulario
 		 */
+		leerDatos ( datos, IDS );
 
-		_doc.datos.nombreRolUpdate.valor = elemento.clave_rol;
+		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI' );
+		sigesop.query({
+			data: datos,
+			class: 'usuarios',
+			query: 'actualizarRolUsuario',
+			queryType: 'sendData',
+			type: 'POST',
+			OK: function ( msj, eventos ) {
+				$( 'header' ).barraHerramientas();
+				getData();
+				$.unblockUI();
+				win.close();
+				// $( '#divEdicionRol' ).modal( 'hide' );			
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
 
-		var
+			NA: function ( msj, eventos ) { 
+				$.unblockUI(); 
+				sigesop.msg( msj, sigesop.parseMsj( eventos ),'warning' );
+			},
+			DEFAULT: function ( msj, eventos ) { 
+				$.unblockUI(); 
+				sigesop.msg( msj, sigesop.parseMsj( eventos ),'error' );
+			},
+			error: function () { 
+				$.unblockUI(); 
+				sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
+			}
+		}) ;
+	},
 
-		showBsModal = function() 
-		{
-			document.getElementById( this.idBody ).innerHTML = _doc.html;
-			_doc.javascript();
-		},
+	_doc = sigesop.roles.document({
+		obj: elem,
+		arr_areaAcceso: window.sesion.matrizAreaAcceso, 
+		arr_permisoAcceso: window.sesion.matrizPermisoAcceso, 
+		suf: '_',
+		error: error,
+		success: success
+	});
 
-		win = sigesop.ventanaEmergente({
-			idDiv: 'divEdicionRol',
-			titulo: 'Edicion de Rol',
-			keyboard: true,
-			clickAceptar: function ( event ){ event.preventDefault(); $( win.idBody ).modal( 'hide' ); },
-			showBsModal: showBsModal
-		});
-	} 
-	else 
-		sigesop.msg( 'info', 'Seleccione un elemento para continuar', 'info' );
-}
-
-function actualizarElemento( datos, IDS )
-{
-	/* capturamos todos los datos del formulario
+	/* guardamos la llave primaria para la actualizacion de datos
 	 */
-	leerDatos ( datos, IDS );
 
-	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI' );
-	sigesop.query({
-		data: datos,
-		class: 'usuarios',
-		query: 'actualizarRolUsuario',
-		queryType: 'sendData',
-		type: 'POST',
-		OK: function ( msj, eventos ) 
-		{
-			$( 'header' ).barraHerramientas();
-			getData();
-			$.unblockUI();
-			$( '#divEdicionRol' ).modal( 'hide' );			
-			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-		},
+	_doc.datos.nombreRolUpdate.valor = elem.clave_rol;
 
-		NA: function ( msj, eventos ) { 
-			$.unblockUI(); 
-			sigesop.msg( msj, sigesop.parseMsj( eventos ),'warning' );
-		},
-		DEFAULT: function ( msj, eventos ) { 
-			$.unblockUI(); 
-			sigesop.msg( msj, sigesop.parseMsj( eventos ),'error' );
-		},
-		error: function () { 
-			$.unblockUI(); 
-			sigesop.msg( 'Error', 'Error de conexion al servidor', 'error' );
-		}
-	}) ;
+	var
+
+    win = BootstrapDialog.show({
+        title: 'Edicion de Rol',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: _doc.html,
+        onshown: function ( dialog ) {
+        	_doc.javascript();
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
+
+	// showBsModal = function() {
+	// 	document.getElementById( this.idBody ).innerHTML = _doc.html;
+	// 	_doc.javascript();
+	// },
+
+	// win = sigesop.ventanaEmergente({
+	// 	idDiv: 'divEdicionRol',
+	// 	titulo: 'Edicion de Rol',
+	// 	keyboard: true,
+	// 	clickAceptar: function ( event ){ event.preventDefault(); $( win.idBody ).modal( 'hide' ); },
+	// 	showBsModal: showBsModal
+	// });
 }

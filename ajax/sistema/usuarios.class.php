@@ -1,7 +1,6 @@
 <?php
 require 'sigesop.class.php';
-class usuarios extends sigesop
-{	
+class usuarios extends sigesop {	
     private $matrizPermisoAcceso = array(
         array('idPermiso' => 'select', 'descripcion' => 'Consulta a datos'),
         array('idPermiso' => 'insert', 'descripcion' => 'Inserción de datos'),
@@ -14,17 +13,14 @@ class usuarios extends sigesop
         array('idPermiso' => 'all', 'descripcion' => 'Permisos de administración de la Base de datos')
     );
 
-    public function __construct( $usuario, $clave )
-    {
+    public function __construct( $usuario, $clave ) {
         parent::sigesop( $usuario, $clave );
     }
 
     public function __destruct(){ parent::__destruct(); }
 
-	public function solicitudAjax( $accion, $post, $get )
-	{
-		switch ( $accion )
-		{
+	public function solicitudAjax( $accion, $post, $get ) {
+		switch ( $accion ) {
             case 'actualizarAreaTrabajo':
                 $actualizarAreaTrabajo = $this->actualizarAreaTrabajo( $post );
                 echo json_encode( $actualizarAreaTrabajo );
@@ -106,8 +102,7 @@ class usuarios extends sigesop
 
     # nuevaAreaTrabajo ----------------------
 
-    public function nuevaAreaTrabajo( $data ) 
-    {
+    public function nuevaAreaTrabajo( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
         if ( !$this->estadoConexion ) 
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
@@ -153,8 +148,7 @@ class usuarios extends sigesop
 
     # nuevoRolUsuario ----------------------
 
-    public function nuevoRolUsuario( $data ) 
-    {
+    public function nuevoRolUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
         if ( !$this->estadoConexion ) 
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
@@ -243,8 +237,7 @@ class usuarios extends sigesop
 
     # nuevoUsuario ----------------------
 
-    public function nuevoUsuario( $data ) 
-    {
+    public function nuevoUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
         if ( !$this->estadoConexion ) 
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
@@ -371,8 +364,7 @@ class usuarios extends sigesop
         return $rsp; 
     }
 
-    private function __createUsuario( $data )
-    {
+    private function __createUsuario( $data ){
         $nombreUsuario = $data['nombreUsuario'];
         $apellidosUsuario = $data['apellidosUsuario'];
         $RPEusuario = $data['RPEusuario'];
@@ -391,8 +383,7 @@ class usuarios extends sigesop
         return $query;
     }
 
-    private function __createUser( $usuario, $password, $rol ) 
-    {
+    private function __createUser( $usuario, $password, $rol ) {
         $sql =  "CREATE USER '$usuario'@'$this->host' IDENTIFIED BY '$password'";
         $query = $this->insert_query( $sql, true );
 
@@ -405,8 +396,7 @@ class usuarios extends sigesop
         return $query; 
     }
 
-    private function __grantPrivileges( $usuario, $rol )
-    {
+    private function __grantPrivileges( $usuario, $rol ) {
         # Definimos los permisos que tendra cada tipo de usuario
         
         $sql = "SELECT permiso_rol FROM permiso_rol WHERE clave_rol = '$rol'";
@@ -416,23 +406,19 @@ class usuarios extends sigesop
         # buscamos si existe el permiso all de superUsuario
         
         $superUsuario = false;
-        foreach ( $mtz as $fila ) 
-        {
-            if ( $fila == 'all' ) 
-            {
+        foreach ( $mtz as $fila ) {
+            if ( $fila == 'all' ) {
                 $superUsuario = true;
                 break;
             }
         }
 
-        if ( $superUsuario ) 
+        if ( $superUsuario )
             $permiso = "GRANT ALL PRIVILEGES ON *.* TO '$usuario'@'$this->host' WITH GRANT OPTION";
-        else 
-        {
+        else {
             $permiso = 'GRANT ';
 
-            for ( $i = 0; $i < sizeof( $mtz ) ; $i++ ) 
-            {
+            for ( $i = 0; $i < sizeof( $mtz ) ; $i++ ) {
                 if ( $i !== ( sizeof( $mtz ) -1 ) ) $permiso = $permiso.$mtz[ $i ].', ';
                 else $permiso = $permiso.$mtz[ $i ];
             }
@@ -461,8 +447,7 @@ class usuarios extends sigesop
 
     # actualizarUsuario ----------------------
 
-    public function actualizarUsuario( $data ) 
-    {
+    public function actualizarUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
         if ( !$this->estadoConexion ) 
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
@@ -542,8 +527,7 @@ class usuarios extends sigesop
         return $rsp; 
     }
 
-    private function __updateUsuario( $data )
-    {
+    private function __updateUsuario( $data ) {
         $nombre = utf8_encode( $data['nombreUsuario']['valor'] );
         $apellidos = utf8_encode( $data['apellidosUsuario']['valor'] );
         $rpeUsuario = utf8_encode( $data['RPEusuario']['valor'] );
@@ -571,8 +555,7 @@ class usuarios extends sigesop
         return $query;
     }
 
-    private function __updateUser( $usuario, $usuario_update, $password, $rol )
-    { 
+    private function __updateUser( $usuario, $usuario_update, $password, $rol ){ 
         $dropUser = $this->__dropUser( $usuario ); # si existía o no, siempre retorna OK;
 
         # creamos usuario en mysql
@@ -591,8 +574,7 @@ class usuarios extends sigesop
 
     # actualizarAreaTrabajo ---------------
 
-    public function actualizarAreaTrabajo( $data ) 
-    {        
+    public function actualizarAreaTrabajo( $data ) {        
         $rsp = array( 'status' => array(), 'eventos' => array() );
         if ( !$this->estadoConexion ) 
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
@@ -640,26 +622,22 @@ class usuarios extends sigesop
 
     # actualizarRolUsuario ----------------------
 
-    public function actualizarRolUsuario( $data ) 
-    {
-        if ( !$this->estadoConexion ) return "Sin conexion a base de datos: ". $this->baseDatos;
-        if ( !$this->estadoConexionMysql ) return "Sin conexion a base de datos: MySQL";
+    public function actualizarRolUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
 
-        $validar =  $this->verificaDatosNulos( $data, array(
-                        'nombreRol', 'descripcionRol', 'matrizAreaAcceso', 
-                        'matrizPermisoAcceso', 'nombreRolUpdate'
-                    ));
+        $validar =  
+            $this->verificaDatosNulos( $data, array(
+                'nombreRol', 'descripcionRol', 'matrizAreaAcceso', 
+                'matrizPermisoAcceso', 'nombreRolUpdate'
+            ));
 
-        if ( $validar == 'OK' ) 
-        {  
+        if ( $validar == 'OK' ) {  
             $rol = $data['nombreRol']['valor'];  
 
             # limpiando areas de acceso
 
             $query = $this->__limpiarAreasAcceso( $rol );
-            if ( $query != 'OK') 
-            {
+            if ( $query != 'OK') {
                 $this->conexion->rollback();
 
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al limpiar areas de acceso.' );
@@ -670,8 +648,7 @@ class usuarios extends sigesop
             # limpiando permisos de acceso
 
             $query = $this->__limpiarPermisoAcceso( $rol );
-            if ( $query != 'OK' )
-            {
+            if ( $query != 'OK' ) {
                 $this->conexion->rollback();
 
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al limpiar permisos de acceso.' );
@@ -682,8 +659,7 @@ class usuarios extends sigesop
             # actualizando datos de rol
 
             $query = $this->__updateRol( $data );
-            if ( $query == 'OK' ) 
-            {              
+            if ( $query == 'OK' ) {              
                 $this->conexion->commit();
                 $this->conexionMySQL->commit();
 
@@ -691,8 +667,7 @@ class usuarios extends sigesop
                 $rsp[ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $rol, 'msj' => 'Correcto' );
                 return $rsp;
             }
-            else 
-            {
+            else {
                 $this->conexion->rollback();
                 $this->conexionMySQL->rollback();
 
@@ -710,22 +685,19 @@ class usuarios extends sigesop
         return $rsp;
     }
 
-    private function __limpiarAreasAcceso ( $rol )
-    {
+    private function __limpiarAreasAcceso ( $rol ) {
         $sql = "delete from acceso_rol where clave_rol = '$rol'";
         $clean = $limpiarAreasAcceso = $this->insert_query( $sql );
         return $clean;
     }
 
-    private function __limpiarPermisoAcceso ( $rol )
-    {
+    private function __limpiarPermisoAcceso ( $rol ) {
         $sql = "delete from permiso_rol where clave_rol = '$rol'";
         $clean = $this->insert_query( $sql );
         return $clean;
     }
 
-    private function __updateRol ( $data )
-    {
+    private function __updateRol ( $data ) {
         $rol =                  $data[ 'nombreRol' ][ 'valor' ];
         $descripcion =          $data[ 'descripcionRol' ][ 'valor' ];
         $matrizAreaAcceso =     $data[ 'matrizAreaAcceso' ];
@@ -733,41 +705,39 @@ class usuarios extends sigesop
 
         $rolUpdate =            $data[ 'nombreRolUpdate' ][ 'valor' ];
                     
-        $sql = "update roles set clave_rol = '$rol', descripcion_areaTrabajo = '$descripcion' where clave_rol = '$rolUpdate'";
+        $sql = 
+        "UPDATE roles SET ".
+        "clave_rol = '$rol', ".
+        "descripcion_areaTrabajo = '$descripcion' ".
+        "WHERE clave_rol = '$rolUpdate'";
+
         $updateRol = $this->insert_query( $sql );
 
-        if ( $updateRol == 'OK' ) 
-        {
-            # insertando las areas de acceso
+        # retornamos el ERROR si no se inserta correctamente
+        if ( $updateRol != 'OK' ) return $updateRol;
 
-            $insertarAreaAcceso = $this->__insertarAreaAcceso ( $rol, $matrizAreaAcceso );
-            if ( $insertarAreaAcceso != 'OK' ) return $insertarAreaAcceso;
+        # insertando las areas de acceso
+        $insertarAreaAcceso = $this->__insertarAreaAcceso ( $rol, $matrizAreaAcceso );
+        if ( $insertarAreaAcceso != 'OK' ) return $insertarAreaAcceso;
 
-            # insertando los permisos de acceso
-            $insertarPermisoAcceso = $this->__insertarPermisoAcceso ( $rol, $matrizPermisoAcceso );
-            if ( $insertarPermisoAcceso != 'OK' ) return $insertarPermisoAcceso;
+        # insertando los permisos de acceso
+        $insertarPermisoAcceso = $this->__insertarPermisoAcceso ( $rol, $matrizPermisoAcceso );
+        if ( $insertarPermisoAcceso != 'OK' ) return $insertarPermisoAcceso;
 
-            # actualizar los nuevos permisos a los usuarios previamente asignados            
-            $reasignarPermisos = $this->__reasignarPermisos( $rol );
-            
-            /* si la respuesta es [null] es porque no hay usuario para reasignar permisos
-             * si es [OK] es porque se reasignaron a los usuarios pertenecientes al rol actualizado
-             */ 
-            if ( $reasignarPermisos == 'OK' || $reasignarPermisos == null ) return 'OK';
-                else return $reasignarPermisos;
-        } 
-
-        else return $updateRol;
+        # actualizar los nuevos permisos a los usuarios previamente asignados            
+        $reasignarPermisos = $this->__reasignarPermisos( $rol );
+        
+        /* si la respuesta es [null] es porque no hay usuario para reasignar permisos
+         * si es [OK] es porque se reasignaron a los usuarios pertenecientes al rol actualizado
+         */ 
+        if ( $reasignarPermisos == 'OK' || $reasignarPermisos == null ) return 'OK';
+        else return $reasignarPermisos." Permisos no reasignados.";
     }
 
-    private function __insertarAreaAcceso ( $rol, $data )
-    {
-        foreach ( $data as $area ) 
-        {
-            foreach ( $this->matrizAreaAcceso as $filaNivel ) 
-            {
-                if ($filaNivel['paginaAcceso'] == $area) 
-                {
+    private function __insertarAreaAcceso ( $rol, $data ) {
+        foreach ( $data as $area ) {
+            foreach ( $this->matrizAreaAcceso as $filaNivel ) {
+                if ($filaNivel['paginaAcceso'] == $area) {
                     $nivelBarra = $filaNivel['nivelBarra'];
                     $nombreBarra = $filaNivel['nombrePagina'];
                 }
@@ -782,8 +752,7 @@ class usuarios extends sigesop
         return 'OK';
     }
 
-    private function __insertarPermisoAcceso( $rol, $data )
-    {
+    private function __insertarPermisoAcceso( $rol, $data ) {
         foreach ( $data as $permiso ) 
         {
             $sql = "insert into permiso_rol values('$rol', '$permiso')"; 
@@ -795,14 +764,15 @@ class usuarios extends sigesop
         return 'OK';
     }
 
-    private function __reasignarPermisos( $rol )
-    {
-        $sql = "SELECT nombre_usuario FROM personal WHERE clave_rol = '$rol'";
+    private function __reasignarPermisos( $rol ) {
+        $sql = 
+            "SELECT nombre_usuario FROM personal ".
+            "WHERE clave_rol = '$rol'";
+
         $users = $this->array_query( $sql, 'nombre_usuario', null );
         if ( $users == null ) return null;
             
-        foreach ( $users as $usr ) 
-        {
+        foreach ( $users as $usr ) {
             $updatePermisos = $this->__grantPrivileges( $usr, $rol );
             if ( $updatePermisos != 'OK' ) return $updatePermisos;
         }
@@ -812,8 +782,7 @@ class usuarios extends sigesop
 
     # ------------------------------------------
 
-    public function eliminarAreaTrabajo ( $data ) 
-    {
+    public function eliminarAreaTrabajo ( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
         if ( !$this->estadoConexion ) 
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
@@ -846,8 +815,7 @@ class usuarios extends sigesop
         return $rsp;
     }
 
-    public function eliminarRolUsuario( $data ) 
-    {
+    public function eliminarRolUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
         $clave_rol = $data[ 'clave_rol' ];
 
@@ -877,8 +845,7 @@ class usuarios extends sigesop
 
     # eliminarUsuario ---------------
 
-    public function eliminarUsuario( $data ) 
-    {
+    public function eliminarUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
         $usuario = $usuario = $data['nombre_usuario'];
 
@@ -908,8 +875,7 @@ class usuarios extends sigesop
         return $rsp;
     }
 
-    private function __dropUsuario( $usuario )
-    {
+    private function __dropUsuario( $usuario ){
         $sql = "DELETE FROM personal WHERE nombre_usuario = '$usuario'";
 
         $query = $this->insert_query( $sql );
@@ -922,8 +888,7 @@ class usuarios extends sigesop
         else return $query;
     } 
 
-    private function __dropUser( $usuario ) 
-    {
+    private function __dropUser( $usuario ) {
         // ---------- verificamos la existencia del usuario
 
         $user = $this->checkUserInsideMysql( $usuario );
@@ -945,8 +910,7 @@ class usuarios extends sigesop
 
     # -------------------------------
 
-    public function obtenerTipoRolUsuario() 
-    {
+    public function obtenerTipoRolUsuario() {
         $sql = 'select * from roles';
         $tipoRol = $this->array_query( $sql );
 
@@ -973,8 +937,7 @@ class usuarios extends sigesop
         return $objetoRoles;
     }
 
-    public function obtenerAreaTrabajo() 
-    {
+    public function obtenerAreaTrabajo() {
         // Obteniendo las diferentes areas de trabajo
         $sql = 'select * from area_trabajo';
         $areaTrabajo = $this->array_query( $sql );

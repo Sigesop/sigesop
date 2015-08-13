@@ -370,55 +370,55 @@ class sigesop {
                 break;
                 
             case 1044:
-                return "Error ".$noError.".\nAcceso denegado para el usuario";
+                return "Error ".$noError.".\nAcceso denegado para el usuario.";
                 break;
 
             case 1045:
-                return "Error ".$noError.".\nAcceso denegado para el usuario: ".$this->usuario.", no cuenta con los privilegios necesarios";
+                return "Error ".$noError.".\nAcceso denegado para el usuario: ".$this->usuario.", no cuenta con los privilegios necesarios.";
                 break;
 
             case 1054:
-                return "Error ".$noError.".\nColumna desconocida";
+                return "Error ".$noError.".\nColumna desconocida.";
                 break;
 
             case 1062:
-                return "Error ".$noError.".\nEntrada duplicada";
+                return "Error ".$noError.".\nEntrada duplicada.";
                 break;            
 
             case 1064:
-                return "Error ".$noError.".\nError de sintaxis SQL";
+                return "Error ".$noError.".\nError de sintaxis SQL.";
                 break;
 
             case 1065:
-                return "Error ".$noError.".\nLa consulta se encuentra vacia";
+                return "Error ".$noError.".\nLa consulta se encuentra vacia.";
                 break;
 
-            // case 1133:
-            //     return "Error ".$noError.".\n".$error;
-            //     break;                
+            case 1133:
+                return "Error ".$noError.".\nNo se puede encontrar ninguna coincidencia en la tabla [user].";
+                break;                
 
             case 1136:
-                return "Error ".$noError.".\nEl número de columnas no corresponde al número en la línea";
+                return "Error ".$noError.".\nEl número de columnas no corresponde al número en la línea.";
                 break;
 
             case 1142:
-                return "Error ".$noError.".\nAccion negada para usuario: \"". $this->usuario ."\". No cuenta con los privilegios suficientes";
+                return "Error ".$noError.".\nAccion negada para usuario: \"". $this->usuario ."\". No cuenta con los privilegios suficientes.";
                 break;                
 
             case 1146:
-                return "Error ".$noError.".\nNo existe la tabla solicitada";
+                return "Error ".$noError.".\nNo existe la tabla solicitada.";
                 break;
 
             case 1227:
-                return "Error ".$noError.".\nAccion negada para usuario: \"". $this->usuario ."\". No cuenta con los privilegios suficientes";
+                return "Error ".$noError.".\nAccion negada para usuario: \"". $this->usuario ."\". No cuenta con los privilegios suficientes.";
                 break;                
 
             case 1265:
-                return "Error ".$noError.".\nDatos truncados para columna";
+                return "Error ".$noError.".\nDatos truncados para columna.";
                 break;        
 
             case 1364:
-                return "Error ".$noError.".\n El valor no puede ser nulo";
+                return "Error ".$noError.".\n El valor no puede ser nulo.";
                 break;
 
             // case 1396:
@@ -426,15 +426,15 @@ class sigesop {
             //     break;
 
             case 1406:
-                return "Error ".$noError.".\n Dato demasiado largo para el tamaño de la columna";
+                return "Error ".$noError.".\n Dato demasiado largo para el tamaño de la columna.";
                 break;
 
             case 1451:
-                return "Error ".$noError.".\nNo se puede eliminar elemento del que dependen registros";
+                return "Error ".$noError.".\nNo se puede eliminar elemento del que dependen registros.";
                 break;
 
             case 1452:
-                return "Error ".$noError.".\nNo se puede eliminar, actualizar o crear elemento sin elemento padre disponible";
+                return "Error ".$noError.".\nNo se puede eliminar, actualizar o crear elemento sin elemento padre disponible.";
                 break;
 
             default:

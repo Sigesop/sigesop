@@ -18,7 +18,7 @@ sigesop.roles = {
 			};
 
 		var 
-		
+
 		html =
 			'<form id="formCatalogoRoles' + suf + '" class="form-horizontal" role="form">' +
 				'<div class="form-group">' +
@@ -41,7 +41,7 @@ sigesop.roles = {
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="col-sm-2 col-md-2 control-label">Descripción Rol:</label>' +
+					'<label class="col-sm-2 col-md-2 control-label">Descripción:</label>' +
 					'<div class="col-sm-9 col-md-9">' +
 						'<textarea name="descripcionRol" id="descripcionRol' + suf + '" class="form-control eventoCambioMayuscula' +
 						'" rows="3" placeholder="Descripción área de trabajo" >' + obj.descripcion_areaTrabajo + '</textarea>' +
