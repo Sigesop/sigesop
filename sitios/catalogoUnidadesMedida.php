@@ -35,8 +35,8 @@ if ( !$obj->accesoPagina( 'catalogoUnidadesMedida.php' ) ) {
 			<div class="alert alert-success"><h4 class="text-center">Catálogo de Unidades de Medida</h4></div>
 
 			<ul class="nav nav-tabs">
-				<li class="active"><a href="#main" data-toggle="tab">Unidades de Medida</a></li>
-				<li ><a href="#main2" data-toggle="tab">Unidades de Medida Agregadas <span id="badge_unidadMedida" class="badge"></span></a></li>
+				<li class="active"><a href="#main" data-toggle="tab">Nueva Unidad de Medida</a></li>
+				<li ><a href="#main2" data-toggle="tab">Unidades de Medida Registradas <span id="badge_unidadMedida" class="badge"></span></a></li>
 			</ul>
 
 			<div class="tab-content">
