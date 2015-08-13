@@ -141,44 +141,52 @@ function leerDatos ( datos, IDS ) {
 }
 
 function eliminarElemento( index ) {
-	var 
-		elemento = window.sesion.matrizTipoRol[ index ];
+	if ( index < 0 ) 
+		throw new Error( 'function eliminarElemento: index fuera de rango' );
 
-	if( elemento )
-	{
-		var 
-		win = sigesop.ventanaEmergente({										
-			idDiv: 'confirmarSolicitud',
-			titulo: 'Autorización requerida',
-			clickAceptar: function( event ) 
-			{
-				event.preventDefault();
-				$( win.idDiv ).modal( 'hide' );
-				sigesop.query({
-					data: { clave_rol: elemento.clave_rol },
-					class: 'usuarios',
-					query: 'eliminarRolUsuario',
-					queryType: 'sendData',
-					OK: function ( msj, eventos )
-					{
-						getData();
-						sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-					},
-					NA: function ( msj, eventos ) {	sigesop.msg( msj, sigesop.parseMsj( eventos ),'warning' ) },
-					DEFAULT: function ( msj, eventos ) { sigesop.msg( msj, sigesop.parseMsj( eventos ),'error' ) },
-					error: function () { sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ) }
-				});					
-			},
-			showBsModal: function () 
-			{
-				document.getElementById( this.idBody ).innerHTML =
-				'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
-			}
-		});		
+	var elem = window.sesion.matrizTipoRol[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+		throw new Error('function eliminarElemento: elem es indefinido');
 	}
-	 
-	else 
-		sigesop.msg( 'info', 'Seleccione un elemento para continuar', 'info' );
+
+	var 
+
+	action = function ( dialog ) {
+		dialog.close();
+		sigesop.query({
+			data: { clave_rol: elem.clave_rol },
+			class: 'usuarios',
+			query: 'eliminarRolUsuario',
+			queryType: 'sendData',
+			OK: function ( msj, eventos )
+			{
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) {	sigesop.msg( msj, sigesop.parseMsj( eventos ),'warning' ) },
+			DEFAULT: function ( msj, eventos ) { sigesop.msg( msj, sigesop.parseMsj( eventos ),'error' ) },
+			error: function () { sigesop.msgBlockUI( 'Error de conexion al servidor', 'error' ) }
+		});	
+	},
+
+    win = BootstrapDialog.show({
+        title: 'Autorización requerida',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',        
+        size: BootstrapDialog.SIZE_NORMAL,
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            action: function ( dialog ) {
+            	dialog.close();
+            }
+        },{
+            label: 'Aceptar',
+            cssClass: 'btn-danger',
+            action: action
+        }]
+    });	
 }
 
 function editarElemento( index ) {
@@ -262,17 +270,4 @@ function editarElemento( index ) {
             }
         }]
     });
-
-	// showBsModal = function() {
-	// 	document.getElementById( this.idBody ).innerHTML = _doc.html;
-	// 	_doc.javascript();
-	// },
-
-	// win = sigesop.ventanaEmergente({
-	// 	idDiv: 'divEdicionRol',
-	// 	titulo: 'Edicion de Rol',
-	// 	keyboard: true,
-	// 	clickAceptar: function ( event ){ event.preventDefault(); $( win.idBody ).modal( 'hide' ); },
-	// 	showBsModal: showBsModal
-	// });
 }

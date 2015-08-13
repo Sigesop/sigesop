@@ -24,8 +24,8 @@ sigesop.roles = {
 				'<div class="form-group">' +
 					'<label class="col-sm-2 col-md-2 control-label">Nombre del Rol:</label>' +
 					'<div class="col-sm-9 col-md-9">' +
-						'<input name="nombreRol" id="nombreRol' + suf + '" class="form-control input-md eventoCambioMayuscula ' +
-						'placeholder="Ingrese tipo de usuario por ejemplo (admin, operador, etc.)" value="' + 
+						'<input name="nombreRol" id="nombreRol' + suf + '" class="form-control input-md eventoCambioMayuscula" ' +
+						'placeholder="De 1 – 25 caracteres." value="' + 
 						obj.clave_rol + '">' +
 					'</div>' +
 				'</div>' +
@@ -270,7 +270,7 @@ sigesop.roles = {
 		            nombreRol: {
 		                validators: {
 		                    notEmpty: {
-		                        message: 'Ingrese Nombre del Rol de Usuario'
+		                        message: 'Campo requerido'
 		                    },
 		                    stringLength: {
 		                    	min: 1,
@@ -286,21 +286,21 @@ sigesop.roles = {
 		            'areaAcceso[]': {
 		            	validators: {
 		            		notEmpty: {
-		            			message: 'No se han seleccionado areas de acceso'
+		            			message: 'Campo requerido'
 		            		}
 		            	}
 		            },
 		            'permisoAcceso[]': {
 		            	validators: {
 		            		notEmpty: {
-		            			message: 'No se han seleccionado permisos de usuario'
+		            			message: 'Campo requerido'
 		            		}
 		            	}
 		            },
 		            descripcionRol: {
 		                validators: {
 		                    notEmpty: {
-		                        message: 'Es necesaria la descripción del rol'
+		                        message: 'Campo requerido'
 		                    },
 		                    regexp: {
 		                        regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]*$/i,

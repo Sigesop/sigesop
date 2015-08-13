@@ -13,139 +13,151 @@ sigesop.areaTrabajo = {
 			}
 
 		var 
-			html = 
-				'<form id="formAreaTrabajo' + suf + '" class="form-horizontal" role="form">'+
-					'<div class="form-group">'+
-						'<label class="col-sm-2 control-label">Clave del área de trabajo: </label>'+
-						'<div class="col-sm-9">'+
-							'<input name="claveAreaTrabajo" id="claveAreaTrabajo' + suf + 
-							'" class="form-control input-md MAYUS" placeholder="Ingrese clave del área de trabajo (10 caracteres)" value="' + obj.clave_areaTrabajo + '">'+
-						'</div>'+
+
+		html = 
+			'<form id="formAreaTrabajo' + suf + '" class="form-horizontal" role="form">'+
+				'<div class="form-group">'+
+					'<label class="col-sm-2 control-label">Clave del área de trabajo: </label>'+
+					'<div class="col-sm-9">'+
+						'<input ' +
+							'name="claveAreaTrabajo" ' +
+							'id="claveAreaTrabajo' + suf + '"' +
+							'class="form-control input-md MAYUS" ' +
+							'placeholder="De 1 – 10 caracteres." ' +
+							'value="' + obj.clave_areaTrabajo + '">'+
 					'</div>'+
+				'</div>'+
 
-					'<div class="form-group">'+
-						'<label class="col-sm-2 control-label">Descripción:</label>'+
-						'<div class="col-sm-9">'+
-							'<textarea name="descripcionAreaTrabajo" id="descripcionAreaTrabajo' + suf + 
-							'" class="form-control input-md MAYUS" placeholder="Descripción del área de trabajo (50 caractéres)">' + obj.descripcion_areaTrabajo + '</textarea>'+
-						'</div>'+
+				'<div class="form-group">'+
+					'<label class="col-sm-2 control-label">Descripción:</label>'+
+					'<div class="col-sm-9">'+
+						'<textarea ' +
+							'name="descripcionAreaTrabajo" ' +
+							'id="descripcionAreaTrabajo' + suf + '"' +
+							'class="form-control input-md MAYUS" ' +
+							'placeholder="De 1 – 50 caracteres."' +
+							'>' + obj.descripcion_areaTrabajo + 
+						'</textarea>'+
 					'</div>'+
+				'</div>'+
 
-					'<div class="form-group">'+
-						'<div class="col-sm-2 control-label"></div>'+
-						'<p class="col-sm-9">'+
-							'<button id="btnGuardarAreaTrabajo' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> '+
-							'<button id="botonLimpiar' + suf + '" type="reset" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
-						'</p>' +
-					'</div>' +
-				'</form>',
+				'<div class="form-group">'+
+					'<div class="col-sm-2 control-label"></div>'+
+					'<p class="col-sm-9">'+
+						'<button id="btnGuardarAreaTrabajo' + suf + '" type="submit" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> '+
+						'<button id="botonLimpiar' + suf + '" type="reset" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
+					'</p>' +
+				'</div>' +
+			'</form>',
 
-			javascript = function () 
-			{
-				var
-				form = this.IDS.form,
-				$form = $( form ).formValidation({
-			        icon: {
-			            valid: 'glyphicon glyphicon-ok',
-			            invalid: 'glyphicon glyphicon-remove',
-			            validating: 'glyphicon glyphicon-refresh'
-			        },
+		javascript = function () {
+			var
+			form = this.IDS.form,
+			$form = $( form ).formValidation({
+		        icon: {
+		            valid: 'glyphicon glyphicon-ok',
+		            invalid: 'glyphicon glyphicon-remove',
+		            validating: 'glyphicon glyphicon-refresh'
+		        },
 
-			        onSuccess: function ( e ) {
-			        	e.preventDefault();			        	
-			        	typeof opt.success == 'function' ?
-			        		opt.success( doc.datos, doc.IDS, limpiarCampos ) :
-			        		console.log( 'success is null' );
+		        onSuccess: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.success == 'function' ?
+		        		opt.success( doc.datos, doc.IDS, limpiarCampos ) :
+		        		console.log( 'success is null' );
 
-			        	$( form ).data( 'formValidation' ).disableSubmitButtons( false );
-			        },
+		        	$( form ).data( 'formValidation' ).disableSubmitButtons( false );
+		        },
 
-			        onError: function ( e ) {
-			        	e.preventDefault();			        	
-			        	typeof opt.error == 'function' ?
-			        		opt.error() : console.log( 'error is null' );			        	
-			        },
+		        onError: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.error == 'function' ?
+		        		opt.error() : console.log( 'error is null' );			        	
+		        },
 
-			        fields: {
-			            claveAreaTrabajo: {
-			                validators: {
-			                    notEmpty: {
-			                        message: 'Campo requerido'
-			                    },
-			                    stringLength: {
-			                    	min: 1,
-			                    	max: 10,
-			                    	message: 'Número de caracteres inválido'
-			                    },
-			                    regexp: {
-			                    	regexp: /^[\-\]!"#\/()=?¡*[_{+}¿'|\w\s]*$/i,
-			                    	message: 'Caracteres inválidos'
-			                    }
-			                }
-			            },
+		        fields: {
+		            claveAreaTrabajo: {
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Campo requerido'
+		                    },
+		                    stringLength: {
+		                    	min: 1,
+		                    	max: 10,
+		                    	message: 'Número de caracteres inválido'
+		                    },
+		                    regexp: {
+		                    	regexp: /^[\-\]!"#\/()=?¡*[_{+}¿'|\w\s]*$/i,
+		                    	message: 'Caracteres inválidos'
+		                    }
+		                }
+		            },
 
-			            descripcionAreaTrabajo: {
-			                validators: {
-			                    notEmpty: {
-			                        message: 'Campo requerido'
-			                    },
-			                    regexp: {
-			                        regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]*$/i,
-			                        message: 'Caracteres inválidos'
-			                    }
-			                }
-			            },				            
-			        }
-				});
+		            descripcionAreaTrabajo: {
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Campo requerido'
+		                    },
+		                    stringLength: {
+		                    	min: 1,
+		                    	max: 50,
+		                    	message: 'Número de caracteres inválido'
+		                    },
+		                    regexp: {
+		                        regexp: /^[\-\]!"#$%&\/()=?¡*[_:;,.{´+}¿'|^~\w\sáéíóúñ]*$/i,
+		                        message: 'Caracteres inválidos'
+		                    }
+		                }
+		            },				            
+		        }
+			});
 
-				this.IDS.$form = $form;
+			this.IDS.$form = $form;
 
-				$( '.MAYUS' ).eventoCambioMayuscula();
-				$( this.IDS.botonLimpiar ).on('click', function ( event ) {	vaciarDatos(); });
+			$( '.MAYUS' ).eventoCambioMayuscula();
+			$( this.IDS.botonLimpiar ).on('click', function ( event ) {	vaciarDatos(); });
+		},
+
+		limpiarCampos = function () {
+			$( doc.datos.claveAreaTrabajo.idHTML ).val( '' );
+			$( doc.datos.descripcionAreaTrabajo.idHTML ).val( '' );
+
+			vaciarDatos();
+		},
+
+		vaciarDatos = function () {
+			doc.datos.claveAreaTrabajo.valor = null;
+			doc.datos.claveAreaTrabajoUpdate.valor = null;
+			doc.datos.descripcionAreaTrabajo.valor = null;
+
+			doc.IDS.$form.formValidation( 'resetForm' );		
+		},
+
+		datos = {
+			claveAreaTrabajo: {
+				valor: null,
+				idHTML: '#claveAreaTrabajo' + suf
 			},
+			claveAreaTrabajoUpdate: { valor: null },
+			descripcionAreaTrabajo: {
+				valor: null,
+				idHTML: '#descripcionAreaTrabajo' + suf,
+			}					
+		},
 
-			limpiarCampos = function ()
-			{
-				$( doc.datos.claveAreaTrabajo.idHTML ).val( '' );
-				$( doc.datos.descripcionAreaTrabajo.idHTML ).val( '' );
+		IDS = {
+			botonGuardar: '#btnGuardarAreaTrabajo' + suf,
+			botonLimpiar: '#botonLimpiar' + suf,
+			form: '#formAreaTrabajo' + suf,
+			$form: null
+		},
 
-				vaciarDatos();
-			},
-
-			vaciarDatos = function ()
-			{
-				doc.datos.claveAreaTrabajo.valor = null;
-				doc.datos.claveAreaTrabajoUpdate.valor = null;
-				doc.datos.descripcionAreaTrabajo.valor = null;
-	
-				doc.IDS.$form.formValidation( 'resetForm' );		
-			},
-
-			datos = {
-				claveAreaTrabajo: {
-					valor: null,
-					idHTML: '#claveAreaTrabajo' + suf
-				},
-				claveAreaTrabajoUpdate: { valor: null },
-				descripcionAreaTrabajo: {
-					valor: null,
-					idHTML: '#descripcionAreaTrabajo' + suf,
-				}					
-			},
-
-			IDS = {
-				botonGuardar: '#btnGuardarAreaTrabajo' + suf,
-				botonLimpiar: '#botonLimpiar' + suf,
-				form: '#formAreaTrabajo' + suf,
-				$form: null
-			},
-
-			doc = {
-				html: html,
-				javascript: javascript,
-				datos: datos,
-				IDS: IDS
-			};
+		doc = {
+			html: html,
+			javascript: javascript,
+			datos: datos,
+			IDS: IDS
+		};
 
 		return doc;
 	},
