@@ -19,61 +19,100 @@ sigesop.usuarios = {
 		};
 
 		var 
+
 		html = 
 			'<form id="formUsuario' + suf + '" class="form-horizontal" role="form" method="post">'+
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Nombre:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="nombreUsuario" id="nombreUsuario' + suf + '" class="form-control input-md MAYUS" placeholder="Ingrese nombre del trabajador ( 1-50 caracteres, signos aceptados [A-Z])" value="' + usr.nombre_trabajador + '">'+
+						'<input ' +
+							'name="nombreUsuario" ' +
+							'id="nombreUsuario' + suf + '"' +
+							'class="form-control input-md MAYUS" ' +
+							'placeholder="De 1 – 50 caracteres. [A-Z][espacio en blanco]" ' +
+							'value="' + usr.nombre_trabajador + '">'+
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Apellidos:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="apellidosUsuario" id="apellidosUsuario' + suf + '" class="form-control input-md MAYUS" placeholder="Ingrese apellido del trabajador ( 1-50 caracteres, signos aceptados [A-Z])" value="' + usr.apellidos_trabajador +'">' +
+						'<input ' +
+							'name="apellidosUsuario" ' +
+							'id="apellidosUsuario' + suf + '"' +
+							'class="form-control input-md MAYUS" ' +
+							'placeholder="De 1 – 50 caracteres. [A-Z][espacio en blanco]" ' +
+							'value="' + usr.apellidos_trabajador +'">' +
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">RPE:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="RPEusuario" id="RPEusuario' + suf + '" class="form-control input-md MAYUS" placeholder="Ingrese RPE ( 5 caracteres exactos, signos aceptados [A-Z] [0-9])" value="'+ usr.RDE_trabajador + '">' +
+						'<input ' +
+							'name="RPEusuario" ' +
+							'id="RPEusuario' + suf + '"' +
+							'class="form-control input-md MAYUS" ' +
+							'placeholder="5 caracteres exactos. [0-9] [A-Z]" ' +
+							'value="'+ usr.RDE_trabajador + '">' +
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Usuario:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="usuario" id="usuario' + suf + '" class="form-control input-md" placeholder="Ingrese nombre de usuario ( 1-30 caracteres, signos aceptados [-_.] [A-Za-z] [0-9])" value="' + usr.nombre_usuario + '">' +
+						'<input ' +
+							'name="usuario" ' +
+							'id="usuario' + suf + '"' +
+							'class="form-control input-md" ' +
+							'placeholder="De 1 – 16 caracteres. [- _ .] [0-9] [A-Z]" ' +
+							'value="' + usr.nombre_usuario + '">' +
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Contraseña:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="claveUsuario" id="claveUsuario' + suf + '" type="password" class="form-control input-md" placeholder="Ingrese nueva contraseña de identificación">'+
+						'<input ' +
+							'name="claveUsuario" ' +
+							'id="claveUsuario' + suf + '" ' +
+							'type="password" ' +
+							'class="form-control input-md" ' +
+							'placeholder="8 caracteres mínimo.">'+
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Confirmar contraseña:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="claveUsuarioConfirmacion" id="claveUsuarioConfirmacion' + suf + '" type="password"  class="form-control input-md" placeholder="Confirme contraseña de identificación">'+
+						'<input ' +
+							'name="claveUsuarioConfirmacion" ' +
+							'id="claveUsuarioConfirmacion' + suf + '" ' +
+							'type="password" ' +
+							'class="form-control input-md" ' +
+							'placeholder="8 caracteres mínimo.">'+
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Area de Trabajo:</label>'+
 					'<div class="col-sm-7">'+
-						'<select name="areaTrabajo" id="areaTrabajo' + suf + '" class="form-control input-md" ></select>' +
+						'<select ' +
+							'name="areaTrabajo" ' +
+							'id="areaTrabajo' + suf + '" ' +
+							'class="form-control input-md" >' +
+						'</select>' +
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Rol de Usuario:</label>'+
 					'<div class="col-sm-7">'+
-						'<select name="rolUsuario" id="rolUsuario' + suf + '" class="form-control input-md" ></select>' +
+						'<select ' +
+							'name="rolUsuario" ' +
+							'id="rolUsuario' + suf + '" ' +
+							'class="form-control input-md" >' +
+						'</select>' +
 					'</div>'+
 				'</div>'+
 
@@ -195,7 +234,7 @@ sigesop.usuarios = {
 		                    	message: 'Número de caracteres inválido (16 max.)'
 		                    },
 		                    regexp: {
-		                    	regexp: /^[-_.\w\s]*$/i,
+		                    	regexp: /^[-_.\w]*$/i,
 		                    	message: 'Caracteres inválidos'
 		                    }
 		                }

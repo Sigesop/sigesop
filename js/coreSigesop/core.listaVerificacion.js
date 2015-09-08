@@ -23,8 +23,8 @@ sigesop.listaVerificacion = {
 
 		struct_html = function ( vista ) {
 			var html =
-			'<div class="panel panel-success">' +
-			'<div class="panel-heading">ASOCIACIÓN</div><br>' +
+			// '<div class="panel panel-success">' +
+			// '<div class="panel-heading">ASOCIACIÓN</div><br>' +
 			'<form id="form-lista-verificacion-' + suf + '" class="form-horizontal" role="form">';
 
 			switch( vista ) {
@@ -87,8 +87,8 @@ sigesop.listaVerificacion = {
 					'<button id="btn-limpiar-lista-' + suf + '" type="reset"  class="btn btn-success"> <span class="glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
 				'</p>' +
 			'</div>' +
-			'</form>' +
-			'</div>';
+			'</form>';
+			// '</div>';
 
 			return html;
 		},

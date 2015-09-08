@@ -60,20 +60,20 @@ class mantenimiento extends sigesop
                 echo json_encode( $obtenerOrdenTrabajo );
                 break;
 
-            // case 'obtenerOrdenTrabajoLista':
-            //     $obtenerOrdenTrabajoLista = $this->obtenerOrdenTrabajoLista( $get );
-            //     echo json_encode( $obtenerOrdenTrabajoLista );
+            case 'obtenerOrdenTrabajoLista':
+                $obtenerOrdenTrabajoLista = $this->obtenerOrdenTrabajoLista( $get );
+                echo json_encode( $obtenerOrdenTrabajoLista );
+                break;
+
+            // case 'obtenerOrdenesPorGenerador':
+            //     $obtenerOrdenesPorGenerador = $this->obtenerOrdenesPorGenerador( $get );
+            //     echo json_encode( $obtenerOrdenesPorGenerador );
             //     break;
 
-            case 'obtenerOrdenesPorGenerador':
-                $obtenerOrdenesPorGenerador = $this->obtenerOrdenesPorGenerador( $get );
-                echo json_encode( $obtenerOrdenesPorGenerador );
-                break;
-
-            case 'obtenerVerificacionOrdenTrabajo':
-                $obtenerVerificacionOrdenTrabajo = $this->obtenerVerificacionOrdenTrabajo( $get );
-                echo json_encode( $obtenerVerificacionOrdenTrabajo );
-                break;
+            // case 'obtenerVerificacionOrdenTrabajo':
+            //     $obtenerVerificacionOrdenTrabajo = $this->obtenerVerificacionOrdenTrabajo( $get );
+            //     echo json_encode( $obtenerVerificacionOrdenTrabajo );
+            //     break;
 
             case 'systems_into_mantto':
                 $query = $this->systems_into_mantto( $get );
@@ -754,8 +754,7 @@ class mantenimiento extends sigesop
 
         $arr = array();
 
-        switch ( $tipo_query ) 
-        {
+        switch ( $tipo_query ) {
             case 'numero_unidad': // devuelve todos los generadores que no tienen un programa de mantenimiento dentro una unidad
                 $numero_unidad = $get[ 'numero_unidad' ];
                 $sql =  
@@ -796,6 +795,12 @@ class mantenimiento extends sigesop
         }
 
         return $arr;
+    }
+
+    #------------------------------------------------------------------------
+
+    public function obtenerOrdenTrabajoLista  ( $get ) {
+        $data = $this->obtenerOrdenTrabajo( $get );
     }
 
     // ---------- actividadesOrdenTrabajo -----------------------------------------------

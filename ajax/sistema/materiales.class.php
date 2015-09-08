@@ -280,7 +280,7 @@ class materiales extends sigesop {
             return $rsp;
         }
 
-        $id_orden_trabajo = $get[ 'id_orden_trabajo' ];
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $get[ 'id_orden_trabajo' ] );
 
         $sql =
         "SELECT t_otm.id_orden_trabajo_material, t_otm.id_orden_trabajo, ".

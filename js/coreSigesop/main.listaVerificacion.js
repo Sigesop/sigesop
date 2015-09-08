@@ -600,7 +600,7 @@ function _verActividades( index ) {
 	        		}
 	            },
 	            parametro_aceptacion: {
-	            	name: 'Editar Paramentro, lectura actual y posterior', 
+	            	name: 'Editar Parametro, lectura actual y posterior', 
 	            	icon: 'edit',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );

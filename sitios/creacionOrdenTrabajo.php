@@ -39,13 +39,13 @@ if ( !$obj->accesoPagina( 'creacionOrdenTrabajo.php' ) ) {
 		<ul id="pestanas" class="nav nav-tabs">
 			<li class="active"><a href="#main" data-toggle="tab"> Programación de Mantenimiento </a></li>
 			<li><a href="#main2" data-toggle="tab">Mantenimientos Programados <span id="badge_RM" class="badge"></span></a></li>
-			<li><a href="#main3" data-toggle="tab">Histórico <span id="badge_RH" class="badge"></span></a></li>
+			<!-- <li><a href="#main3" data-toggle="tab">Histórico <span id="badge_RH" class="badge"></span></a></li> -->
 		</ul>
 
 		<div class="tab-content">			
 			<div class="tab-pane fade in active" id="main"></div>
 			<div class="tab-pane fade" id="main2"></div>
-			<div class="tab-pane fade" id="main3"></div>
+			<!-- <div class="tab-pane fade" id="main3"></div> -->
 		</div>
 	</div>
 

@@ -88,7 +88,7 @@ sigesop.reporteNovedades = {
 				'<div class="form-group">' +
 					'<label class="col-sm-3 control-label">Trabajador que solicitó:</label>' +
 					'<div class="col-sm-5">' +
-						'<input name="solicito" id="solicito' + suf + '" class="form-control input-md eventoCambioMayuscula" placeholder="Seleccione trabajador">' +
+						'<input name="solicito" id="solicito' + suf + '" class="form-control input-md" placeholder="Seleccione trabajador">' +
 					'</div>' +
 					'<div class="col-sm-2">' +
 						'<button type="button" id="botonSolicito' + suf + '" class="btn btn-primary">Seleccione Trabajador</button>' +
@@ -98,7 +98,7 @@ sigesop.reporteNovedades = {
 				'<div class="form-group">' +
 					'<label class="control-label col-sm-3" for="">Causa de salida: </label>' +
 					'<div class="col-sm-7">' +
-						'<textarea name="descripcion_evento" id="descripcion_evento' + suf + '" class="form-control input-md eventoCambioMayuscula" type="text"></textarea>' +
+						'<textarea name="descripcion_evento" id="descripcion_evento' + suf + '" class="form-control input-md" type="text"></textarea>' +
 					'</div>' +
 				'</div>';
 
@@ -132,6 +132,7 @@ sigesop.reporteNovedades = {
 		javascript = function () {
 			var
 			doc = this,
+			IDS = this.IDS,
 			datos = this.datos,
 			now = moment().format( 'DD-MM-YYYY' ),
 			form = doc.IDS.form,
@@ -242,6 +243,18 @@ sigesop.reporteNovedades = {
 		                }
 		            },
 		            solicito: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.trabajador_solicito.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.trabajador_solicito.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.trabajador_solicito.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Seleccione trabajador que solicita'
@@ -258,6 +271,18 @@ sigesop.reporteNovedades = {
 		                }
 		            },
 		            descripcion_evento: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val().toUpperCase();
+		            		datos.descripcion_evento.valor = val;
+		            		data.element.val( val );
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.descripcion_evento.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.descripcion_evento.valor = null;
+	                	},
 		                validators: {
 		                    notEmpty: {
 		                        message: 'Es necesaria la descripción del evento'
@@ -292,19 +317,21 @@ sigesop.reporteNovedades = {
 		        }
 			});
 
-			doc.IDS.$form = $form;
-			doc.IDS.$hora_inicio_evento = $hora_inicio_evento;
-			doc.IDS.$fecha_inicio_evento = $fecha_inicio_evento;
-			doc.IDS.$fecha_termino_estimado = $fecha_termino_estimado;
-			doc.IDS.$reporte_por = $reporte_por;
-			doc.IDS.$numero_unidad = $numero_unidad;
-			doc.IDS.$numero_aero = $numero_aero;
-			doc.IDS.$trabajador_solicito = $trabajador_solicito
-			doc.IDS.$descripcion_evento = $descripcion_evento;
-			doc.IDS.$condicion_operativa = $condicion_operativa;
-			doc.IDS.$id_libro_licencia = $id_libro_licencia;
+			/* Enlazando a vista publica			
+			 */ 
+			IDS.$form = $form;
+			IDS.$hora_inicio_evento = $hora_inicio_evento;
+			IDS.$fecha_inicio_evento = $fecha_inicio_evento;
+			IDS.$fecha_termino_estimado = $fecha_termino_estimado;
+			IDS.$reporte_por = $reporte_por;
+			IDS.$numero_unidad = $numero_unidad;
+			IDS.$numero_aero = $numero_aero;
+			IDS.$trabajador_solicito = $trabajador_solicito
+			IDS.$descripcion_evento = $descripcion_evento;
+			IDS.$condicion_operativa = $condicion_operativa;
+			IDS.$id_libro_licencia = $id_libro_licencia;
 
-			sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );				
+			// sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );				
 
 			Globalize.culture( 'de-DE' );
 			$hora_inicio_evento.val( moment().format( 'HH:mm' ) );
@@ -958,25 +985,22 @@ sigesop.reporteNovedades = {
 					campo: 'RDE_trabajador, nombre_usuario, nombre_trabajador, apellidos_trabajador, clave_areaTrabajo, clave_rol',						
 				}),
 
-			clickAceptar = function( event ) 
-			{
-				// ---------- Guardamos el id del sistema y ponenos el nombre del sistema en la caja
-				
-				if ( !jQuery.isEmptyObject( docT.matrizInput ) )
-				{
+			action = function( dialog ) {
+				/* Guardamos el id del sistema y ponenos
+				 * el nombre del sistema en la caja				
+				 */ 				
+				if ( !$.isEmptyObject( docT.matrizInput ) ) {
 					var index = sigesop.getDataRadio( docT.matrizInput[ 0 ] ) ? // impedir que no sea seleccionado alguno
 						sigesop.getDataRadio( docT.matrizInput[ 0 ] ) : -1;
 
-					if ( index >= 0 ) 
-					{
+					if ( index >= 0 ) {
 						var rpe = window.sesion.matrizUsuario[ index ]['RDE_trabajador'];
-						if( localStorage.rpe !== rpe ) // verificamos que no sea el mismo usuario
-						{
+						if( localStorage.rpe !== rpe ) { // verificamos que no sea el mismo usuario
 							elem.valor = rpe;
 							$( elem.idHTML ).val( elem.valor );
 							doc.IDS.$form.formValidation( 'revalidateField', campo_validar ); // revalidar
 
-							$( win.idDiv ).modal( 'hide' );
+							dialog.close();
 						}
 														
 						else sigesop.msg( 'Info', 'El usuario seleccionado no puede ser el mismo que el actual', 'info' );
@@ -988,33 +1012,38 @@ sigesop.reporteNovedades = {
 				else console.log( '[docT.matrizInput] es nula' );			
 			},
 
-			showBsModal = function () 
-			{
-				document.getElementById( this.idBody ).innerHTML = docT.html;					
+		    win = BootstrapDialog.show({
+		        title: 'Selección de trabajador solicitante',
+		        type: BootstrapDialog.TYPE_DEFAULT,
+		        message: docT.html,
+		        onshown: function ( dialog ) {
+					if( !$.isEmptyObject( window.sesion.matrizUsuario ) )
+						docT.update_table( window.sesion.matrizUsuario );
 
-				if( !jQuery.isEmptyObject( window.sesion.matrizUsuario ) )
-					docT.update_table( window.sesion.matrizUsuario );
-
-				else 
-				{
-					sigesop.query({
-						class: 'usuarios',
-						query: 'obtenerUsuarios',
-						success: function ( data ) 
-						{
-							window.sesion.matrizUsuario = data;
-							docT.update_table( data );
-						}
-					});
-				}
-			},
-
-			win = sigesop.ventanaEmergente({
-				idDiv: 'seleccionTrabajador',
-				titulo: 'Selección de trabajador solicitante',
-				clickAceptar: clickAceptar,
-				showBsModal: showBsModal
-			});
+					else {
+						sigesop.query({
+							class: 'usuarios',
+							query: 'obtenerUsuarios',
+							success: function ( data ) {
+								window.sesion.matrizUsuario = data;
+								docT.update_table( data );
+							}
+						});
+					}
+		        },
+		        size: BootstrapDialog.SIZE_WIDE,        
+		        draggable: true,
+		        buttons: [{
+		            label: 'Cancelar',
+		            action: function( dialog ) {
+		                dialog.close();
+		            }
+		        },{
+		            label: 'Aceptar',
+		            cssClass: 'btn-success',
+		            action: action
+		        }]
+		    });
 		},
 
 		limpiarCampos = function () {
@@ -1719,9 +1748,9 @@ sigesop.reporteNovedades = {
 							'<option value="7AM" >7 A.M.</option>' +
 						'</select>' +
 					'</div>' +
-				'</div>' +
-				'<div id="tabla_registro_activos' + suf + '" class="form-group"></div>'+
-			'</form>',
+				'</div>' +				
+			'</form>' + 
+			'<div id="tabla_registro_activos' + suf + '" class="form-group"></div>',
 
 		javascript = function () {
 			var
@@ -1993,10 +2022,9 @@ sigesop.reporteNovedades = {
 					'<p class="col-sm-2">'+
 						'<button type="submit" id="btnConsultaReporte' + suf + '" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Consultar</button>'+					
 					'</p>'+
-				'</div>'+
-
-				'<div id="tabla_registro_terminado' + suf + '" class="form-group"></div>'+
-			'</form>',
+				'</div>'+				
+			'</form>' + 
+			'<div id="tabla_registro_terminado' + suf + '" class="form-group"></div>',
 
 		javascript = function () {
 			var 
@@ -2241,11 +2269,10 @@ sigesop.reporteNovedades = {
 						'<button type="submit" id="btn-consulta-reporte-' + suf + '" class="btn btn-success"  data-loading-text="Buscando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Consultar</button> ' +
 						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+					
 					'</p>'+
-				'</div>'+
+				'</div>'+				
 
-				'<div id="tabla-impresion-reporte-' + suf + '" class="form-group"> </div>'+
-
-				'</form>',
+			'</form>' +
+			'<div id="tabla-impresion-reporte-' + suf + '" class="form-group"> </div>',
 
 		javascript = function () {
 			var 
@@ -2426,6 +2453,262 @@ sigesop.reporteNovedades = {
 			botonConsultar: '#btn-consulta-reporte-' + suf,
 			botonImprimir: '#btn-imprimir-reporte-' + suf,
 			form: '#form-imprimir-reporte-' + suf
+		},
+
+		doc = {
+			html: html,
+			javascript: javascript,
+			datos: datos,
+			IDS: IDS,
+			table: {
+				body: null,
+				update_table: null
+			}
+		}
+
+		return doc;
+	},
+
+	registroReportePeriodo : function ( opt ) {
+		var
+			obj = opt.obj || {},
+			suf = opt.suf || '';
+
+		var 
+
+		html = 
+			'<form id="form-imprimir-reporte-' + suf + '" class="form-horizontal" role="form">'+
+
+				'<div class="form-group">' +
+					'<label class="control-label col-sm-5" for="">De fecha: </label>' +
+					'<div class="col-sm-2">' +
+						'<input name="fecha_inf" id="fecha-inferior-impresion-' + suf + '" class="form-control" type="text"/>' +
+					'</div>' +
+				'</div>' +
+
+				'<div class="form-group">' +
+					'<label class="control-label col-sm-5" for="">A fecha: </label>' +
+					'<div class="col-sm-2">' +
+						'<input name="fecha_sup" id="fecha-superior-impresion-' + suf + '" class="form-control" type="text"/>' +
+					'</div>' +
+				'</div>' +
+
+				'<div class="form-group">'+
+					'<label class="control-label col-sm-5 ">Condición operativa: </label>'+
+					'<div class="col-sm-2">'+
+						'<select name="condicion_operativa" id="condicion-operativa-impresion-reporte-periodo-' + suf + '"class="form-control input-md"></select>' +
+					'</div>'+
+				'</div>'+
+
+				'<div class="form-group">'+
+					'<div class="col-sm-5 control-label"></div>'+
+					'<p class="col-sm-7">'+
+						'<button type="submit" id="btn-consulta-reporte-' + suf + '" class="btn btn-success"  data-loading-text="Buscando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Consultar</button> ' +
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+					
+					'</p>'+
+				'</div>'+				
+
+			'</form>' +
+			'<div id="tabla-impresion-reporte-' + suf + '" class="form-group"> </div>',
+
+		javascript = function () {
+			var 
+			doc = this,
+			form = doc.IDS.form,
+			IDS = this.IDS,
+			$condicion_operativa = $( doc.datos.condicion_operativa.idHTML ),
+			$fecha_inf = $( doc.datos.fecha_inf.idHTML ),
+			$fecha_sup = $( doc.datos.fecha_sup.idHTML ),
+			$botonImprimir = $( doc.IDS.botonImprimir ),
+			$form = $( form )
+			.formValidation({
+				// live: 'submit',
+		        icon: {
+		            valid: 'glyphicon glyphicon-ok',
+		            invalid: 'glyphicon glyphicon-remove',
+		            validating: 'glyphicon glyphicon-refresh'
+		        },
+
+		        onSuccess: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.success == 'function' ?
+		        		opt.success( doc.datos, doc.IDS ) :
+		        		console.log( 'success is null' );
+
+		        	$( form ).data( 'formValidation' ).disableSubmitButtons( false );
+		        },
+
+		        onError: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.error == 'function' ?
+		        		opt.error() : console.log( 'error is null' );			        	
+		        },
+
+		        fields: {
+		      		fecha_inf: {
+		                validators: {
+                            date: {
+                            	format: 'DD-MM-YYYY',
+                            	message: 'Fecha inválida'
+                            }
+		                }
+		            },
+
+		            fecha_sup: {
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Fecha necesaria.'
+		                    },
+                            date: {
+                            	format: 'DD-MM-YYYY',
+                            	message: 'Fecha inválida'
+                            }
+		                }
+		            },
+
+		        	condicion_operativa: {
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Seleccione unidad de generador'
+	                    	}
+	                	}
+		            }
+		        }
+			})			
+			.on( 'success.form.fv', function( e ) { $botonImprimir.prop( 'disabled', false ); })
+	        .on( 'err.field.fv', function( e ) { $botonImprimir.prop( 'disabled', true ); })
+			.on( 'success.field.fv', function( e, data ) { data.fv.disableSubmitButtons( false ); });
+	
+			/* Enlace de objetos a vista publica			
+			 */ 
+			IDS.$form = $form;
+			IDS.$condicion_operativa = $condicion_operativa;
+			IDS.$fecha_inf = $fecha_inf;
+			IDS.$fecha_sup = $fecha_sup;
+			IDS.$botonImprimir = $botonImprimir;
+
+			sigesop.query({
+				class: 'generadores',
+				query: 'obtenerEstadoLicencia',
+				success: function ( data ) {
+					data.push( 'TODAS' );
+					window.sesion.matrizEstadoLicencia = data;
+					$condicion_operativa.combo({
+						arr: data
+					})
+				}
+			});
+
+			var tabla_reporte = 
+			sigesop.tablaRegistro({
+				suf: '-reporte-periodo',
+				head: 	'AERO, CONDICION OPERATIVA, FECHA INICIAL, FECHA TERMINO, HORA INICIO, ' +
+						'HORA TERMINO, TIEMPO TOTAL, NUM. SUBEVENTOS, TIEMPO TOTAL SUBEVENTOS, ' +
+						'TIEMPO MUERTO',
+				campo: 	'numero_unidad, numero_aero, condicion_operativa, descripcion_evento, ' +
+					'fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, fecha_termino_evento, ' +
+					'hora_termino_evento, horas_dia_reporte, horas_acumuladas_evento',
+
+				addClass: {
+						body: {
+							class: 'warning, danger, info, success',
+							campo: 'condicion_operativa, condicion_operativa, condicion_operativa, condicion_operativa',
+							valor: 'C.A., FALLA, MTTO, F.A.'
+						}
+					}
+			});
+
+			doc.table.update_table = tabla_reporte.update_table; // enlazamos a vista publica
+			doc.table.body = tabla_reporte.IDS.body;
+			document.getElementById( doc.IDS.idTabla.flushChar('#') ).innerHTML = '<br>' + tabla_reporte.html
+
+			$fecha_inf.datepicker({
+				defaultDate: "+1w",
+				changeMonth: true,
+				changeYear: true,
+				numberOfMonths: 3,
+				dateFormat: 'dd-mm-yy',
+				showAnim: 'slide',
+				onClose: function( selectedDate ) {
+					doc.IDS.$form.formValidation( 'revalidateField', 'fecha_inf' );
+				}
+			});
+			
+			$fecha_sup.datepicker({
+				defaultDate: "+1w",
+				changeMonth: true,
+				changeYear: true,
+				numberOfMonths: 3,
+				dateFormat: 'dd-mm-yy',
+				showAnim: 'slide',
+				onClose: function( selectedDate ) {
+					doc.IDS.$form.formValidation( 'revalidateField', 'fecha_sup' );
+				}
+			})
+			.on( 'success.field.fv', function ( e, data ) {
+				var 
+					fecha_inf = moment( $fecha_inf.val(), 'DD-MM-YYYY' ),
+					fecha_sup = moment( $fecha_sup.val(), 'DD-MM-YYYY' );
+
+				if( $fecha_inf.val() )
+					if ( fecha_sup.isBefore( fecha_inf ) )			
+						doc.IDS.$form.data( 'formValidation' ).updateStatus( 'fecha_inf', 'INVALID' );
+			});
+			
+			$botonImprimir.on( 'click', function ( event ) { 
+				// sigesop.query({
+				// 	class:"operacion",
+				// 	query:"imprimir",
+				// 	data:{
+				// 		option: 'rango_fechas',
+				// 		estado_evento: 'all',			
+				// 		fecha_inf: $fecha_inf.val(),
+				// 		fecha_sup: $fecha_sup.val(),
+				// 		option2: 'numero_unidad',
+				// 		numero_unidad: $numero_unidad.val()
+				// 	},
+				// 	success: function(data)
+				// 	{
+				// 		var ventana = window.open(data);
+				//         	ventana.focus();
+				// 	}
+				// });
+
+				var url = sigesop.raizServidor + 'ajax.php?class=operacion' +
+					'&action=imprimir&option=rango_fechas&estado_evento=all' +
+					'&fecha_inf=' + $fecha_inf.val() + '&fecha_sup=' + $fecha_sup.val() +
+					'&option2=numero_unidad' + '&numero_unidad=' + $numero_unidad.val(),
+
+					win = window.open( url );
+
+				win.focus();
+
+			 });
+		},
+					
+		datos = {
+			condicion_operativa:{
+				idHTML: '#condicion-operativa-impresion-reporte-periodo-' + suf,
+				valor: null
+			} ,
+
+			fecha_inf: {
+				idHTML: '#fecha-inferior-impresion-' + suf,
+				valor: null
+			},
+
+			fecha_sup: {
+				idHTML: '#fecha-superior-impresion-' + suf,
+				valor: null
+			}
+		},
+
+		IDS = {
+			idTabla: '#tabla-impresion-reporte-' + suf,
+			botonConsultar: '#btn-consulta-reporte-' + suf,
+			botonImprimir: '#btn-imprimir-reporte-' + suf,
+			form: '#form-imprimir-reporte-' + suf,
+			$condicion_operativa: null
 		},
 
 		doc = {

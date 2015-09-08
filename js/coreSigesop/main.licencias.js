@@ -73,32 +73,43 @@ function eliminarElemento ( index ) {
 		throw new Error('function eliminarElemento: elem es indefinido');
 	}
 
-	var win = sigesop.ventanaEmergente({
-		idDiv: 'confirmar-eliminacion',
-		titulo: 'Autorización requerida',
-		clickAceptar: function( event ) {
-			event.preventDefault();
-			sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
-			$( win.idDiv ).modal( 'hide' );
-			sigesop.query({
-				data: { id_libro_licencia: elem.id_libro_licencia },
-				class: 'operacion',
-				query: 'eliminar_libro_licencia',
-				queryType: 'sendData',
-				OK: function ( msj, eventos ) {
-					$.unblockUI();
-					getData();
-					sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-				},
-				NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
-				DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
-			});					
-		},
-		showBsModal: function () {
-			document.getElementById( this.idBody ).innerHTML = 
-			'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
-		}
-	});
+	var 
+
+	action = function ( dialog ) {
+		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
+		dialog.close();
+		sigesop.query({
+			data: { id_libro_licencia: elem.id_libro_licencia },
+			class: 'operacion',
+			query: 'eliminar_libro_licencia',
+			queryType: 'sendData',
+			OK: function ( msj, eventos ) {
+				$.unblockUI();
+				getData();
+				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+			},
+			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+		});	
+	},
+
+    win = BootstrapDialog.show({
+        title: 'Autorización requerida',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',        
+        size: BootstrapDialog.SIZE_NORMAL,
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        },{
+            label: 'Aceptar',
+            cssClass: 'btn-danger',
+            action: action
+        }]
+    });
 }
 
 function agregarConsecutivo ( index ) {
@@ -112,6 +123,7 @@ function agregarConsecutivo ( index ) {
 	}
 
 	var 
+	
 	success = function ( datos, IDS ) {
 		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
 		sigesop.query({
@@ -121,7 +133,7 @@ function agregarConsecutivo ( index ) {
 			queryType: 'sendData',
 			type: 'POST',
 			OK: function( msj, eventos ) {
-				$( win.idDiv ).modal( 'hide' );
+				win.close();
 				$.unblockUI();				
 				getData();
 				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );		
@@ -138,16 +150,34 @@ function agregarConsecutivo ( index ) {
 		error: sigesop.completeCampos
 	}),
 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'win-consecutivo',
-		titulo: 'Agregar consecutivo Inicializador',
-		clickAceptar: function ( event ) {
-			event.preventDefault();
-			$( win.idDiv ).modal( 'hide' );
-		},
-		showBsModal: function ()  {
-			document.getElementById( this.idBody ).innerHTML = _doc.html;
-			_doc.javascript();
-		}
-	});
+    win = BootstrapDialog.show({
+        title: 'Agregar consecutivo Inicializador',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: _doc.html,
+        onshown: function ( dialog ) {
+        	_doc.javascript();
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
+
+	// win = sigesop.ventanaEmergente({
+	// 	idDiv: 'win-consecutivo',
+	// 	titulo: 'Agregar consecutivo Inicializador',
+	// 	clickAceptar: function ( event ) {
+	// 		event.preventDefault();
+	// 		$( win.idDiv ).modal( 'hide' );
+	// 	},
+	// 	showBsModal: function ()  {
+	// 		document.getElementById( this.idBody ).innerHTML = _doc.html;
+	// 		_doc.javascript();
+	// 	}
+	// });
 }

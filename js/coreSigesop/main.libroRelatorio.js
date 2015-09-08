@@ -52,6 +52,20 @@ function main() {
 	document.getElementById( 'main_registro_reporte' ).innerHTML = '<br>' + docRR.html;
 	docRR.javascript();
 
+	/* documento de impresion de reportes por periodos	
+	 */ 
+	docRP = sigesop.reporteNovedades.registroReportePeriodo({
+		suf: '-reporte-periodos',
+		success: function () {
+			alert('ok');
+		},
+		error: function () {
+			sigesop.msg( 'Info', 'Completar informacion', 'info' );
+		}
+	});
+	document.getElementById( 'main_registro_periodo' ).innerHTML = '<br>' + docRP.html;
+	docRP.javascript();
+
 	/* descarga de datos
 	 */	
 	$( 'header' ).barraHerramientas();
@@ -133,8 +147,7 @@ function getData() {
 	sigesop.query({
 		class: 'generadores',
 		query: 'obtenerEstadoLicencia',
-		success: function ( data ) 
-		{
+		success: function ( data ) {
 			window.sesion.matrizEstadoLicencia = data;
 			sigesop.combo({
 				arr: data,

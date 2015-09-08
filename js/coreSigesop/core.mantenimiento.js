@@ -521,22 +521,29 @@ sigesop.mantenimiento = {
 			 */
 			_doc = sigesop.mantenimiento.documentoVistaPreliminar( '_' ),
 
-			showBsModal = function () {
-				document.getElementById( this.idBody ).innerHTML = _doc.html;
-				datos.programacion_mtto = sigesop.mantenimiento.formatoFechaServidor( fechaLocal );
-				$( _doc.IDS.botonGuardar ).on( 'click', function ( event ) {
-					event.preventDefault();
-					success( datos, fechaLocal, limpiarCampos = limpiarCampos.bind( doc ) );
-				});	
-			},
+		    win = BootstrapDialog.show({
+		        title: 'Vista preliminar',
+		        type: BootstrapDialog.TYPE_DEFAULT,
+		        message: _doc.html,
+		        onshown: function ( dialog ) {
+					datos.programacion_mtto = sigesop.mantenimiento.formatoFechaServidor( fechaLocal );
+					$( _doc.IDS.botonGuardar ).on( 'click', function ( event ) {
+						event.preventDefault();
+						success( datos, fechaLocal, limpiarCampos = limpiarCampos.bind( doc ), dialog );
+					});
 
-			win = sigesop.ventanaEmergente({
-				idDiv: '_vg',
-				titulo: 'Vista preliminar',
-				clickAceptar: function ( event ) { $( '#' + this.idDiv ).modal( 'hide' ); },					
-				showBsModal: showBsModal,							
-				shownBsModal: function ( ) { sigesop.mantenimiento.graficaMantenimiento( [ obj ], _doc.IDS.grafica ); }
-			});
+					sigesop.mantenimiento.graficaMantenimiento( [ obj ], _doc.IDS.grafica );
+		        },
+		        size: BootstrapDialog.SIZE_WIDE,        
+		        draggable: true,
+		        buttons: [{
+		            label: 'Cancelar',
+		            cssClass: 'btn-danger',
+		            action: function( dialog ) {
+		                dialog.close();
+		            }
+		        }]
+		    });
 		},
 
 		datos = {

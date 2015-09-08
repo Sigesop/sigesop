@@ -273,10 +273,8 @@ class sigesop {
         $conexion = $type === false ? $this->conexion : $this->conexionMySQL;
 
         $arr = array();
-        if( $query = $conexion->query( $sql ) )
-        {
-            while ( $data = $query->fetch_assoc() )
-            {
+        if( $query = $conexion->query( $sql ) ) {
+            while ( $data = $query->fetch_assoc() ) {
                 $arr[ ] = $fetch_assoc === false ?
                     $data : 
                     ( $data[ $fetch_assoc ] == null ? $valorNulo : $data[ $fetch_assoc ] );

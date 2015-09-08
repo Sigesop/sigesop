@@ -1140,12 +1140,15 @@ class operacion extends sigesop {
         $query = $this->array_query( $sql );
         $arr = array();        
 
+        // return $query;
+
         # calculamos las horas para cada evento
         foreach ( $query as $val ) {
             $fecha_termino_evento = $val [ 'fecha_termino_evento' ];
             $hora_termino_evento = $val [ 'hora_termino_evento' ];
             $estado_evento = $val [ 'estado_evento' ]; 
 
+            $id_libro_relatorio = $val[ 'id_libro_relatorio' ];
             $id_libro_licencia = $val[ 'id_libro_licencia' ];
             $consecutivo_licencia = $val[ 'consecutivo_licencia' ];
 
@@ -1184,6 +1187,17 @@ class operacion extends sigesop {
                 $val[ 'horas_acumuladas_evento' ] = $horas.':'.$min;
             }
 
+            # Calculamos el numero de subeventos
+            $sql =
+            "SELECT COUNT( id_libro_relatorio ) num_subeventos ".
+            "FROM libro_relatorio_historial ".
+            "WHERE id_libro_relatorio = $id_libro_relatorio";
+
+            // return $sql;
+
+            $num_subeventos = $this->query( $sql, 'num_subeventos', null );
+
+            $val[ 'num_subeventos' ] = $num_subeventos;
             $val[ 'fecha_inicio_evento' ] = Carbon::parse( $val[ 'fecha_inicio_evento' ], 'America/Mexico_City' )->format( 'd-m-Y' );
             $val[ 'numero_licencia' ] = $this->__get_numero_licencia( $id_libro_licencia, $consecutivo_licencia );
 

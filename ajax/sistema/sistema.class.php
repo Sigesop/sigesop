@@ -3,25 +3,21 @@ include 'sigesop.class.php';
 
 class sistema extends sigesop 
 {
-    public function __construct( $usuario, $clave )
-    {
+    public function __construct( $usuario, $clave ) {
         parent::sigesop( $usuario, $clave );
     }
 
-    public function __destruct()
-    {
+    public function __destruct() {
         parent::__destruct();
     }
 
-    function solicitudAjax( $accion )
-    {
+    function solicitudAjax( $accion ) {
         // Switch de opciones para las diferentes funciones que realizara el servidor.
         // la opcion seleccionada se envia mediante el metodos GET desde el cliente por medio del
         // la funcion ajax de JQuery.
         // Todos los datos son enviados al cliente en formato JSON
 
-        switch ($accion)
-        {
+        switch ( $accion ) {
             case 'insertaBarraHerramientasRolUsuario':
                 $insertaBarraHerramientasRolUsuario = $this->insertaBarraHerramientasRolUsuario();
                 echo json_encode($insertaBarraHerramientasRolUsuario);
@@ -48,19 +44,16 @@ class sistema extends sigesop
         }        
     }
 
-    function insertaBarraHerramientasRolUsuario()
-    {
+    function insertaBarraHerramientasRolUsuario() {
         // consultamos las paginas a las que tiene acceso
         // if ($this->estadoConexionRoot && $this->usuario == 'root') 
-        if ( $this->estadoConexionRoot ) 
-        {
+        if ( $this->estadoConexionRoot ) {
             $barraHerramientas = $this->matrizAreaAcceso;
             $usuarioActivo = 'Sesión: '.$this->usuario;
             $barraHerramientas[] = array('nivelBarra' => 0, 'idAcceso' => 'usuarioActivo', 'paginaAcceso' => '#', 'nombrePagina' => $usuarioActivo);
-            return $barraHerramientas;            
+            return array( 'root' => $this->root, 'data' => $barraHerramientas ); 
         } 
-        else 
-        { 
+        else { 
             # consultamos el tipo de rol al que pertenece
             $sql = 'select clave_rol from personal where nombre_usuario = "'.$this->usuario.'"';
             $query = $this->array_query( $sql, 'clave_rol' );
@@ -76,12 +69,9 @@ class sistema extends sigesop
 
             # recorremos la matriz para obtener los datos completos de la variable privada matrizAreaAcceso
             
-            foreach ( $query as $areaAccesoRetorno ) 
-            {
-                foreach ( $this->matrizAreaAcceso as $areaAcceso) 
-                {
-                    if ( $areaAcceso['paginaAcceso'] == $areaAccesoRetorno ) 
-                    {
+            foreach ( $query as $areaAccesoRetorno ) {
+                foreach ( $this->matrizAreaAcceso as $areaAcceso ) {
+                    if ( $areaAcceso['paginaAcceso'] == $areaAccesoRetorno ) {
                         $acceso[] = $areaAcceso;
                         break;
                     }
@@ -98,23 +88,20 @@ class sistema extends sigesop
             
             $usuarioActivo = 'Sesión: '.$this->usuario;
             $acceso[] = array('nivelBarra' => 0, 'idAcceso' => 'usuarioActivo', 'paginaAcceso' => '#', 'nombrePagina' => $usuarioActivo );
-            return $acceso;
+            return array( 'root' => $this->root, 'data' => $acceso ); 
         }        
     }
 
     // ---------- Funcion que cierra sesion destruyendo la variable global SESSION
     
-    function requestCloseSesion()
-    {
-        if( session_destroy() )
-        {
+    function requestCloseSesion() {
+        if( session_destroy() ) {
             return "OK";
         } 
         else return "NA";
     }      
 
-    function sesionActiva()
-    {
+    function sesionActiva() {
         // Guardamos al usuario y su password en una variable global para acceder a ellas en el resto del codigo
         $user = $_SESSION['user'];
         $pass = $_SESSION['pass'];
@@ -140,8 +127,7 @@ class sistema extends sigesop
         }
     } 
 
-    function solicitudInicioSesion()
-    {        
+    function solicitudInicioSesion() {        
 
         $flagVerificacion = true;
         empty( $this->usuario ) ? $flagVerificacion = false : null;

@@ -69,7 +69,7 @@ function getData() {
 	});	
 }
 
-function nuevoElemento( datos, IDS, limpiarCampos ) {
+function nuevoElemento( datos, IDS, limpiarCampos, dialog ) {
 	/* insertamos los datos al servidor
 	 */	
 	sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
@@ -83,7 +83,7 @@ function nuevoElemento( datos, IDS, limpiarCampos ) {
 			$.unblockUI();
 			limpiarCampos();
 			getData();
-			$( '#_vg' ).modal( 'hide' );
+			dialog.close();
 			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
 		NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
@@ -103,10 +103,9 @@ function eliminarElemento ( index ) {
 
 	var
 
-	clickAceptar = function( event ) {
-		event.preventDefault();
+	action = function( dialog ) {
 		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
-		$( win.idDiv ).modal( 'hide' );
+		dialog.close();
 		sigesop.query({
 			data: { id_prog_mtto: elem.id_prog_mtto },
 			class: 'mantenimiento',
@@ -122,15 +121,23 @@ function eliminarElemento ( index ) {
 		});					
 	},
 
-	win = sigesop.ventanaEmergente({
-		idDiv: 'confirmar-eliminacion',
-		titulo: 'Autorización requerida',
-		clickAceptar: clickAceptar,
-		showBsModal: function () {
-			document.getElementById( this.idBody ).innerHTML = 
-			'<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>';
-		}
-	});
+    win = BootstrapDialog.show({
+        title: 'Autorización requerida',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',        
+        size: BootstrapDialog.SIZE_NORMAL,
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            action: function ( dialog ) {
+            	dialog.close();
+            }
+        },{
+            label: 'Aceptar',
+            cssClass: 'btn-danger',
+            action: action
+        }]
+    });
 }
 
 function verDetalles ( elem, data ) {
@@ -237,20 +244,17 @@ function insertarUsuarios( index ) {
 			query: 'asignarUsuariosOrdenTrabajo',
 			queryType: 'sendData',
 			type: 'POST',
-			OK: function ( msj, eventos ) 
-			{
+			OK: function ( msj, eventos ) {
 				getData();
 				$.unblockUI();
-				$( '#__divInsertarUsuarios' ).modal( 'hide' );
+				win.close();
 				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 			},
-			NA: function ( msj, eventos ) 
-			{
+			NA: function ( msj, eventos ) {
 				$.unblockUI();
 				sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'warning' );
 			},
-			DEFAULT: function ( msj, eventos ) 
-			{
+			DEFAULT: function ( msj, eventos ) {
 				$.unblockUI();
 				sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ),'error' );
 			},
@@ -260,37 +264,37 @@ function insertarUsuarios( index ) {
 			}	
 		}) ;
 	},
-
-	showBsModal = function () {
-		document.getElementById( this.idBody ).innerHTML = '<br>' + docU.html;
-		docU.javascript();
-
-		sigesop.query({
-			class: 'usuarios',
-			query: 'obtenerUsuarios',
-			success: function ( data ) 
-			{
-				docU.update_user( data );
-			}
-		});
-	},
-
-	docU = sigesop.mantenimiento.documentAddUser({
+	
+	_doc = sigesop.mantenimiento.documentAddUser({
 		error: sigesop.completeCampos,
 		success: nuevoUsuario
 	}),
 
-	win = sigesop.ventanaEmergente({
-		idDiv: '__divInsertarUsuarios',
-		titulo: 'Insertar Usuarios',
-		clickAceptar: function ( event )
-		{
-			event.preventDefault();
-			$( win.idDiv ).modal( 'hide' );
-		},
+    win = BootstrapDialog.show({
+        title: 'Asignar Orden de Trabajo',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: _doc.html,
+        onshown: function ( dialog ) {
+			_doc.javascript();
 
-		showBsModal: showBsModal
-	});
+			sigesop.query({
+				class: 'usuarios',
+				query: 'obtenerUsuarios',
+				success: function ( data ) {
+					_doc.update_user( data );
+				}
+			});
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
 }
 
 function materiales ( index ) {
@@ -389,25 +393,23 @@ function materiales ( index ) {
 		}
 	}),
 
-	showBsModal = function () {
-		document.getElementById( this.idBody ).innerHTML = '<br>' + docM.html;
-		docM.javascript();
-		__getData();
-	},
-
-	win = sigesop.ventanaEmergente({
-		idDiv: 'agregar-materiales',
-		titulo: 'Materiales',
-		clickCerrar: function ( e ) {
-			e.preventDefault();
-			sesion.matrizOrdenTrabajoMaterial = [];
-			$( win.idDiv ).modal( 'hide' );
-		},
-		clickAceptar: function ( e ) {
-			e.preventDefault();
-			sesion.matrizOrdenTrabajoMaterial = [];
-			$( win.idDiv ).modal( 'hide' );
-		},
-		showBsModal: showBsModal
-	});
+    win = BootstrapDialog.show({
+        title: 'Materiales',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        message: docM.html,
+        onshown: function ( dialog ) {
+			docM.javascript();
+			__getData();
+        },
+        size: BootstrapDialog.SIZE_WIDE,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+            	sesion.matrizOrdenTrabajoMaterial = [];
+                dialog.close();
+            }
+        }]
+    });
 }

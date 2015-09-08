@@ -317,99 +317,103 @@ window.sesion = {
 			// elem = elem || this;
 			var elem = this;
 			var
-				struct_barra = function( data )
-				{
-					if ( data == null ) {
-						console.log( 'function: barraHerramientas --> [data] es nulo' )
-						return null;
+
+			struct_barra = function( data ) {
+				if ( data == null ) {
+					console.log( 'function: barraHerramientas --> [data] es nulo' )
+					return null;
+				}
+
+				/* configuramos al usuario root en el navegador
+				 * preguntando al servidor				
+				 */
+				sigesop.root = data.root;
+
+				var
+					html = '',
+
+					n1 = '',
+
+					n2 = '<li class="dropdown">' +
+							 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Catálogos<b class="caret"></b></a>'+
+							 '<ul class="dropdown-menu">',
+
+					n3 = '<li class="dropdown">'+
+							 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Mantenimiento<b class="caret"></b></a>'+
+							 '<ul class="dropdown-menu">',
+
+					n4 = '<li class="dropdown">'+
+							 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Operación<b class="caret"></b></a>'+
+							 '<ul class="dropdown-menu">',
+
+					n_usuario = '',
+
+					nivelActivo1 = false,
+					nivelActivo2 = false,
+					nivelActivo3 = false,
+					nivelActivo4 = false,
+					nivelActivo_usuario = false;
+
+				for( var i = 0, lon = data.data.length; i < lon; i++ ) {
+
+					var row = data.data[ i ];
+					switch( row.nivelBarra ) {
+						case 1:
+							n1 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+							nivelActivo1 = true;
+							break;
+						case 2:
+							n2 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+							nivelActivo2 = true;
+							break;
+						case 3:
+							n3 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+							nivelActivo3 = true;
+							break;
+						case 4:
+							n4 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+							nivelActivo4 = true;
+							break;
+						case 0:
+							n_usuario += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+							nivelActivo_usuario = true;
+							break;
 					}
+				}
 
-					var
-						html = '',
+				n2 += '</ul></li>';
+				n3 += '</ul></li>';
+				n4 += '</ul></li>';
 
-						n1 = '',
+				html +=
+					'<nav class="navbar navbar-cfe navbar-static-top navbar-fixed-top" role="navigation">'+
+						'<div class="container-fluid">'+
+							'<div class="navbar-header">'+
+								'<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#barraNavegacion">'+
+									'<span class="glyphicon glyphicon-home"></span>'+
+								'</button>'+
+							'</div>'+
+							'<div id="barraNavegacion" class="collapse navbar-collapse bs-navbar-collapse">'+
+								'<ul class="nav navbar-nav">';
 
-						n2 = '<li class="dropdown">' +
-								 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Catálogos<b class="caret"></b></a>'+
-								 '<ul class="dropdown-menu">',
+					nivelActivo1 ? 	html +=	n1 : null;
+					nivelActivo2 ? 	html +=	n2 : null;
+					nivelActivo3 ? 	html +=	n3 : null;
+					nivelActivo4 ? 	html +=	n4 : null;
+					nivelActivo_usuario ? 	html +=	n_usuario : null;
 
-						n3 = '<li class="dropdown">'+
-								 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Mantenimiento<b class="caret"></b></a>'+
-								 '<ul class="dropdown-menu">',
+					html += '</ul>'+
+								'<ul class="nav navbar-nav navbar-right">'+
+									'<li><a href="javascript: sigesop.cerrarSesion()"> Cerrar Sesión  <span class="glyphicon glyphicon-off"></span> </a></li>'+
+								'</ul>'+
+							'</div>'+
+						'</div>'+
+					'</nav>';
 
-						n4 = '<li class="dropdown">'+
-								 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Operación<b class="caret"></b></a>'+
-								 '<ul class="dropdown-menu">',
-
-						n_usuario = '',
-
-						nivelActivo1 = false,
-						nivelActivo2 = false,
-						nivelActivo3 = false,
-						nivelActivo4 = false,
-						nivelActivo_usuario = false;
-
-					for( var i = 0, lon = data.length; i < lon; i++ )
-					{
-						 switch( data[ i ].nivelBarra )
-						 {
-						 	case 1:
-						 		n1 += '<li><a href="' + data[ i ].paginaAcceso + '">' + data[ i ].nombrePagina + '</a></li>';
-						 		nivelActivo1 = true;
-						 		break;
-						 	case 2:
-						 		n2 += '<li><a href="' + data[ i ].paginaAcceso + '">' + data[ i ].nombrePagina + '</a></li>';
-						 		nivelActivo2 = true;
-						 		break;
-						 	case 3:
-						 		n3 += '<li><a href="' + data[ i ].paginaAcceso + '">' + data[ i ].nombrePagina + '</a></li>';
-						 		nivelActivo3 = true;
-						 		break;
-						 	case 4:
-						 		n4 += '<li><a href="' + data[ i ].paginaAcceso + '">' + data[ i ].nombrePagina + '</a></li>';
-						 		nivelActivo4 = true;
-						 		break;
-						 	case 0:
-						 		n_usuario += '<li><a href="' + data[ i ].paginaAcceso + '">' + data[ i ].nombrePagina + '</a></li>';
-						 		nivelActivo_usuario = true;
-						 		break;
-						 }
-					}
-
-					n2 += '</ul></li>';
-					n3 += '</ul></li>';
-					n4 += '</ul></li>';
-
-					html +=
-						'<nav class="navbar navbar-cfe navbar-static-top navbar-fixed-top" role="navigation">'+
-						'	<div class="container-fluid">'+
-						'		<div class="navbar-header">'+
-						'			<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#barraNavegacion">'+
-						'				<span class="glyphicon glyphicon-home"></span>'+
-						'			</button>'+
-						'		</div>'+
-						'		<div id="barraNavegacion" class="collapse navbar-collapse bs-navbar-collapse">'+
-						'			<ul class="nav navbar-nav">';
-
-						nivelActivo1 ? 	html +=	n1 : null;
-						nivelActivo2 ? 	html +=	n2 : null;
-						nivelActivo3 ? 	html +=	n3 : null;
-						nivelActivo4 ? 	html +=	n4 : null;
-						nivelActivo_usuario ? 	html +=	n_usuario : null;
-
-						html += '</ul>'+
-						'			<ul class="nav navbar-nav navbar-right">'+
-						'				<li><a href="javascript: sigesop.cerrarSesion()"> Cerrar Sesión  <span class="glyphicon glyphicon-off"></span> </a></li>'+
-						'			</ul>'+
-						'		</div>'+
-						'	</div>'+
-						'</nav>';
-
-					$( elem ).html( html );
-				};
+				$( elem ).html( html );
+			};
 
 			// ejecutamos ajax de peticion de datos
-
 			sigesop.query({
 				class: 'sistema',
 				query: 'insertaBarraHerramientasRolUsuario',
@@ -2266,8 +2270,7 @@ $.extend( String.prototype,
 			return temp.toLowerCase();
 		},
 
-		splitParametros: function ( del )
-		{
+		splitParametros: function ( del ) {
 			if ( !this ) return [];
 
 			var array = [],
