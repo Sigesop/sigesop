@@ -1117,6 +1117,13 @@ class operacion extends sigesop {
                         $numero_unidad = $get[ 'numero_unidad' ];
                         $sql.= "AND numero_unidad = '$numero_unidad' ";
                         break;
+
+                    case 'condicion_operativa':
+                        $condicion_operativa = $get[ 'condicion_operativa' ];
+                        if ( $condicion_operativa !== 'TODAS' ) 
+                            $sql.= "AND condicion_operativa = '$condicion_operativa' ";
+                        
+                        break;
                     
                     default: break; # si es nulo lo omitimos
                 }
@@ -1197,6 +1204,46 @@ class operacion extends sigesop {
 
             $num_subeventos = $this->query( $sql, 'num_subeventos', null );
 
+
+            # Calculamos el tiempo de los subeventos
+            $sql =
+            "SELECT fecha_inicio_evento,hora_inicio_evento,fecha_termino_evento,hora_termino_evento ".
+            "FROM libro_relatorio_historial ".
+            "WHERE id_libro_relatorio = $id_libro_relatorio";
+
+            // return $sql;
+
+            $subeventos = $this->array_query($sql);
+
+            //------------------------------------------------------------------------------------------------------------------------
+            // 2015-09-08 Julioe
+            //------------------------------------------------------------------------------------------------------------------------
+            
+            $sumatoria_horas=0;
+            $sumatoria_minutos=0;
+            foreach ($subeventos as $row)
+            {
+                $fecha_inicio = Carbon::parse( $row[ 'fecha_inicio_evento' ]." ".$row[ 'hora_inicio_evento' ], 'America/Mexico_City' );
+                $fecha_final = Carbon::parse( $row[ 'fecha_termino_evento' ]." ".$row[ 'hora_termino_evento' ], 'America/Mexico_City' );
+
+                $horas = $fecha_final->diffInHours( $fecha_inicio );
+                $min_total = $fecha_final->diffInMinutes( $fecha_inicio );
+                
+
+                $sumatoria_horas+=$horas;
+                $sumatoria_minutos+=$min_total;
+
+
+            }
+
+            $min = $sumatoria_minutos % 60;
+            //$row['horas_acumuladas_evento'] = $sumatoria_horas.':'.$min;
+
+            $val[ 'sum_subeventos' ] = $sumatoria_horas.':'.$min;
+
+            //------------------------------------------------------------------------------------------------------------------------
+            // 2015-09-08 Julioe
+            //------------------------------------------------------------------------------------------------------------------------
             $val[ 'num_subeventos' ] = $num_subeventos;
             $val[ 'fecha_inicio_evento' ] = Carbon::parse( $val[ 'fecha_inicio_evento' ], 'America/Mexico_City' )->format( 'd-m-Y' );
             $val[ 'numero_licencia' ] = $this->__get_numero_licencia( $id_libro_licencia, $consecutivo_licencia );

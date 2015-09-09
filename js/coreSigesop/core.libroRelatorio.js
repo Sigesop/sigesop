@@ -1206,64 +1206,64 @@ sigesop.reporteNovedades = {
 		html =
 			'<form id="form-agregar-evento-' + suf + '" class="form-horizontal" role="form">'+
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3" for="">Fecha inicio de evento: </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4" for="">Fecha inicio de evento: </label>' +
+					'<div class="col-sm-4">' +
 						'<input name="fecha_inicio_evento" id="fecha-inicio-evento-' + suf + '" class="form-control" type="text"/>' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3" for="">Hora inicio de Evento (HH:mm): </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4" for="">Hora inicio de Evento (HH:mm): </label>' +
+					'<div class="col-sm-4">' +
 						'<input name="hora_inicio_evento" id="hora-inicio-evento-' + suf + '" class="form-control input-md" type="text">' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3" for="">Fecha termino estimado de evento: </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4" for="">Fecha termino estimado de evento: </label>' +
+					'<div class="col-sm-4">' +
 						'<input name="fecha_termino_estimado_evento" id="fecha-termino-estimado-evento-' + suf + '" class="form-control" type="text"/>' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3" for="">Hora termino estimado de Evento (HH:mm): </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4" for="">Hora termino estimado de Evento (HH:mm): </label>' +
+					'<div class="col-sm-4">' +
 						'<input name="hora_termino_estimado_evento" id="hora-termino-estimado-evento-' + suf + '" class="form-control input-md" type="text">' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3" for="">Fecha termino de evento: </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4" for="">Fecha termino de evento: </label>' +
+					'<div class="col-sm-4">' +
 						'<input name="fecha_termino_evento" id="fecha-termino-evento-' + suf + '" class="form-control" type="text"/>' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3" for="">Hora termino de Evento (HH:mm): </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4" for="">Hora termino de Evento (HH:mm): </label>' +
+					'<div class="col-sm-4">' +
 						'<input name="hora_termino_evento" id="hora-termino-evento-' + suf + '" class="form-control input-md" type="text">' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3">Condicion operativa: </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4">Condicion operativa: </label>' +
+					'<div class="col-sm-4">' +
 						'<select name="condicion_operativa" id="condicion-operativa-' + suf + '" type="text" class="form-control"></select>' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
-					'<label class="control-label col-sm-3" for="">Evento: </label>' +
-					'<div class="col-sm-7">' +
+					'<label class="control-label col-sm-4" for="">Evento: </label>' +
+					'<div class="col-sm-5">' +
 						'<textarea name="descripcion_evento" id="descripcion-evento-' + suf + '" class="form-control input-md eventoCambioMayuscula" type="text"></textarea>' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">'+
-					'<div class="col-sm-3 control-label"></div>'+
-					'<p class="col-sm-7">'+
+					'<div class="col-sm-4 control-label"></div>'+
+					'<p class="col-sm-5">'+
 						'<button type="submit" id="btn-guardar-evento-' + suf + '" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> '+
 						'<button type="reset"  id="btn-limpiar-evento-' + suf + '" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
 					'</p>'+
@@ -1818,7 +1818,7 @@ sigesop.reporteNovedades = {
 
 			if ( localStorage.usuario === sigesop.root ) {
 				items.editar = {
-	            	name: 'Editar',
+	            	name: 'Editar reporte',
 	            	icon: 'edit',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -1829,7 +1829,7 @@ sigesop.reporteNovedades = {
 	            }
 
 				items.eliminar = {
-	            	name: 'Eliminar',
+	            	name: 'Eliminar reporte',
 	            	icon: 'delete',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -1948,7 +1948,7 @@ sigesop.reporteNovedades = {
 			if ( localStorage.usuario === sigesop.root ) {
 				var items = {
 					editar: {
-		            	name: 'Editar',
+		            	name: 'Editar evento',
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -1958,7 +1958,7 @@ sigesop.reporteNovedades = {
 		        		}
 					},
 					eliminar: {
-		            	name: 'Eliminar',
+		            	name: 'Eliminar evento',
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -2605,9 +2605,9 @@ sigesop.reporteNovedades = {
 				head: 	'AERO, CONDICION OPERATIVA, FECHA INICIAL, FECHA TERMINO, HORA INICIO, ' +
 						'HORA TERMINO, TIEMPO TOTAL, NUM. SUBEVENTOS, TIEMPO TOTAL SUBEVENTOS, ' +
 						'TIEMPO MUERTO',
-				campo: 	'numero_unidad, numero_aero, condicion_operativa, descripcion_evento, ' +
-					'fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, fecha_termino_evento, ' +
-					'hora_termino_evento, horas_dia_reporte, horas_acumuladas_evento',
+				campo: 	'numero_aero, condicion_operativa, fecha_inicio_evento, ' +
+					'fecha_termino_evento, hora_inicio_evento, hora_termino_evento, ' +
+					'horas_acumuladas_evento, num_subeventos, sum_subeventos, tiempo_muerto',
 
 				addClass: {
 						body: {

@@ -56,9 +56,7 @@ function main() {
 	 */ 
 	docRP = sigesop.reporteNovedades.registroReportePeriodo({
 		suf: '-reporte-periodos',
-		success: function () {
-			alert('ok');
-		},
+		success: consultaReporteII,
 		error: function () {
 			sigesop.msg( 'Info', 'Completar informacion', 'info' );
 		}
@@ -539,6 +537,39 @@ function consultaReporteI ( datos ) {
 		}
 	});
 }
+
+//------------------------------------------------------------------------------------------------------------------------
+// 2015-09-08 Julioe
+//------------------------------------------------------------------------------------------------------------------------
+function consultaReporteII ( datos ) {
+	$( docRP.table.body ).empty();
+	var
+	condicion_operativa = $( datos.condicion_operativa.idHTML ).val(),
+	fecha_inf = $( datos.fecha_inf.idHTML ).val(),
+	fecha_sup = $( datos.fecha_sup.idHTML ).val();
+
+	sigesop.query({
+		data: { 
+			option: 'rango_fechas',
+			estado_evento: 'all',			
+			fecha_inf: fecha_inf,
+			fecha_sup: fecha_sup,
+			option2: 'condicion_operativa',
+			condicion_operativa: condicion_operativa
+		},
+		class: 'operacion',
+		query: 'obtener_libro_relatorio',
+		queryType: 'sendGetData',
+		success: function ( data ) { 
+			data.length > 0 ?
+				docRP.table.update_table( data ):
+				sigesop.msg( 'Advertencia', 'No hay registros...', 'warning' );
+		}
+	});
+}
+//------------------------------------------------------------------------------------------------------------------------
+// 2015-09-08 Julioe
+//------------------------------------------------------------------------------------------------------------------------
 
 function editarElemento( index ) {
 	if ( index < 0 ) 
