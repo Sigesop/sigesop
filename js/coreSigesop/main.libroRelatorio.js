@@ -64,6 +64,16 @@ function main() {
 	document.getElementById( 'main_registro_periodo' ).innerHTML = '<br>' + docRP.html;
 	docRP.javascript();
 
+	/* documento de reportes por orden de trabajo	
+	 */ 
+	docROT = sigesop.reporteNovedades.reporteOrdenTrabajo({
+		suf: '-orden-trabajo',
+		success: consultaReporteIII,
+		error: sigesop.completeCampos
+	});
+	document.getElementById( 'main-registro-orden-trabajo' ).innerHTML = '<br>' + docROT.html;
+	docROT.javascript();
+
 	/* descarga de datos
 	 */	
 	$( 'header' ).barraHerramientas();
@@ -76,8 +86,7 @@ function getData() {
 		class: 'operacion',
 		query: 'obtener_libro_relatorio',
 		queryType: 'sendGetData',
-		success: function ( data ) 
-		{
+		success: function ( data ) {
 			window.sesion.matrizLibroRelatorio = data;
 			docR.table.update_table( data );
 			document.getElementById( 'badge_RR' ).innerHTML = data != null ?
@@ -96,12 +105,10 @@ function getData() {
 		}
 	});
 
-
 	sigesop.query({
 		class: 'unidades',
 		query: 'obtenerUnidades',
-		success: function ( data ) 
-		{
+		success: function ( data ) {
 			window.sesion.matrizUnidades = data;
 			sigesop.combo({
 				arr: data,
@@ -113,14 +120,14 @@ function getData() {
 				elem: docRR.datos.numero_unidad.idHTML,
 				campo: 'numero_unidad'
 			});
+			docROT.table.update_unidades( data );
 		}
 	});
 
 	sigesop.query({
 		class: 'operacion',
 		query: 'obtener_libro_licencia',
-		success: function ( data ) 
-		{
+		success: function ( data ) {
 			window.sesion.matrizLicencia = data;
 			var 
 				now = moment(),
@@ -455,61 +462,6 @@ function historialEventosFinalizados( index ) {
 	});
 }
 
-// function cerrar_evento ( index ) {
-// 	if ( index < 0 ) 
-// 		throw new Error( 'function cerrar_evento: index fuera de rango' );
-
-// 	var elem = window.sesion.matrizLibroRelatorio [ index ];
-// 	if( !elem ) {
-// 		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
-// 		throw new Error('function cerrar_evento: elem es indefinido');
-// 	}
-
-// 	var
-
-// 	showBsModal = function () {
-// 		document.getElementById( this.idBody )
-// 		.innerHTML = 
-// 			'<div class="alert alert-danger text-center">' +
-// 				'<h4>¿Está seguro de cerrar el evento?</h4>' +
-// 			'</div>';
-// 	},
-
-// 	clickAceptar = function( event ) {
-// 		event.preventDefault();
-// 		sigesop.query({
-// 			data: { 
-// 				condicion_operativa: elem.condicion_operativa,
-// 				id_libro_relatorio: elem.id_libro_relatorio,
-// 				numero_aero: elem.numero_aero
-// 			},
-// 			class: 'operacion',
-// 			query: 'cerrar_evento',
-// 			queryType: 'sendData',
-// 			OK: function ( msj, eventos ) {
-// 				getData();
-// 				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-				
-// 			},
-// 			NA: function ( msj, eventos ) {
-// 				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' );
-// 			},
-// 			DEFAULT: function ( msj, eventos ) {
-// 				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' );
-// 			}
-// 		});
-
-// 		$( win.idDiv ).modal( 'hide' );		
-// 	},
-
-// 	win = sigesop.ventanaEmergente({
-// 		idDiv: 'cerrar-evento',
-// 		titulo: 'Cerrar evento',
-// 		clickAceptar: clickAceptar,
-// 		showBsModal: showBsModal
-// 	});
-// }
-
 function consultaReporteI ( datos ) {
 	$( docRR.table.body ).empty();
 	var
@@ -543,10 +495,10 @@ function consultaReporteI ( datos ) {
 //------------------------------------------------------------------------------------------------------------------------
 function consultaReporteII ( datos ) {
 	$( docRP.table.body ).empty();
-	var
-	condicion_operativa = $( datos.condicion_operativa.idHTML ).val(),
-	fecha_inf = $( datos.fecha_inf.idHTML ).val(),
-	fecha_sup = $( datos.fecha_sup.idHTML ).val();
+	var 
+		condicion_operativa = $( datos.condicion_operativa.idHTML ).val(),
+		fecha_inf = $( datos.fecha_inf.idHTML ).val(),
+		fecha_sup = $( datos.fecha_sup.idHTML ).val();
 
 	sigesop.query({
 		data: { 
@@ -570,6 +522,10 @@ function consultaReporteII ( datos ) {
 //------------------------------------------------------------------------------------------------------------------------
 // 2015-09-08 Julioe
 //------------------------------------------------------------------------------------------------------------------------
+
+function consultaReporteIII ( datos, IDS, limpiarCampos ) {
+
+} 
 
 function editarElemento( index ) {
 	if ( index < 0 ) 

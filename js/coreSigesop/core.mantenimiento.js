@@ -799,7 +799,8 @@ sigesop.mantenimiento = {
 
 			tabla = sigesop.tabla({
 				head: {
-					campo: 'RPE, NOMBRE, APELLIDOS'
+					campo: 'RPE, NOMBRE, APELLIDOS',
+					checkAll: false
 				},
 				body: {
 					campo: 'RDE_trabajador, nombre_trabajador, apellidos_trabajador',
@@ -827,6 +828,9 @@ sigesop.mantenimiento = {
 				// update_auxiliar.call( doc, arr );
 			},
 
+			/* verifica que exista al menos un elemento valido	
+			 * dentro de un arreglo de datos		
+			 */ 
 			check_arr = function ( arr ) {
 				var 
 					i = 0,

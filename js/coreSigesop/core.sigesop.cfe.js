@@ -29,6 +29,7 @@ window.sesion = {
 
 (function () {
 	sigesop = {
+		/* DEPRECATED */ 
 		alerta: function ( opt ) {
 			// --- PROPIEDADES DEL opt ---
 			// titulo
@@ -69,6 +70,7 @@ window.sesion = {
 			$( '#alerta' ).modal( { keyboard: true } );
 		},
 
+		/* DEPRECATED */ 
 		alertaRoot: function ( opt ) {
 			// --- PROPIEDADES DEL JSON ---
 			// idDiv
@@ -526,6 +528,23 @@ window.sesion = {
 			}
 		},
 
+		/* verifica que exista al menos un elemento valido	
+		 * dentro de un arreglo de datos		
+		 */ 
+		isNotEmpty: function ( arr, field ) {
+			var 
+				i = 0,
+				lon = arr.length,
+				row = null;
+
+			for ( i ; i < lon ; i++ ) {
+				row = this.lecturaDeep( arr[ i ], field );
+				if ( row ) return true;
+			}
+				
+			return false;
+		},
+
 		matrizIndexOfObjeto: function ( data, campo, arr ) {
 			/**
 			 * busca los indices de los elementos propuestos y retorna su posicion
@@ -924,8 +943,7 @@ window.sesion = {
 				icon = '',
 				ui_type = /^success|warning|error|info$/;
 
-			switch( tipo.match( ui_type ) !== null ? tipo.match( ui_type )[0] : null )
-			{
+			switch( tipo.match( ui_type ) !== null ? tipo.match( ui_type )[0] : null ) {
 				case 'error': icon = 'picon picon-32 picon-dialog-error';	break;
 				// case 'error': icon = 'picon picon-32 picon-dialog-error';	break;
 				case 'success': icon = 'picon picon-32 picon-custom-check'; break;
@@ -1087,6 +1105,8 @@ window.sesion = {
 			 							name al input.
 			 * body.disabled.campo
 			 * body.disabled.campoValor
+			 * body.callback            - {function} llamada a funcion por cada evento
+			 * 							de seleccion del check o radio
 			 * ------------------------------------------------------------------
 			 * tipo		 				- {string}[checkbox | radio] tipo de caja
 			 *			   	  			que adquiere el input.
@@ -1104,7 +1124,7 @@ window.sesion = {
 			// default settings
 			var
 			tipo = 			opt.tipo || 'radio',
-			suf = 			opt.suf || '_',
+			suf = 			opt.suf || '-',
 			color_fila = 	opt.color_fila || '',
 			color_select = 	opt.color_select || 'success',
 			campo =			opt.body.campo,
@@ -1115,13 +1135,23 @@ window.sesion = {
 			var
 			matriz_input = 	[],
 
+			checkAll = 	typeof opt.head.checkAll === 'boolean' ?
+						( opt.head.checkAll || false ) : 
+						( opt.head.checkAll || {} ) ,
+
 			elem_anterior = null,
+
+			IDS = {
+				head: '#tablaHead_seleccion_' + suf,
+				body: '#tablaBody_seleccion_' + suf,
+				checkAll: '#check-all-' + suf,
+				$checkAll: null
+			},
 
 			tipo_input = function ( tipo, secuencia, full ) {
 				if ( typeof full == 'undefined' ) full = true; // bandera para retornar sólo ID o cadena completa.
 
-				switch ( tipo )
-				{
+				switch ( tipo ) {
 					case 'radio':
 						return full ?
 							'name="name_seleccion_' + suf +'"' :
@@ -1129,8 +1159,8 @@ window.sesion = {
 
 					case 'checkbox':
 						return full ?
-							'id="id_seleccion_' + secuencia + '"' :
-							'id_seleccion_' + secuencia;
+							'id="id_seleccion_' + secuencia + suf + '"' :
+							'id_seleccion_' + secuencia + suf;
 
 					default: // si es un valor invalido retorna un "radio" por defecto
 						return full ?
@@ -1146,13 +1176,14 @@ window.sesion = {
 			},
 
 			struct_head = function ( campo_head ) {
-				if ( !jQuery.isEmptyObject( campo_head ) )
-				{
+				if ( !jQuery.isEmptyObject( campo_head ) ) {
 					var
 						m = campo_head.splitParametros( ',' ),
 						i = 0,
 						lon = m.length,
-						head = '<tr><th></th>';
+						check_all = tipo == 'checkbox' && checkAll !== false ? // agregarmos un check para seleccionar todas
+							'<center><input id="check-all-' + suf + '" type="checkbox" ></center>' : '',
+						head = '<tr><th>' + check_all + '</th>';
 
 					for( i; i < lon; i++ )
 						head += '<th>' + m[ i ] + '</th>';
@@ -1162,8 +1193,7 @@ window.sesion = {
 					return head;
 				}
 
-				else
-				{
+				else {
 					console.log( '[campo_head] es nulo' );
 					return '';
 				}
@@ -1181,7 +1211,7 @@ window.sesion = {
 
 					for( i ; i < lon_i ; i++ ) {
 						var
-							fila = arr[ i ];
+							fila = arr[ i ],
 							disabled = 	typeof opt.body.disabled === 'object' ?
 								( typeof opt.body.disabled.campo === 'string' &&
 								typeof opt.body.disabled.campoValor === 'string' ?
@@ -1244,8 +1274,7 @@ window.sesion = {
 			change_checkbox = function ( event ) {
 				var $this = $( this );
 
-				if ( $this.prop( 'checked' ) )
-				{
+				if ( $this.prop( 'checked' ) ) {
 					$this.parents( 'tr' ).addClass( color_select ); // cambia color
 
 					/* Añade valor a matriz publica
@@ -1254,8 +1283,7 @@ window.sesion = {
 					if ( index != -1 ) matriz_input[ index ].valor = $this.val();
 				}
 
-				else
-				{
+				else {
 					/* quita color
 					 */
 					$this.parents( 'tr' ).removeClass();
@@ -1267,50 +1295,90 @@ window.sesion = {
 					if ( index != -1 ) matriz_input[ index ].valor = null;
 				}
 
+				/* Llamada a funcion por cada evento de seleccion				
+				 */
 				if ( typeof opt.body.callback === 'function' )
-					opt.body.callback( $this.prop( 'checked' ), $this.val(), $this );
+					opt.body.callback( $this.prop( 'checked' ), $this.val(), $this, matriz_input );
+			},
+
+			selectAll = function () {
+				if ( tipo !== 'checkbox' ) return;
+				if ( $.isEmptyObject( this.matrizInput ) ) return null;
+				
+				var
+					i = 0,
+					lon = this.matrizInput.length;
+
+				for ( i ; i < lon ; i++ ) {					
+					var $elem = $( '#' + this.matrizInput[ i ].index );
+					$elem.prop( 'checked', true )
+						.parents( 'tr' )
+						.addClass( color_select );
+
+					/* Añade valor a matriz publica
+					 */
+					var index = sigesop.indexOfObjeto( matriz_input, 'index', $elem[0].id );
+					if ( index != -1 ) matriz_input[ index ].valor = $elem.val();
+				}
+			},
+
+			reset = function () {
+				if ( tipo == 'radio' ) {
+					// var $elem = $( '#' + this.matrizInput[ i ].index );
+					// $elem.val('');
+					// $elem.parents( 'tr' ).removeClass();
+				}
+				else if ( tipo == 'checkbox' ) {
+					if ( jQuery.isEmptyObject( this.matrizInput ) ) return null;
+					var
+						i = 0,
+						lon = this.matrizInput.length;
+
+					for ( i ; i < lon ; i++ ) {
+						this.matrizInput[ i ].valor = null;
+						var $elem = $( '#' + this.matrizInput[ i ].index );
+						$elem.prop( 'checked', false ).parents( 'tr' ).removeClass();							
+
+						/* Elimina valor a matriz publica
+						 */
+						var index = sigesop.indexOfObjeto( matriz_input, 'index', $elem[0].id );
+						if ( index != -1 ) matriz_input[ index ].valor = null;
+					}
+				}
 			},
 
 			run_javascript = function ( mtz ) {
-				if ( !jQuery.isEmptyObject( mtz ) )
-				{
+				if ( !jQuery.isEmptyObject( mtz ) ) {
 					if ( tipo === 'radio' )
 						$( 'input[name="' + mtz[ 0 ].index + '"]' ).change( change_radio );
 
-					else if ( tipo === 'checkbox' )
-					{
-							for( var i = 0, lon = mtz.length; i < lon; i++ )
-								$( '#' + mtz[ i ].index ).change( change_checkbox );
+					else if ( tipo === 'checkbox' ) {
+						for( var i = 0, lon = mtz.length; i < lon; i++ )
+							$( '#' + mtz[ i ].index ).change( change_checkbox );
 					}
 
 					else console.log( 'tipo de elemento no válido para efecto [change]' );
 				}
 
 				else console.log( 'Matriz [matrizInput] es nula' );
-			},
 
-			reset = function () {
-				if ( tipo == 'radio' )
-				{
-					// var $elem = $( '#' + this.matrizInput[ i ].index );
-					// $elem.val('');
-					// $elem.parents( 'tr' ).removeClass();
-				}
-				else if ( tipo == 'checkbox' )
-				{
-					if ( jQuery.isEmptyObject( this.matrizInput ) ) return null;
-					var
-						i = 0,
-						lon = this.matrizInput.length;
+				/* Agregamos el evento de cambio 
+				 * para seleccionar todos los campos				
+				 */
+				var $checkAll = $( IDS.checkAll );
+				IDS.$checkAll = $checkAll;
 
-					for ( i ; i < lon ; i++ )
-					{
-						this.matrizInput[ i ].valor = null;
-						var $elem = $( '#' + this.matrizInput[ i ].index );
-						// $elem.val('');
-						$elem.parents( 'tr' ).removeClass();
-					}
-				}
+				$checkAll.change(function( e ) {
+					var state = $checkAll.prop( 'checked' );
+					if ( state ) 
+						selectAll.call( doc );
+					else reset.call( doc );
+
+					/* Llamada a funcion por cada evento de seleccion				
+					 */
+					if ( typeof checkAll.callback === 'function' )
+						checkAll.callback( $checkAll.prop( 'checked' ), $checkAll.val(), $checkAll, matriz_input );
+				});
 			};
 
 			var
@@ -1330,10 +1398,7 @@ window.sesion = {
 			doc = {
 				html: html,
 				update_table: update_table,
-				IDS: {
-					head: '#tablaHead_seleccion_' + suf,
-					body: '#tablaBody_seleccion_' + suf
-				},
+				IDS: IDS,
 				reset: reset,
 				matrizInput: matriz_input
 			};
@@ -2079,8 +2144,7 @@ window.sesion = {
 		},
 
 		// /*** DEPRECATED ***/ 
-		agregarPopover: function( array )
-		{
+		agregarPopover: function( array ) {
 			for ( var i = 0, lon = array.length; i < lon; i++ )
 			{
 				if ( typeof array[ i ].popover != 'undefined' ) 
@@ -2099,8 +2163,7 @@ window.sesion = {
 		},
 
 		// /*** DEPRECATED ***/ 
-		vaciarPopover: function( array )
-		{
+		vaciarPopover: function( array ) {
 			for( var i in array )
 			{
 				if ( typeof array [ i ].popover != 'undefined' ) 

@@ -42,6 +42,7 @@ if ( !$obj->accesoPagina( 'libroRelatorio.php' ) ) {
 			<li><a href="#main_registro_terminados" data-toggle="tab">Reportes terminados <span id="badge_RT" class="badge"></span></a></li>
 			<li><a href="#main_registro_reporte" data-toggle="tab">Imprimir reportes <span id="badge_RR" class="badge"></span></a></li>
 			<li><a href="#main_registro_periodo" data-toggle="tab">Imprimir reportes periodo <span id="badge_RP" class="badge"></span></a></li>
+			<li><a href="#main-registro-orden-trabajo" data-toggle="tab">Reportes orden trabajo programados<span id="badge_ROT" class="badge"></span></a></li>
 		</ul>
 
 		<div class="tab-content">				
@@ -50,6 +51,7 @@ if ( !$obj->accesoPagina( 'libroRelatorio.php' ) ) {
 			<div class="tab-pane fade" id="main_registro_terminados"></div>
 			<div class="tab-pane fade" id="main_registro_reporte"></div>
 			<div class="tab-pane fade" id="main_registro_periodo"></div>
+			<div class="tab-pane fade" id="main-registro-orden-trabajo"></div>
 		</div>
 	</div>
 

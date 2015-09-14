@@ -71,8 +71,7 @@ class generadores extends sigesop
         else if ( !empty( $numero_aero ) ) $opt = 'numero_aero';
         else $opt = null;
 
-        switch ( $opt ) 
-        {
+        switch ( $opt ) {
             case 'numero_unidad':
                 switch ( $option ) {
                     case 'libro_relatorio':
@@ -83,7 +82,31 @@ class generadores extends sigesop
                     
                     case 'unidad':
                         if( $numero_unidad=="TODAS" ) $sql = "select * from aeros";
-                        else $sql = "select * from aeros where numero_unidad = '$numero_unidad'";
+                        else {
+                            # si no es un arreglo de unidades
+                            if ( !is_array( $numero_unidad ) )
+                                $sql = "select * from aeros where numero_unidad = '$numero_unidad'";
+
+                            # si es arreglo de unidades
+                            else {
+                                $str_unidades = "";
+                                $i = 0;
+                                $lon = sizeof( $numero_unidad );
+                                foreach ( $numero_unidad as $row ) {
+                                    if ( $i == $lon - 1 ) $str_unidades .= "'".$row."'";
+                                    else $str_unidades .= "'".$row."',";                                    
+                                    $i++;
+                                }
+
+                                $sql =
+                                "SELECT numero_unidad, numero_aero, ".
+                                "capacidad_efectiva_aero, fecha_operacion ".
+                                "estado_licencia ".
+                                "FROM aeros ".
+                                "WHERE numero_unidad IN( $str_unidades ) ".
+                                "ORDER BY numero_unidad ASC";
+                            }
+                        }
                         break;
 
                     default: 
@@ -102,6 +125,9 @@ class generadores extends sigesop
                 $sql = "select * from aeros";
                 break;
         }
+
+        // return $sql;
+
         $query = $this->array_query( $sql );
         return $query;
     }

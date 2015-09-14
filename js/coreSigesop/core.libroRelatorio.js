@@ -1530,7 +1530,20 @@ sigesop.reporteNovedades = {
 				onSelect: function( date, inst ) {
 					$form.formValidation( 'revalidateField', 'fecha_inicio_evento' );
 				}
-			});
+			})
+			// .on( 'success.field.fv', function ( e, data ) {
+			// 	var 
+			// 		fecha_1 = moment( $fecha_inicial.val(), 'DD-MM-YYYY' ),
+			// 		fecha_2 = moment( $fecha_final.val(), 'DD-MM-YYYY' );
+
+			// 	if( $fecha_inicial.val() && $fecha_final.val() )
+			// 		if ( fecha_2.isBefore( fecha_1 ) )
+			// 		{			
+			// 			$form.data( 'formValidation' ).updateStatus( 'fecha_inicial', 'INVALID' );
+			// 			$fecha_inicial.val('');
+			// 			sigesop.msg( 'Advertencia', 'Fecha fuera de rango', 'warning' );
+			// 		}
+			// });
 
 			$hora_inicio_evento.val( moment().format( 'HH:mm' ) )
 			.timespinner().spinner({ // evento para revalidar los campos
@@ -2481,22 +2494,32 @@ sigesop.reporteNovedades = {
 
 				'<div class="form-group">' +
 					'<label class="control-label col-sm-5" for="">De fecha: </label>' +
-					'<div class="col-sm-2">' +
+					'<div class="col-sm-3">' +
 						'<input name="fecha_inf" id="fecha-inferior-impresion-' + suf + '" class="form-control" type="text"/>' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
 					'<label class="control-label col-sm-5" for="">A fecha: </label>' +
-					'<div class="col-sm-2">' +
+					'<div class="col-sm-3">' +
 						'<input name="fecha_sup" id="fecha-superior-impresion-' + suf + '" class="form-control" type="text"/>' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">'+
 					'<label class="control-label col-sm-5 ">Condición operativa: </label>'+
-					'<div class="col-sm-2">'+
+					'<div class="col-sm-3">'+
 						'<select name="condicion_operativa" id="condicion-operativa-impresion-reporte-periodo-' + suf + '"class="form-control input-md"></select>' +
+					'</div>'+
+				'</div>'+
+
+				'<div class="form-group">'+
+					'<label class="control-label col-sm-5 ">Historial de eventos: </label>'+
+					'<div class="col-sm-3">'+
+						'<select name="historial" id="historial-' + suf + '"class="form-control input-md">' +
+							'<option value="SI">INCLUIR EN IMPRESION</option>' +
+							'<option value="NO">NO INCLUIR EN IMPRESION</option>' +
+						'</select>' +
 					'</div>'+
 				'</div>'+
 
@@ -2517,6 +2540,7 @@ sigesop.reporteNovedades = {
 			form = doc.IDS.form,
 			IDS = this.IDS,
 			$condicion_operativa = $( doc.datos.condicion_operativa.idHTML ),
+			$historial = $( doc.datos.historial.idHTML ),
 			$fecha_inf = $( doc.datos.fecha_inf.idHTML ),
 			$fecha_sup = $( doc.datos.fecha_sup.idHTML ),
 			$botonImprimir = $( doc.IDS.botonImprimir ),
@@ -2675,9 +2699,10 @@ sigesop.reporteNovedades = {
 				// });
 
 				var url = sigesop.raizServidor + 'ajax.php?class=operacion' +
-					'&action=imprimir&option=rango_fechas&estado_evento=all' +
+					'&action=imprimir_reporte_periodo&option=rango_fechas&estado_evento=all' +
 					'&fecha_inf=' + $fecha_inf.val() + '&fecha_sup=' + $fecha_sup.val() +
-					'&option2=numero_unidad' + '&numero_unidad=' + $numero_unidad.val(),
+					'&option2=condicion_operativa' + '&condicion_operativa=' + $condicion_operativa.val() +
+					'&historial=' + $historial.val(),
 
 					win = window.open( url );
 
@@ -2687,6 +2712,11 @@ sigesop.reporteNovedades = {
 		},
 					
 		datos = {
+			historial:{
+				idHTML: '#historial-' + suf,
+				valor: null
+			} ,
+
 			condicion_operativa:{
 				idHTML: '#condicion-operativa-impresion-reporte-periodo-' + suf,
 				valor: null
@@ -2721,7 +2751,443 @@ sigesop.reporteNovedades = {
 				update_table: null
 			}
 		}
+		return doc;
+	},
 
+	reporteOrdenTrabajo : function ( opt ) {
+		var
+			obj = opt.obj || {},
+			suf = opt.suf || '';
+
+		var 
+
+		html = 
+			'<form id="form-imprimir-reporte-' + suf + '" class="form-horizontal" role="form">'+
+
+				'<div class="form-group">' +
+					'<label class="control-label col-sm-5" for="">Fecha Inicial: </label>' +
+					'<div class="col-sm-3">' +
+						'<input name="fecha_inf" id="fecha-inferior-impresion-' + suf + '" class="form-control" type="text"/>' +
+					'</div>' +
+				'</div>' +
+
+				'<div class="form-group">' +
+					'<label class="control-label col-sm-5" for="">Fecha Final: </label>' +
+					'<div class="col-sm-3">' +
+						'<input name="fecha_sup" id="fecha-superior-impresion-' + suf + '" class="form-control" type="text"/>' +
+					'</div>' +
+				'</div>' +
+
+				'<div class="form-group">' +
+					'<label class="control-label col-sm-5" for="">Fecha Final: </label>' +
+					'<div class="col-sm-3">' +
+						'<select name="tipo_orden_trabajo" id="tipo-orden-trabajo-' + suf + '" class="form-control">' +
+							'<option>PROGRAMADAS</option>' +
+							'<option>TERMINADAS</option>' +
+							'<option>TODAS</option>' +
+						'</select>' +
+					'</div>' +
+				'</div>' +
+
+				'<div class="form-group">'+
+					'<label class="control-label col-sm-5 ">Unidades: </label>'+
+					'<div id="div-unidades' + suf + '" class="col-sm-3"></div>'+
+				'</div>'+
+
+				'<div class="form-group">'+
+					'<label class="control-label col-sm-5 ">Aerogeneradores: </label>'+
+					'<div id="div-aerogeneradores-' + suf + '" class="col-sm-3"></div>'+
+				'</div>'+
+
+				'<div class="form-group">'+
+					'<div class="col-sm-5 control-label"></div>'+
+					'<p class="col-sm-7">'+
+						'<button type="submit" id="btn-consulta-reporte-' + suf + '" class="btn btn-success"  data-loading-text="Buscando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Consultar</button> ' +
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+					
+					'</p>'+
+				'</div>'+				
+
+			'</form>' +
+			'<div id="tabla-impresion-reporte-' + suf + '" class="form-group"> </div>',
+
+		limpiarCampos = function () {
+
+		},
+
+		javascript = function () {
+			var 
+			doc = this,
+			datos = this.datos,
+			form = doc.IDS.form,
+			IDS = this.IDS,
+			$fecha_inf = $( datos.fecha_inf.idHTML ),
+			$fecha_sup = $( datos.fecha_sup.idHTML ),
+			$botonImprimir = $( IDS.botonImprimir ),
+			$form = $( form )
+			.formValidation({
+		        icon: {
+		            valid: 'glyphicon glyphicon-ok',
+		            invalid: 'glyphicon glyphicon-remove',
+		            validating: 'glyphicon glyphicon-refresh'
+		        },
+
+		        onSuccess: function ( e ) {
+		        	e.preventDefault();	
+		        	
+		        	/* verificamos que el se haya seleccionado
+		        	 * por lo menos una unidad
+		        	 */
+		        	if ( $.isEmptyObject( datos.unidades ) ){ 
+		        		sigesop.msg( 'Info', 'Seleccione unidad', 'warning' );
+		        		return;
+		        	}
+		        	
+		        	/* verificamos que el se haya seleccionado
+		        	 * por lo menos un aero		        	
+		        	 */		        	
+		        	if ( !$.isEmptyObject( datos.aeros ) )
+			        	typeof opt.success == 'function' ?
+			        		opt.success( doc.datos, doc.IDS, limpiarCampos.bind( doc ) ) :
+			        		console.log( 'success is null' );
+
+			        else sigesop.msg( 'Info', 'Seleccione aerogenerador', 'warning' );
+
+		        	$( form ).data( 'formValidation' ).disableSubmitButtons( false );
+		        },
+
+		        onError: function ( e ) {
+		        	e.preventDefault();			        	
+		        	typeof opt.error == 'function' ?
+		        		opt.error() : console.log( 'error is null' );			        	
+		        },
+
+		        fields: {
+		      		fecha_inf: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val();
+		            		datos.fecha_inf.valor = val;
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.fecha_inf.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.fecha_inf.valor = null;
+	                	},
+		                validators: {
+                            date: {
+                            	format: 'DD-MM-YYYY',
+                            	message: 'Fecha inválida'
+                            }
+		                }
+		            },
+
+		            fecha_sup: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val();
+		            		datos.fecha_sup.valor = val;
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.fecha_sup.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.fecha_sup.valor = null;
+	                	},
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Fecha necesaria.'
+		                    },
+                            date: {
+                            	format: 'DD-MM-YYYY',
+                            	message: 'Fecha inválida'
+                            }
+		                }
+		            },
+
+		        	tipo_orden_trabajo: {
+		            	onSuccess: function ( e, data ) {
+		            		var val = data.element.val();
+		            		datos.tipo_orden_trabajo.valor = val;
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.tipo_orden_trabajo.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.tipo_orden_trabajo.valor = null;
+	                	},
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Campo requerido'
+	                    	}
+	                	}
+		            }
+		        }
+			})			
+			.on( 'success.form.fv', function( e ) { $botonImprimir.prop( 'disabled', false ); })
+	        .on( 'err.field.fv', function( e ) { $botonImprimir.prop( 'disabled', true ); })
+			.on( 'success.field.fv', function( e, data ) { data.fv.disableSubmitButtons( false ); });
+	
+			/* Enlace de objetos a vista publica			
+			 */ 
+			IDS.$form = $form;
+			IDS.$fecha_inf = $fecha_inf;
+			IDS.$fecha_sup = $fecha_sup;
+			IDS.$botonImprimir = $botonImprimir;
+
+			/* Tabla de tablas de seleccion
+			 */ 
+			var 
+
+			tabla_aero = sigesop.tabla({
+				suf: '-aerogeneradores',
+				head: {
+					campo: 'AEROGENERADOR, UNIDAD',
+					checkAll: {
+						callback: function ( state, val, $elem, arr ) {
+							/* agregar elementos validos a la 
+							 * matriz con vista publica						
+							 */
+							var 
+								i = 0,
+								lon = arr.length,
+								row = null;
+
+							datos.aeros.length = 0; // borramos datos anteriores
+							for ( i ; i < lon ; i++ ) {
+								row = arr[ i ];							
+								if ( row.valor ) datos.aeros.push( row.valor );
+							}
+						}
+					}
+				},
+				body: {
+					campo: 'numero_aero, numero_unidad',
+					callback: function ( state, val, $elem, arr ) {
+						/* agregar elementos validos a la 
+						 * matriz con vista publica
+						 */
+						var 
+							i = 0,
+							lon = arr.length,
+							row = null;
+
+						datos.aeros.length = 0; // borramos datos anteriores
+						for ( i ; i < lon ; i++ ) {
+							row = arr[ i ];							
+							if ( row.valor ) datos.aeros.push( row.valor );
+						}
+					}
+				},
+				tipo: 'checkbox'
+			}),
+
+			tabla_unidades = sigesop.tabla({
+				suf: '-unidades',
+				head: {
+					campo: 'NUMERO DE UNIDAD',
+					checkAll: {
+						callback: function ( state, val, $elem, arr ) {
+							/* agregar elementos validos a la 
+							 * matriz con vista publica						
+							 */
+							var 
+								i = 0,
+								lon = arr.length,
+								row = null;
+
+							datos.unidades.length = 0; // borramos datos anteriores
+							for ( i ; i < lon ; i++ ) {
+								row = arr[ i ];							
+								if ( row.valor ) datos.unidades.push( row.valor );
+							}
+
+							if ( !$.isEmptyObject( datos.unidades ) ) {
+								sigesop.query({
+									data: { numero_unidad: datos.unidades, option: 'unidad' },
+									class: 'generadores',
+									query: 'obtenerGeneradores',
+									queryType: 'sendGetData',
+									success: function ( data ) {
+										tabla_aero.update_table( data );
+									}
+								});
+							}
+
+							// vaciamos las filas de aeros anteriores
+							else tabla_aero.update_table( [] );
+
+							/* borramos datos anteriores
+							 * de los aeros seleccionados									
+							 */
+							datos.aeros.length = 0;
+						}
+					}
+				},
+				body: {
+					campo: 'numero_unidad',
+					callback: function ( state, val, $elem, arr ) {
+						/* agregar elementos validos a la 
+						 * matriz con vista publica						
+						 */
+						var 
+							i = 0,
+							lon = arr.length,
+							row = null;
+
+						datos.unidades.length = 0; // borramos datos anteriores
+						for ( i ; i < lon ; i++ ) {
+							row = arr[ i ];							
+							if ( row.valor ) datos.unidades.push( row.valor );
+						}
+
+						if ( !$.isEmptyObject( datos.unidades ) ) {
+							sigesop.query({
+								data: { numero_unidad: datos.unidades, option: 'unidad' },
+								class: 'generadores',
+								query: 'obtenerGeneradores',
+								queryType: 'sendGetData',
+								success: function ( data ) {									
+									tabla_aero.update_table( data );
+								}
+							});
+						}
+
+						// vaciamos las filas de aeros anteriores
+						else tabla_aero.update_table( [] );
+
+						/* borramos datos anteriores
+						 * de los aeros seleccionados									
+						 */
+						datos.aeros.length = 0;
+					}
+				},
+				tipo: 'checkbox'
+			}),
+
+			update_registro = sigesop.tablaRegistro({
+				suf: '-reporte-periodo',
+				head: 	'AERO, CONDICION OPERATIVA, FECHA INICIAL, FECHA TERMINO, HORA INICIO, ' +
+						'HORA TERMINO, TIEMPO TOTAL, NUM. SUBEVENTOS, TIEMPO TOTAL SUBEVENTOS, ' +
+						'TIEMPO MUERTO',
+				campo: 	'numero_aero, condicion_operativa, fecha_inicio_evento, ' +
+						'fecha_termino_evento, hora_inicio_evento, hora_termino_evento, ' +
+						'horas_acumuladas_evento, num_subeventos, sum_subeventos, tiempo_muerto',
+
+				addClass: {
+					body: {
+						class: 'warning, danger, info, success',
+						campo: 'condicion_operativa, condicion_operativa, condicion_operativa, condicion_operativa',
+						valor: 'C.A., FALLA, MTTO, F.A.'
+					}
+				}
+			});
+
+
+			/* Imprimiendo en documentos			
+			 */ 
+			document.getElementById( IDS.tablaUnidades.flushChar('#') )
+				.innerHTML = tabla_unidades.html;
+			this.table.update_unidades = tabla_unidades.update_table; // enlace a vista publica
+
+			document.getElementById( IDS.tablaAero.flushChar('#') )
+				.innerHTML = tabla_aero.html;
+			this.table.update_aero = tabla_aero.update_table; // enlace a vista publica
+
+			document.getElementById( IDS.tablaRegistro.flushChar('#') )
+				.innerHTML = '<br>' + update_registro.html			
+			this.table.update_registro = update_registro.update_table; // enlazamos a vista publica
+
+			/* Configuracion de fields y clicks			
+			 */ 
+			$fecha_inf.datepicker({
+				defaultDate: "+1w",
+				changeMonth: true,
+				changeYear: true,
+				numberOfMonths: 3,
+				dateFormat: 'dd-mm-yy',
+				showAnim: 'slide',
+				onClose: function( selectedDate ) {
+					doc.IDS.$form.formValidation( 'revalidateField', 'fecha_inf' );
+				}
+			});
+			
+			$fecha_sup.datepicker({
+				defaultDate: "+1w",
+				changeMonth: true,
+				changeYear: true,
+				numberOfMonths: 3,
+				dateFormat: 'dd-mm-yy',
+				showAnim: 'slide',
+				onClose: function( selectedDate ) {
+					doc.IDS.$form.formValidation( 'revalidateField', 'fecha_sup' );
+				}
+			})
+			.on( 'success.field.fv', function ( e, data ) {
+				var 
+					fecha_inf = moment( $fecha_inf.val(), 'DD-MM-YYYY' ),
+					fecha_sup = moment( $fecha_sup.val(), 'DD-MM-YYYY' );
+
+				if( $fecha_inf.val() )
+					if ( fecha_sup.isBefore( fecha_inf ) )			
+						doc.IDS.$form.data( 'formValidation' ).updateStatus( 'fecha_inf', 'INVALID' );
+			});
+			
+			$botonImprimir.on( 'click', function ( event ) { 
+				var url = sigesop.raizServidor + 'ajax.php?class=operacion' +
+					'&action=imprimir_reporte_periodo&option=rango_fechas&estado_evento=all' +
+					'&fecha_inf=' + $fecha_inf.val() + '&fecha_sup=' + $fecha_sup.val() +
+					'&option2=condicion_operativa' + '&condicion_operativa=' + $condicion_operativa.val() +
+					'&historial=' + $historial.val(),
+
+					win = window.open( url );
+
+				win.focus();
+			 });
+		},
+					
+		datos = {
+			fecha_inf: {
+				idHTML: '#fecha-inferior-impresion-' + suf,
+				valor: null
+			},
+
+			fecha_sup: {
+				idHTML: '#fecha-superior-impresion-' + suf,
+				valor: null
+			},
+
+			tipo_orden_trabajo: {
+				idHTML: '#tipo-orden-trabajo-' + suf,
+				valor: null
+			},
+
+			unidades:[],
+
+			aeros: []
+		},
+
+		IDS = {
+			tablaUnidades: '#div-unidades' + suf,
+			tablaAero: '#div-aerogeneradores-' + suf,
+			tablaRegistro: '#tabla-impresion-reporte-' + suf,
+			botonConsultar: '#btn-consulta-reporte-' + suf,
+			botonImprimir: '#btn-imprimir-reporte-' + suf,
+			form: '#form-imprimir-reporte-' + suf
+		},
+
+		doc = {
+			html: html,
+			javascript: javascript,
+			datos: datos,
+			IDS: IDS,
+			table: {				
+				update_unidades: null,
+				update_aero: null,
+				update_registro: null
+			}
+		}
 		return doc;
 	}
 };

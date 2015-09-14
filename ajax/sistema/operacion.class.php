@@ -56,8 +56,13 @@ class operacion extends sigesop {
             case 'imprimir':
                 $query = $this->imprimir( $get );
                 echo json_encode( $query );
-                break; 
-
+                break;
+				
+			case 'imprimir_reporte_periodo':
+                $query = $this->imprimir_reporte_periodo( $get );
+                echo json_encode( $query );
+                break;
+				
             case 'nuevo_evento_relatorio':
                 $query = $this->nuevo_evento_relatorio( $post );
                 echo json_encode( $query );
@@ -1148,13 +1153,14 @@ class operacion extends sigesop {
         $arr = array();        
 
         // return $query;
-
+		$tiempo_muerto_horas=0;
+        $tiempo_muerto_minutos=0;
         # calculamos las horas para cada evento
         foreach ( $query as $val ) {
             $fecha_termino_evento = $val [ 'fecha_termino_evento' ];
             $hora_termino_evento = $val [ 'hora_termino_evento' ];
             $estado_evento = $val [ 'estado_evento' ]; 
-
+			
             $id_libro_relatorio = $val[ 'id_libro_relatorio' ];
             $id_libro_licencia = $val[ 'id_libro_licencia' ];
             $consecutivo_licencia = $val[ 'consecutivo_licencia' ];
@@ -1167,6 +1173,11 @@ class operacion extends sigesop {
                     Carbon::now( 'America/Mexico_City' ): # el dia de hoy desde las 00:00 hasta la hora del instante
                     Carbon::parse( Carbon::now()->toDateString()." "."07:00:00" ,'America/Mexico_City' ); # el dia de hoy desde las 00:00 hasta las 7:00 A.M.
 
+				/*  julioe 09-09-2015  */
+				$val['fecha_termino_evento']="ABIERTO";
+				$val['hora_termino_evento']="ABIERTO";
+				/*  julioe 09-09-2015  */
+
                 #------------
 
                 $val[ 'horas_dia_reporte' ] = $fecha_final->format( 'H:i' ).":00"; 
@@ -1175,6 +1186,7 @@ class operacion extends sigesop {
 
                 $horas = $fecha_inicio->diffInHours( $fecha_final, false );
                 $min_total = $fecha_final->diffInMinutes( $fecha_inicio );
+				//$tiempo_muerto_minutos = $min_total;
                 $min = $min_total % 60;
                 $val[ 'horas_acumuladas_evento' ] = $horas.':'.$min;
             }
@@ -1193,7 +1205,7 @@ class operacion extends sigesop {
                 $min = $min_total % 60;
                 $val[ 'horas_acumuladas_evento' ] = $horas.':'.$min;
             }
-
+			$tiempo_muerto_minutos = $min_total;
             # Calculamos el numero de subeventos
             $sql =
             "SELECT COUNT( id_libro_relatorio ) num_subeventos ".
@@ -1221,6 +1233,10 @@ class operacion extends sigesop {
             
             $sumatoria_horas=0;
             $sumatoria_minutos=0;
+
+			//$tiempo_muerto_horas=$horas;
+            //$tiempo_muerto_minutos=$min;
+			
             foreach ($subeventos as $row)
             {
                 $fecha_inicio = Carbon::parse( $row[ 'fecha_inicio_evento' ]." ".$row[ 'hora_inicio_evento' ], 'America/Mexico_City' );
@@ -1233,17 +1249,27 @@ class operacion extends sigesop {
                 $sumatoria_horas+=$horas;
                 $sumatoria_minutos+=$min_total;
 
-
             }
 
+			
             $min = $sumatoria_minutos % 60;
             //$row['horas_acumuladas_evento'] = $sumatoria_horas.':'.$min;
 
             $val[ 'sum_subeventos' ] = $sumatoria_horas.':'.$min;
-
+			
             //------------------------------------------------------------------------------------------------------------------------
-            // 2015-09-08 Julioe
+            // 2015-09-09 Julioe
             //------------------------------------------------------------------------------------------------------------------------
+			
+			//$tiempo_muerto_horas-=$sumatoria_horas;
+            $tiempo_muerto_minutos-=$sumatoria_minutos;
+			
+			$val[ 'tiempo_muerto' ] = intval($tiempo_muerto_minutos/60) . ":" . $tiempo_muerto_minutos%60;
+			
+			//
+			//  end - julioe
+			//
+			
             $val[ 'num_subeventos' ] = $num_subeventos;
             $val[ 'fecha_inicio_evento' ] = Carbon::parse( $val[ 'fecha_inicio_evento' ], 'America/Mexico_City' )->format( 'd-m-Y' );
             $val[ 'numero_licencia' ] = $this->__get_numero_licencia( $id_libro_licencia, $consecutivo_licencia );
@@ -1311,7 +1337,7 @@ class operacion extends sigesop {
         $pdf->AddPage('L', 'A4');
 
         # estructuring data for pdf
-        $datos = $this->obtener_libro_relatorio( $get );
+        $datos = $this->obtener_libro_relatorio($get);
         $i = 0;
 
         foreach ( $datos as $row ) {
@@ -1378,7 +1404,128 @@ class operacion extends sigesop {
         $pdf->lastPage();
         $pdf->Output('/Reporte_Mantenimiento.pdf', 'I');
     } 
+//  ----------------------------------------------------------------------
+//  julioe 09-09-2015
+//  ----------------------------------------------------------------------
+    public function imprimir_reporte_periodo ( $get ) {
+        require_once('../tcpdf/tcpdf.php');
 
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de Mantenimiento' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        $datos = $this->obtener_libro_relatorio($get);
+        $i = 0;
+
+        foreach ( $datos as $row ) {
+            $id_libro_relatorio = $row[ 'id_libro_relatorio' ];
+			$string = $row['descripcion_evento'];
+			if($get[ 'historial']=='SI')
+			{
+				$string .= "<br><br><b>HISTORIAL:</b><br><br>";
+			
+				$sql =
+					"SELECT descripcion_evento, ".
+					"DATE_FORMAT( fecha_inicio_evento, '%d-%m-%Y') AS fecha_inicio_evento, ".
+					"DATE_FORMAT( fecha_termino_evento, '%d-%m-%Y') AS fecha_termino_evento, ".
+					"hora_inicio_evento, hora_termino_evento, condicion_operativa ".
+					"FROM libro_relatorio_historial ".
+					"WHERE id_libro_relatorio = $id_libro_relatorio ".
+					"ORDER BY fecha_inicio_evento ASC, hora_inicio_evento ASC";
+			
+				$query = $this->array_query( $sql );
+
+				if ( !empty( $query ) ) {
+					foreach ( $query as $log ) {
+						$string .= 
+							"INICIO: <br>".
+							$log[ 'fecha_inicio_evento' ]." ".$log[ 'hora_inicio_evento' ]."<br>".
+                        
+							"TERMINO: <br>".
+							$log[ 'fecha_termino_evento' ]." ".$log[ 'hora_termino_evento' ]."<br>".
+
+							"CONDICION OPERATIVA: ".$log[ 'condicion_operativa' ]."<br>".
+                        
+							"DESCRIPCIÓN: <br>".
+							$log[ 'descripcion_evento' ]."<br><br>";
+					}
+					$datos[ $i ][ 'descripcion_evento' ] = $string;
+				}
+				else {
+					$datos[ $i ][ 'descripcion_evento' ] = $string;
+				}
+			}
+			$i++;
+        }
+		
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'NO. AEREO', 'campo'=> 'numero_aero', 'x'=>50 ),
+                    array( 'titulo' => 'CONDICION', 'campo'=> 'condicion_operativa','x'=>70 ),
+                    array( 'titulo' => 'REPORTE DE EVENTO', 'campo'=> 'descripcion_evento', 'x'=>220 ),
+                    array( 'titulo' => 'FECHA INICIO EVENTO', 'campo'=> 'fecha_inicio_evento', 'x'=>82 ),
+                    array( 'titulo' => 'HORA INICIO EVENTO', 'campo'=> 'hora_inicio_evento', 'x'=>82 ),
+					array( 'titulo' => 'FECHA TERMINO EVENTO', 'campo'=> 'fecha_termino_evento' , 'x'=>82  ),
+                    array( 'titulo' => 'HORA TERMINO EVENTO', 'campo'=> 'hora_termino_evento', 'x'=>82 ),
+                    array( 'titulo' => 'TIEMPO TOTAL', 'campo'=> 'horas_acumuladas_evento', 'x'=>72 ),
+					array( 'titulo' => 'NO. SUBEVENTOS', 'campo'=> 'num_subeventos', 'x'=>70 ),
+					array( 'titulo' => 'T. TOTAL SUBEVENTOS', 'campo'=> 'sum_subeventos', 'x'=>70 ),
+                    array( 'titulo' => 'TIEMPO MUERTO', 'campo'=> 'tiempo_muerto', 'x'=>70 )
+                ), 
+                $datos
+            );
+
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_Mantenimiento.pdf', 'I');
+    } 	
+//  ----------------------------------------------------------------------
+//  end julioe
+//  ----------------------------------------------------------------------	
     public function eliminar_libro_relatorio ( $get ) {
         $rsp = array();
 
