@@ -32,6 +32,8 @@ function main () {
 				url: 'ajax/ajax.php?q=iniciarSesion',
 				success: function ( data ) {
 					alert( data );
+                    if ( data === 'OK' ) 
+                        document.location.href = 'vistas/menu.php';
 				},
 				error: function () {
 					alert( 'Error de conexion ajax!!!' );

@@ -1,11 +1,11 @@
 /* Cache de datos para manipulacion local
  *
  * [window.session.matrizTipoMantto]
- * 
+ *
  */
 sigesop.tipoMantenimiento = {
 	document: function ( opt ) {
-		var 
+		var
 		suf = opt.suf || '',
 
 		html =
@@ -13,7 +13,7 @@ sigesop.tipoMantenimiento = {
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Nombre Mantenimiento:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="nombre_mantenimiento" id="nombre-mantenimiento-' + suf + 
+						'<input name="nombre_mantenimiento" id="nombre-mantenimiento-' + suf +
 						'" class="form-control input-md" ' +
 						'placeholder="Ingrese nombre del nuevo tipo de mantenimiento"></input>'+
 					'</div>'+
@@ -22,7 +22,7 @@ sigesop.tipoMantenimiento = {
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">ID Mantenimiento:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="id_mantenimiento" id="id-mantenimiento-' + suf + 
+						'<input name="id_mantenimiento" id="id-mantenimiento-' + suf +
 						'" class="form-control input-md" ' +
 						'placeholder="Ingrese ID del mantenimiento (2 Caracteres)"></input>'+
 					'</div>'+
@@ -47,9 +47,9 @@ sigesop.tipoMantenimiento = {
 				'<div class="form-group">'+
 					'<div class="col-sm-3 control-label"></div>'+
 					'<p class="col-sm-7">'+
-						'<button type="submit" id="btn-guardar-tipo-mantenimiento-' + suf + 
+						'<button type="submit" id="btn-guardar-tipo-mantenimiento-' + suf +
 						'" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> '+
-						'<button type="reset"  id="btn-limpiar-tipo-mantenimiento-' + suf + 
+						'<button type="reset"  id="btn-limpiar-tipo-mantenimiento-' + suf +
 						'" class="btn btn-success"> <span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>'+
 					'</p>'+
 				'</div>'+
@@ -60,23 +60,23 @@ sigesop.tipoMantenimiento = {
 			IDS.$nombre_mantenimiento.val('');
 			IDS.$id_mantenimiento.val('');
 			IDS.$numero_frecuencia.val('');
-			IDS.$tipo_frecuencia.val('');		
+			IDS.$tipo_frecuencia.val('');
 
 			if( IDS.$form !== null )
 				IDS.$form.formValidation( 'resetForm' );
 		},
 
 		javascript = function () {
-			var 
-			doc = this,
-			datos = this.datos,
-			form = this.IDS.form,
-			$botonLimpiar = $( doc.IDS.botonLimpiar ),
-			$nombre_mantenimiento = $( datos.nombre_mantenimiento.idHTML ),
-			$id_mantenimiento = $( datos.id_mantenimiento.idHTML ),
-			$numero_frecuencia = $( datos.numero_frecuencia.idHTML ),
-			$tipo_frecuencia = $( datos.tipo_frecuencia.idHTML ),
-			$form = $( form )
+			var
+			doc                   = this,
+			datos                 = this.datos,
+			form                  = this.IDS.form,
+			$botonLimpiar         = $( doc.IDS.botonLimpiar ),
+			$nombre_mantenimiento = $( datos.nombre_mantenimiento.idHTML ).toUpperCase(),
+			$id_mantenimiento     = $( datos.id_mantenimiento.idHTML ).toUpperCase(),
+			$numero_frecuencia    = $( datos.numero_frecuencia.idHTML ),
+			$tipo_frecuencia      = $( datos.tipo_frecuencia.idHTML ),
+			$form                 = $( form )
 			.formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',
@@ -92,17 +92,15 @@ sigesop.tipoMantenimiento = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
 		            nombre_mantenimiento: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.nombre_mantenimiento.valor = val;
-		            		data.element.val( val );
+		            		datos.nombre_mantenimiento.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.nombre_mantenimiento.valor = null;
@@ -115,7 +113,7 @@ sigesop.tipoMantenimiento = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    stringLength: {		                    	
+		                    stringLength: {
 		                    	max: 30,
 		                    	message: 'Número de caracteres inválido'
 		                    },
@@ -128,9 +126,7 @@ sigesop.tipoMantenimiento = {
 
 		            id_mantenimiento: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.id_mantenimiento.valor = val;
-		            		data.element.val( val );
+		            		datos.id_mantenimiento.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.id_mantenimiento.valor = null;
@@ -143,7 +139,7 @@ sigesop.tipoMantenimiento = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    stringLength: {	                    	
+		                    stringLength: {
 		                    	max: 2,
 		                    	message: 'Número de caracteres inválido'
 		                    },
@@ -169,7 +165,7 @@ sigesop.tipoMantenimiento = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    integer: {		                    
+		                    integer: {
 		                    	message: 'Caracteres inválidos, sólo números'
 		                    }
 		                }
@@ -199,7 +195,7 @@ sigesop.tipoMantenimiento = {
 			});
 
 			/* Enlazar publicamente instancias jQuery de los campos
-			 */	
+			 */
 			doc.IDS.$form = $form;
 			doc.IDS.$botonLimpiar = $botonLimpiar;
 			doc.IDS.$nombre_mantenimiento = $nombre_mantenimiento;
@@ -237,7 +233,7 @@ sigesop.tipoMantenimiento = {
 				$numero_frecuencia.val( obj.numero_frecuencia );
 				$tipo_frecuencia.val( obj.tipo_frecuencia );
 
-				/* Guardamos el ID del equipo que se actualizará				
+				/* Guardamos el ID del equipo que se actualizará
 				 */
 				datos.id_mantenimiento_update.valor = obj.id_mantenimiento;
 			}
@@ -247,7 +243,7 @@ sigesop.tipoMantenimiento = {
 			nombre_mantenimiento: {
 				valor: null,
 				idHTML: '#nombre-mantenimiento-' + suf
-			},	
+			},
 			id_mantenimiento: {
 				valor: null,
 				idHTML: '#id-mantenimiento-' + suf
@@ -264,14 +260,14 @@ sigesop.tipoMantenimiento = {
 		},
 
 		IDS = {
-			botonGuardar: '#btn-guardar-tipo-mantenimiento-' + suf,
-			botonLimpiar: '#btn-limpiar-tipo-mantenimiento-' + suf,
-			form: '#form-tipo-mantenimiento-' + suf,
-			$form: null,
+			botonGuardar         : '#btn-guardar-tipo-mantenimiento-' + suf,
+			botonLimpiar         : '#btn-limpiar-tipo-mantenimiento-' + suf,
+			form                 : '#form-tipo-mantenimiento-' + suf,
+			$form                : null,
 			$nombre_mantenimiento: null,
-			$id_mantenimiento: null,
-			$numero_frecuencia: null,
-			$tipo_frecuencia: null
+			$id_mantenimiento    : null,
+			$numero_frecuencia   : null,
+			$tipo_frecuencia     : null
 		},
 
 		doc = {
@@ -280,16 +276,16 @@ sigesop.tipoMantenimiento = {
 			datos: datos,
 			IDS: IDS
 		};
-		
-		return doc;		
+
+		return doc;
 	},
 
 	registro: function ( opt ) {
-		var 
+		var
 
 		suf = opt.suf || '',
 
-		html = 
+		html =
 			'<form id="form-registro-tipo-mantenimiento-' + suf + '" class="form-horizontal" role="form">'+
 				'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
 					'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
@@ -301,11 +297,11 @@ sigesop.tipoMantenimiento = {
 				'<div class="form-group">'+
 					'<div class="col-sm-5 control-label"></div>'+
 					'<p class="col-sm-7">'+
-						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de los tipos de mantenimiento</button>'+					
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de los tipos de mantenimiento</button>'+
 					'</p>'+
 				'</div>'+
 
-				'<div class="form-group">' +					
+				'<div class="form-group">' +
 					'<div class="col-sm-12 col-md-12" id="tabla-registro-tipo-mantenimiento-' + suf + '"></div>' +
 				'</div>' +
 			'</form>',
@@ -314,7 +310,7 @@ sigesop.tipoMantenimiento = {
 			var
 			doc = this,
 			$botonImprimir = $( doc.IDS.botonImprimir ),
-			table = 
+			table =
 				sigesop.tablaRegistro({
 					head: 'ID, NOMBRE MANTENIMIENTO, FRECUENCIA, TIPO FRECUENCIA',
 					campo: 'id_mantenimiento, nombre_mantenimiento, numero_frecuencia, tipo_frecuencia'
@@ -329,7 +325,7 @@ sigesop.tipoMantenimiento = {
 				selector: 'tr',
 				items: {
 		            editar: {
-		            	name: 'Editar', 
+		            	name: 'Editar',
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -339,7 +335,7 @@ sigesop.tipoMantenimiento = {
 		        		}
 		            },
 		            eliminar: {
-		            	name: 'Eliminar', 
+		            	name: 'Eliminar',
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -351,7 +347,7 @@ sigesop.tipoMantenimiento = {
 				}
 			});
 
-			$botonImprimir.on( 'click', function ( event ) { 
+			$botonImprimir.on( 'click', function ( event ) {
 				var url = sigesop.raizServidor + 'ajax.php?class=listaVerificacion' +
 					'&action=imprimirTipoMtto',
 					win = window.open( url );

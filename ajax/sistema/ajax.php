@@ -46,17 +46,23 @@ switch ( $_GET['class'] ) // clases del sistema
 		break;
 
 	case 'sistema':
-		require ( 'sistema.class.php' );
-		
-		if ( $_GET['action'] != 'solicitudInicioSesion' ) 			
-		    $obj = new sistema( $user, $pass );
+		if ( $_GET[ 'action' ] == 'keepAlive' ) {
+			echo json_encode( array( 'state' => 'OK' ) );
+			return null;
+		}
 
-		else 
-		{			
+		require ( 'sistema.class.php' );		
+
+		if ( $_GET['action'] != 'solicitudInicioSesion' ) {
+			$obj = new sistema( $user, $pass );
+		}
+
+		else
+		{
 		    $_SESSION['host'] = 'localhost';
 		    $_SESSION['user'] = $_POST['usuario']['valor'];
-		    $_SESSION['pass'] = $_POST['clave']['valor'];		    
-		    
+		    $_SESSION['pass'] = $_POST['clave']['valor'];
+
 		    $user = $_SESSION['user'];
 		    $pass = $_SESSION['pass'];
 		    $host = $_SESSION['host'];
@@ -84,7 +90,7 @@ switch ( $_GET['class'] ) // clases del sistema
 		require ( 'usuarios.class.php' );
 		$obj = new usuarios( $user, $pass );
 		break;
-	
+
 	default:
 		echo json_encode( "Clase indefinida" ); return 0;
 		break;

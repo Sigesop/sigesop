@@ -10,7 +10,7 @@ function main() {
 
 	/* documento de reportes activos
 	 */
-	docR = sigesop.reporteNovedades.registro({
+	docR = sigesop.reporteNovedades.activeEvents({
 		badge: 'badge_RR',
 		table: {			
 			actions: {
@@ -22,12 +22,12 @@ function main() {
 			}
 		}
 	});
-	document.getElementById( 'main_registro' ).innerHTML = '<br>' + docR.html;
+	document.getElementById( 'main-2' ).innerHTML = '<br>' + docR.html;
 	docR.javascript();
 
 	/* documento de reportes finalizados
 	 */
-	docRF = sigesop.reporteNovedades.registroFinalizados({ 
+	docRF = sigesop.reporteNovedades.finalyEvents({ 
 		error: function () {
 			sigesop.msg( 'Info', 'Las fechas son inválidas', 'info' )
 		},
@@ -38,18 +38,18 @@ function main() {
 			}
 		}
 	});
-	document.getElementById( 'main_registro_terminados' ).innerHTML = '<br>' + docRF.html;
+	document.getElementById( 'main-3' ).innerHTML = '<br>' + docRF.html;
 	docRF.javascript();
 
 	/* documento de impresion de reportes
 	 */
-	docRR = sigesop.reporteNovedades.registroReporte({ 
+	docRR = sigesop.reporteNovedades.eventsByUnity({ 
 		success: consultaReporteI,
 		error: function () {
 			sigesop.msg( 'Info', 'existe campo vacio', 'info' )
 		}
 	});
-	document.getElementById( 'main_registro_reporte' ).innerHTML = '<br>' + docRR.html;
+	document.getElementById( 'main-4' ).innerHTML = '<br>' + docRR.html;
 	docRR.javascript();
 
 	/* documento de impresion de reportes por periodos	
@@ -61,7 +61,7 @@ function main() {
 			sigesop.msg( 'Info', 'Completar informacion', 'info' );
 		}
 	});
-	document.getElementById( 'main_registro_periodo' ).innerHTML = '<br>' + docRP.html;
+	document.getElementById( 'main-5' ).innerHTML = '<br>' + docRP.html;
 	docRP.javascript();
 
 	/* documento de reportes por orden de trabajo	
@@ -71,8 +71,19 @@ function main() {
 		success: consultaReporteIII,
 		error: sigesop.completeCampos
 	});
-	document.getElementById( 'main-registro-orden-trabajo' ).innerHTML = '<br>' + docROT.html;
+	document.getElementById( 'main-6' ).innerHTML = '<br>' + docROT.html;
 	docROT.javascript();
+
+	/* documento de reportes por orden de trabajo	
+	 */ 
+	docROTP = sigesop.reporteNovedades.reporteOrdenTrabajoProgramado({
+		badge  : 'badge_ROTP',
+		suf    : '-orden-trabajo-programado',
+		success: consultaReporteIV,
+		error  : sigesop.completeCampos
+	});
+	document.getElementById( 'main-7' ).innerHTML = '<br>' + docROTP.html;
+	docROTP.javascript();
 
 	/* descarga de datos
 	 */	
@@ -205,6 +216,13 @@ function agregarEvento( index ) {
 		throw new Error('function materiales: elem es indefinido');
 	}
 
+	// docN = sigesop.reporteNovedades.documentEvento({
+	// 	eventoPrincipal: elem,
+	// 	success: __nuevoEvento,
+	// 	error: sigesop.completeCampos,
+	// 	condicion_operativa: elem.condicion_operativa
+	// });
+
 	var
 
 	__nuevoEvento = function ( datos, IDS, limpiarCampos ) {
@@ -231,6 +249,7 @@ function agregarEvento( index ) {
 	},
 
 	docN = sigesop.reporteNovedades.documentEvento({
+		eventoPrincipal: elem,
 		success: __nuevoEvento,
 		error: sigesop.completeCampos,
 		condicion_operativa: elem.condicion_operativa
@@ -345,6 +364,7 @@ function historialEvento( index ) {
 		},
 
 		_doc = sigesop.reporteNovedades.documentEvento({
+			eventoPrincipal: elem,
 			suf: 'edicion',
 			vista: 'actualizar_evento_relatorio',
 			condicion_operativa: elem.condicion_operativa,
@@ -463,7 +483,10 @@ function historialEventosFinalizados( index ) {
 }
 
 function consultaReporteI ( datos ) {
-	$( docRR.table.body ).empty();
+	$badge = $( '#badge_RU' );
+
+	$badge.empty();
+	$( docRR.table.body ).empty();	
 	var
 	numero_unidad = $( datos.numero_unidad.idHTML ).val(),
 	fecha_inf = $( datos.fecha_inf.idHTML ).val(),
@@ -481,8 +504,8 @@ function consultaReporteI ( datos ) {
 		class: 'operacion',
 		query: 'obtener_libro_relatorio',
 		queryType: 'sendGetData',
-		success: function ( data ) 
-		{ 
+		success: function ( data ) {
+			$badge.html( data.length );
 			data.length > 0 ?
 				docRR.table.update_table( data ):
 				sigesop.msg( 'Advertencia', 'No hay registros...', 'warning' );
@@ -494,6 +517,9 @@ function consultaReporteI ( datos ) {
 // 2015-09-08 Julioe
 //------------------------------------------------------------------------------------------------------------------------
 function consultaReporteII ( datos ) {
+	$badge = $( '#badge_RP' );
+
+	$badge.empty();
 	$( docRP.table.body ).empty();
 	var 
 		condicion_operativa = $( datos.condicion_operativa.idHTML ).val(),
@@ -512,7 +538,8 @@ function consultaReporteII ( datos ) {
 		class: 'operacion',
 		query: 'obtener_libro_relatorio',
 		queryType: 'sendGetData',
-		success: function ( data ) { 
+		success: function ( data ) {
+			$badge.html( data.length );
 			data.length > 0 ?
 				docRP.table.update_table( data ):
 				sigesop.msg( 'Advertencia', 'No hay registros...', 'warning' );
@@ -523,9 +550,55 @@ function consultaReporteII ( datos ) {
 // 2015-09-08 Julioe
 //------------------------------------------------------------------------------------------------------------------------
 
-function consultaReporteIII ( datos, IDS, limpiarCampos ) {
-
+function consultaReporteIII( datos ) {
+	$( docROT.table.body ).empty();
+	sigesop.query({
+		data: { 
+			fecha_inf: datos.fecha_inf.valor,
+			fecha_sup: datos.fecha_sup.valor,
+			tipo_orden_trabajo: datos.tipo_orden_trabajo.valor,
+			historial: datos.historial.valor,
+			aeros: datos.aeros
+		},
+		class: 'operacion',
+		query: 'obtener_libro_relatorio_orden_trabajo',
+		queryType: 'sendGetData',
+		success: function ( data ) { 
+			data.length > 0 ?
+				docROT.table.update_registro( data ):
+				sigesop.msg( 'Advertencia', 'No hay registros...', 'warning' );
+		}
+	});
 } 
+
+/* consulta de la programacion de mantenimiento
+ * y los estados en los que se encuentran
+ */ 
+function consultaReporteIV ( datos ) {
+	docROTP.IDS.$badge.empty();
+	$( docROTP.table.body ).empty();
+
+	sigesop.query({
+		data: {
+			option: 'obtener_libro_relatorio_orden_trabajo_programado',
+			fecha_inf: datos.fecha_inf.valor,
+			fecha_sup: datos.fecha_sup.valor,
+			sin_licencia: datos.sin_licencia.valor
+			// historial: datos.historial.valor,
+			// aeros: datos.aeros
+		},
+		class: 'mantenimiento',
+		query: 'obtenerOrdenTrabajo',
+		queryType: 'sendGetData',
+		success: function ( data ) { datos = data;
+			window.sesion.orden_trabajo_planificacion = data;
+			docROTP.IDS.$badge.html ( data.length );
+			data.length > 0 ?
+				docROTP.table.update_registro( data ):
+				sigesop.msg( 'Advertencia', 'No hay registros...', 'warning' );
+		}
+	});
+}
 
 function editarElemento( index ) {
 	if ( index < 0 ) 
@@ -568,10 +641,10 @@ function editarElemento( index ) {
 	},
 
 	_doc = sigesop.reporteNovedades.document({
-		suf: 'update',
-		obj: elem,
-		error: sigesop.completeCampos,
-		success: actualizarElemento
+		success: actualizarElemento,
+		error: sigesop.completeCampos,		
+		action: 'update',
+		obj: elem
 	}),
 
 	win = BootstrapDialog.show({

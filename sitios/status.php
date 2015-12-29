@@ -7,7 +7,6 @@ $pass = $_SESSION['pass'];
 $host = $_SESSION['host']; 
 
 $obj = new sigesop( $user, $pass );
-
 if ( !$obj->accesoPagina( 'status.php' ) ) {
     session_destroy();
     header('Location: ../error.php');

@@ -1,15 +1,15 @@
 /* Cache de datos para manipulacion local
  *
  * [window.session.matrizUnidadMedida]
- * 
+ *
  */
 sigesop.unidadMedida = {
-	document: function ( opt ) {		
-		var 
-		
+	document: function ( opt ) {
+		var
+
 		suf = opt.suf || '',
 
-		html = 
+		html =
 			'<form id="form-unidad-medida-' + suf + '" class="form-horizontal" role="form">' +
 				'<div class="form-group">' +
 					'<label class="col-sm-3 control-label">Unidad de Medida:</label>' +
@@ -37,7 +37,7 @@ sigesop.unidadMedida = {
 		limpiarCampos = function () {
 			var datos = this.datos;
 			$( datos.unidad_medida.idHTML ).val( '' );
-			$( datos.descripcion_unidad_medida.idHTML ).val( '' );			
+			$( datos.descripcion_unidad_medida.idHTML ).val( '' );
 
 			if( this.IDS.$form !== null )
 				this.IDS.$form.formValidation( 'resetForm' );
@@ -45,13 +45,13 @@ sigesop.unidadMedida = {
 
 		javascript = function () {
 			var
-			doc = this,
-			form = doc.IDS.form,
-			datos = doc.datos,
-			$botonGuardar = $( doc.IDS.botonLimpiar ),
-			$unidad_medida = $( doc.datos.unidad_medida.idHTML ),
-			$descripcion_unidad_medida = $( doc.datos.descripcion_unidad_medida.idHTML ),
-			$form = $( form )
+			doc                        = this,
+			form                       = doc.IDS.form,
+			datos                      = doc.datos,
+			$botonGuardar              = $( doc.IDS.botonLimpiar ),
+			$unidad_medida             = $( doc.datos.unidad_medida.idHTML ).toUpperCase(),
+			$descripcion_unidad_medida = $( doc.datos.descripcion_unidad_medida.idHTML ).toUpperCase(),
+			$form                      = $( form )
 			.formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',
@@ -67,17 +67,15 @@ sigesop.unidadMedida = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
 		            unidad_medida: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.unidad_medida.valor = val;
-		            		data.element.val( val );
+		            		datos.unidad_medida.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.unidad_medida.valor = null;
@@ -90,7 +88,7 @@ sigesop.unidadMedida = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    stringLength: {		                    	
+		                    stringLength: {
 		                    	max: 20,
 		                    	message: 'Número de caracteres inválido'
 		                    },
@@ -103,9 +101,7 @@ sigesop.unidadMedida = {
 
 		            descripcion_unidad_medida: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.descripcion_unidad_medida.valor = val;
-		            		data.element.val( val );
+		            		datos.descripcion_unidad_medida.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.descripcion_unidad_medida.valor = null;
@@ -118,7 +114,7 @@ sigesop.unidadMedida = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    stringLength: {	                    	
+		                    stringLength: {
 		                    	max: 50,
 		                    	message: 'Número de caracteres inválido'
 		                    },
@@ -135,7 +131,7 @@ sigesop.unidadMedida = {
 			});
 
 			/* Enlazar publicamente instancias jQuery de los campos
-			 */		
+			 */
 			doc.IDS.$form = $form;
 			doc.IDS.$botonGuardar = $botonGuardar;
 			doc.IDS.$unidad_medida = $unidad_medida;
@@ -155,7 +151,7 @@ sigesop.unidadMedida = {
 				$unidad_medida.val( obj.unidad_medida );
 				$descripcion_unidad_medida.val( obj.descripcion_unidad_medida );
 
-				/* Guardamos el ID del equipo que se actualizará				
+				/* Guardamos el ID del equipo que se actualizará
 				 */
 				doc.datos.unidad_medida_update.valor = obj.unidad_medida;
 			}
@@ -194,11 +190,11 @@ sigesop.unidadMedida = {
 	},
 
 	registro: function ( opt ) {
-		var 
+		var
 
 		suf = opt.suf || '',
 
-		html = 
+		html =
 		'<form id="form-registro-unidad-medida-' + suf + '" class="form-horizontal" role="form">'+
 			'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
 				'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
@@ -210,11 +206,11 @@ sigesop.unidadMedida = {
 			'<div class="form-group">'+
 				'<div class="col-sm-5 control-label"></div>'+
 				'<p class="col-sm-7">'+
-					'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de unidades de medida</button>'+					
+					'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" > <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir Reporte de unidades de medida</button>'+
 				'</p>'+
 			'</div>'+
 
-			'<div class="form-group">' +					
+			'<div class="form-group">' +
 				'<div class="col-sm-12 col-md-12" id="tabla-registro-unidad-medida-' + suf + '"></div>' +
 			'</div>' +
 		'</form>',
@@ -223,7 +219,7 @@ sigesop.unidadMedida = {
 			var
 			doc = this,
 			$botonImprimir = $( doc.IDS.botonImprimir ),
-			table = 
+			table =
 				sigesop.tablaRegistro({
 					head: 'UNIDAD DE MEDIDA, DESCRIPCIÓN',
 					campo: 'unidad_medida, descripcion_unidad_medida'
@@ -238,7 +234,7 @@ sigesop.unidadMedida = {
 				selector: 'tr',
 				items: {
 		            editar: {
-		            	name: 'Editar', 
+		            	name: 'Editar',
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -248,7 +244,7 @@ sigesop.unidadMedida = {
 		        		}
 		            },
 		            eliminar: {
-		            	name: 'Eliminar', 
+		            	name: 'Eliminar',
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -260,7 +256,7 @@ sigesop.unidadMedida = {
 				}
 			});
 
-			$botonImprimir.on( 'click', function ( event ) { 
+			$botonImprimir.on( 'click', function ( event ) {
 				var url = sigesop.raizServidor + 'ajax.php?class=listaVerificacion' +
 					'&action=imprimirUM',
 					win = window.open( url );
@@ -286,5 +282,5 @@ sigesop.unidadMedida = {
 		};
 
 		return doc;
-	}	
+	}
 }

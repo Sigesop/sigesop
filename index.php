@@ -5,9 +5,11 @@
 		<meta charset="UTF-8"/>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+		
 		<script type="text/javascript">
 			document.write('<link rel="stylesheet" href="css/login.css">');
-		</script>				
+		</script>
+
 		<link rel="stylesheet" href="css/bootstrap.min.css">
 		<link rel="stylesheet" href="css/cfe/jquery.ui.all.css">
 		<link rel="stylesheet" href="css/style.css">
@@ -31,8 +33,9 @@
 		<script type="text/javascript" src="js/jquery.blockUI.js"></script>
 	
 		<script src="js/coreSigesop/core.sigesop.cfe.js"></script>
-		<script src="js/coreSigesop/core.login.js"></script>
-		<script src="js/coreSigesop/main.login.js"></script>
+		<script src="js/coreSigesop/view.bootstrap.loginDocument.js"></script>
+		<script src="js/coreSigesop/core.loginDocument.js"></script>
+		<script src="js/coreSigesop/main.loginDocument.js"></script>
 	</body>
 
 </html>

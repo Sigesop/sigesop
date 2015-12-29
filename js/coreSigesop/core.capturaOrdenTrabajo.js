@@ -532,7 +532,7 @@ sigesop.capturaOrdenTrabajo = {
 	            		'<td class="info col-lg-2 col-sm-2">' +
 	            			'<textarea name="observaciones" id="obser_' + 
 	            			obj.id_orden_trabajo + '_' + j + suf +
-	            			'" class="form-control eventoCambioMayuscula" ' +
+	            			'" class="form-control" ' +
 	            			disabled + ' ></textarea>' +
 	            		'</td>' +
 	            	'</tr>';
@@ -749,7 +749,7 @@ sigesop.capturaOrdenTrabajo = {
             		'<td class="info col-lg-2 col-sm-2 has-error">';
 
             	tabla +=
-            			'<textarea class="form-control eventoCambioMayuscula" readonly >' +
+            			'<textarea class="form-control" readonly >' +
             				fila.observaciones +
             			'</textarea>' +
             		'</td>' +
@@ -784,15 +784,13 @@ sigesop.capturaOrdenTrabajo = {
 				.innerHTML = table.html;
 				doc.datos.datos_actividad = table.actividades;
 
-				$( '.eventoCambioMayuscula' ).eventoCambioMayuscula();
-
 				var
 				$form = $( form ).formValidation({
-			        icon: {
-			            valid: 'glyphicon glyphicon-ok',
-			            invalid: 'glyphicon glyphicon-remove',
-			            validating: 'glyphicon glyphicon-refresh'
-			        },
+			        // icon: {
+			        //     valid: 'glyphicon glyphicon-ok',
+			        //     invalid: 'glyphicon glyphicon-remove',
+			        //     validating: 'glyphicon glyphicon-refresh'
+			        // },
 			        row: {
 			            selector: 'td'
 			        },

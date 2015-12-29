@@ -1,6 +1,6 @@
 <?php
 require 'sigesop.class.php';
-class usuarios extends sigesop {	
+class usuarios extends sigesop {
     private $matrizPermisoAcceso = array(
         array('idPermiso' => 'select', 'descripcion' => 'Consulta a datos'),
         array('idPermiso' => 'insert', 'descripcion' => 'Inserción de datos'),
@@ -28,7 +28,7 @@ class usuarios extends sigesop {
             case 'actualizarRolUsuario':
                 $actualizarRolUsuario = $this->actualizarRolUsuario( $post );
                 echo json_encode( $actualizarRolUsuario );
-                break;             
+                break;
             case 'actualizarUsuario':
                 $actualizarUsuario = $this->actualizarUsuario( $post );
                 echo json_encode($actualizarUsuario);
@@ -72,7 +72,7 @@ class usuarios extends sigesop {
             case 'obtenerTipoRolUsuario':
                 $obtenerTipoRolUsuario = $this->obtenerTipoRolUsuario();
                 echo json_encode($obtenerTipoRolUsuario);
-                break;                               
+                break;
             case 'obtenerUsuarios':
                 $obtenerUsuarios = $this->obtenerUsuarios();
                 echo json_encode( $obtenerUsuarios );
@@ -82,17 +82,17 @@ class usuarios extends sigesop {
             case 'imprimirR':
                 $query = $this->imprimirR();
                 echo json_encode( $query );
-                break; 
+                break;
 
             case 'imprimir':
                 $query = $this->imprimir( $get );
                 echo json_encode( $query );
-                break; 
+                break;
 
             case 'imprimirAT':
                 $query = $this->imprimirAT( );
                 echo json_encode( $query );
-                break; 
+                break;
 
             default:
                 echo json_encode('Funcion no registrada en la clase usuarios');
@@ -104,37 +104,37 @@ class usuarios extends sigesop {
 
     public function nuevaAreaTrabajo( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
+        if ( !$this->estadoConexion )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
         if ( !$this->estadoConexionMysql )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );
 
-        $validar = 
+        $validar =
             $this->verificaDatosNulos( $data, array(
                 'claveAreaTrabajo', 'descripcionAreaTrabajo'
             ));
 
-        if ( $validar === 'OK' ) 
+        if ( $validar === 'OK' )
         {
             $clave_areaTrabajo = $data['claveAreaTrabajo']['valor'];
             $descripcion_areaTrabajo = $data['descripcionAreaTrabajo']['valor'];
             $conexion = $this->conexion;
 
             $sql =  "INSERT INTO area_trabajo( clave_areaTrabajo, descripcion_areaTrabajo ) ".
-                    "VALUES( '$clave_areaTrabajo', '$descripcion_areaTrabajo' )";      
+                    "VALUES( '$clave_areaTrabajo', '$descripcion_areaTrabajo' )";
             $query = $this->insert_query( $sql );
-            
-            if ( $query === 'OK' ) 
-            {                
+
+            if ( $query === 'OK' )
+            {
                 $conexion->commit();
                 $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Área de trabajo ingresado satisfactoriamente.' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $clave_areaTrabajo, 'msj' => 'Correcto' );
-            } 
-            else 
+            }
+            else
             {
                 $conexion->rollback();
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar Área de trabajo.' );
-                $rsp [ 'eventos' ][] = 
+                $rsp [ 'eventos' ][] =
                     array( 'estado' => 'ERROR', 'elem' => $clave_areaTrabajo, 'msj' => $query );
             }
         }
@@ -150,115 +150,124 @@ class usuarios extends sigesop {
 
     public function nuevoRolUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
+        if ( !$this->estadoConexion )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
         if ( !$this->estadoConexionMysql )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );
 
-        $validar = 
+        $validar =
             $this->verificaDatosNulos( $data, array(
-                'nombreRol', 'descripcionRol',               
-                'matrizAreaAcceso', 'matrizPermisoAcceso'
+                'nombreRol',
+                'descripcionRol',
+                'matrizAreaAcceso',
+                'matrizPermisoAcceso'
             ));
 
-        if( $validar === 'OK' )
-        {
-            $clave_rol =                $data[ 'nombreRol' ][ 'valor' ];
-            $descripcion_areaTrabajo =  $data[ 'descripcionRol' ][ 'valor' ];
-            $matrizAreaAcceso =         $data[ 'matrizAreaAcceso' ];
-            $matrizPermisoAcceso =      $data[ 'matrizPermisoAcceso' ];
-            $conexion = $this->conexion;
-            $state = true; # bandera para comprobar recorrido de arreglo
+        if( $validar != 'OK' ) {
+            $rsp[ 'status' ]  = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+        }
 
-            # ----------------------
-            $sql = "insert into roles values('$clave_rol', '$descripcion_areaTrabajo')"; 
+        $clave_rol               = $data[ 'nombreRol' ][ 'valor' ];
+        $descripcion_areaTrabajo = $data[ 'descripcionRol' ][ 'valor' ];
+        $matrizAreaAcceso        = $data[ 'matrizAreaAcceso' ];
+        $matrizPermisoAcceso     = $data[ 'matrizPermisoAcceso' ];
+        $conexion                = $this->conexion;
+        $state                   = true; # bandera para comprobar recorrido de arreglo
+
+        # ----------------------
+        $sql = "INSERT INTO roles VALUES( ".
+            "'$clave_rol', ".
+            "'$descripcion_areaTrabajo' ".
+        ")";
+        // return $sql;
+
+        $query = $this->insert_query( $sql );
+        if ($query != 'OK') {
+            $conexion->rollback();
+            $rsp[ 'status' ]    = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar Rol en la base de datos' );
+            $rsp[ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $clave_rol, 'msj' => $query );
+            return $rsp;
+        }
+
+        foreach ( $matrizPermisoAcceso as $row ) {
+            $sql = "INSERT INTO permiso_rol VALUES( ".
+                "'$clave_rol', ".
+                "'$row' ".
+            ")";
+            // return $sql;
+
             $query = $this->insert_query( $sql );
+            if ( $query != 'OK' ) {
+                $state = false;
+                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $row, 'msj' => $query );
+            }
+        }
 
-            if ($query != 'OK') 
-            {
-                $conexion->rollback();
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar Rol en la base de datos' );
-                $rsp[ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $clave_rol, 'msj' => $query );
-                return $rsp;
-            }             
-
-            foreach ( $matrizPermisoAcceso as $fila ) 
-            {
-                $sql = "insert into permiso_rol values('$clave_rol', '$fila')"; 
-
-                $query = $this->insert_query( $sql );
-                if ( $query != 'OK' ) 
-                {
-                    $state = false;
-                    $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $fila, 'msj' => $query );
+        foreach ( $matrizAreaAcceso as $_id_area_acceso ) {
+            # buscamos [nivelBarra] y [nombrePagina] dentro de la clase
+            # para almacenar con su elemento correspondiente
+            foreach ( $this->matrizAreaAcceso as $row ) {
+                if ( $row[ 'id_area_acceso' ] == $_id_area_acceso ) {
+                    $id_area_acceso = $row[ 'id_area_acceso' ];
+                    break;
                 }
             }
 
-            foreach ( $matrizAreaAcceso as $fila ) 
+            $sql = "INSERT INTO acceso_rol( ".
+                "clave_rol, ".
+                "id_area_acceso ".
+            ") VALUES( ".
+                "'$clave_rol', ".
+                "$id_area_acceso ".
+            ")";
+            // return $sql;
+
+            $query = $this->insert_query( $sql );
+            if ( $query != 'OK' )
             {
-                # buscamos [nivelBarra] y [nombrePagina] dentro de la clase
-                # para almacenar con su elemento correspondiente
-                foreach ( $this->matrizAreaAcceso as $filaNivel ) 
-                {
-                    if ( $filaNivel[ 'paginaAcceso' ] == $fila ) 
-                    {
-                        $nivelBarra = $filaNivel['nivelBarra'];
-                        $nombreBarra = $filaNivel['nombrePagina'];
-                    }
-                }
+                $state = false;
+                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $_id_area_acceso, 'msj' => $query );
+            }
+        }
 
-                $sql = "insert into acceso_rol values('$clave_rol', $nivelBarra, '$nombreBarra', '$fila')"; 
+        if ( $state === true )
+        {
+            $conexion->commit();
+            $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Rol de usuario ingresado satisfactoriamente.' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $clave_rol, 'msj' => 'Correcto' );
+        } else {
+            $conexion->rollback();
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar rol de usuario.' );
+        }
 
-                $query = $this->insert_query( $sql );
-                if ( $query != 'OK' ) 
-                {
-                    $state = false;
-                    $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $fila, 'msj' => $query );
-                }
-            }  
-
-            if ( $state === true )
-            {
-                $conexion->commit();
-                $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Rol de usuario ingresado satisfactoriamente.' );
-                $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $clave_rol, 'msj' => 'Correcto' );
-            } else {
-                $conexion->rollback();
-                $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar rol de usuario.' );
-            }            
-        } 
-        else {
-            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
-            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
-        }        
-
-        return $rsp;      
+        return $rsp;
     }
 
     # nuevoUsuario ----------------------
 
     public function nuevoUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
+        if ( !$this->estadoConexion )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
         if ( !$this->estadoConexionMysql )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );
 
-        $validar = 
+        $validar =
             $this->verificaDatosNulos( $data, array(
                 'nombreUsuario', 'apellidosUsuario', 'RPEusuario',
                 'usuario', 'claveUsuario', 'areaTrabajo', 'rolUsuario'
             ));
 
         if( $validar == 'OK' )
-        {    
+        {
             $nombre = $data['nombreUsuario']['valor'];
             $apellidos = $data['apellidosUsuario']['valor'];
             $rpeUsuario = $data['RPEusuario']['valor'];
             $usuario = $data['usuario']['valor'];
             $password = $data['claveUsuario']['valor'];
             $areaTrabajoUsuario = $data['areaTrabajo']['valor'];
-            $rolUsuario = $data['rolUsuario']['valor']; 
+            $rolUsuario = $data['rolUsuario']['valor'];
 
             $matrizDatosUsuario = array(
                 'nombreUsuario' => $nombre,
@@ -278,7 +287,7 @@ class usuarios extends sigesop {
                 $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'key' => 'usuario', 'msj' => 'Usuario no válido' );
                 return $rsp;
             }
-          
+
             # verificamos la existencia del usuario en las bases de datos laventa_cfe y mysql
 
             $flagMysql = $this->checkUserInsideMysql( $usuario );
@@ -289,17 +298,17 @@ class usuarios extends sigesop {
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'El usuario solicitado ya existe en la base de datos' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'key' => 'usuario', 'msj' => 'Duplicado' );
                 return $rsp;
-            } 
-            else if ( $flagMysql && !$flagLaVenta ) 
+            }
+            else if ( $flagMysql && !$flagLaVenta )
             {
                 # eliminamos el usuario de mysql ya que no existe en laventa_cfe
 
-                $dropUser = $this->__dropUser( $usuario );                
+                $dropUser = $this->__dropUser( $usuario );
                 if ( $dropUser == 'OK' ) $flagInsercion = true;
-            }            
+            }
             else if ( !$flagMysql && $flagLaVenta )
             {
-                # si existe en laventa_cfe pero no en mysql hay que reasignarle el 
+                # si existe en laventa_cfe pero no en mysql hay que reasignarle el
                 # usuario y los permisos conforme al rol recibido
 
                 $sql = "SELECT password_trabajador, clave_rol FROM personal where nombre_usuario = '$usuario'";
@@ -320,12 +329,12 @@ class usuarios extends sigesop {
             }
             else if ( !$flagMysql && !$flagLaVenta ) $flagInsercion = true;
 
-            if ( $flagInsercion ) 
-            {                          
-                # Creando usuario en laventa_cfe                
+            if ( $flagInsercion )
+            {
+                # Creando usuario en laventa_cfe
 
                 $usuarioLaventa = $this->__createUsuario( $matrizDatosUsuario );
-                if ( $usuarioLaventa !== 'OK' ) 
+                if ( $usuarioLaventa !== 'OK' )
                 {
                     $this->conexion->rollback();
                     $this->conexionMySQL->rollback();
@@ -333,12 +342,12 @@ class usuarios extends sigesop {
                     $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al crear usuario' );
                     $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'msj' => $usuarioLaventa );
                     return $rsp;
-                } 
+                }
 
                 # Creando usuario en Mysql
 
                 $usuarioMysql = $this->__createUser( $usuario, $password, $rolUsuario );
-                if ( $usuarioMysql === 'OK' ) 
+                if ( $usuarioMysql === 'OK' )
                 {
                     $this->conexion->commit();
                     $this->conexionMySQL->commit();
@@ -352,16 +361,16 @@ class usuarios extends sigesop {
                     $this->conexionMySQL->rollback();
 
                     $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al crear usuario' );
-                    $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'msj' => $usuarioMysql );                   
+                    $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'msj' => $usuarioMysql );
                 }
             }
-        } 
+        }
         else {
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
             $rsp[ 'eventos' ] = $validar[ 'eventos' ];
         }
 
-        return $rsp; 
+        return $rsp;
     }
 
     private function __createUsuario( $data ){
@@ -379,7 +388,7 @@ class usuarios extends sigesop {
                 "'$password','$areaTrabajo','$rol')";
 
         $query = $this->insert_query( $sql );
-        
+
         return $query;
     }
 
@@ -393,18 +402,18 @@ class usuarios extends sigesop {
             return $permisos;
         }
 
-        return $query; 
+        return $query;
     }
 
     private function __grantPrivileges( $usuario, $rol ) {
         # Definimos los permisos que tendra cada tipo de usuario
-        
+
         $sql = "SELECT permiso_rol FROM permiso_rol WHERE clave_rol = '$rol'";
         $mtz = $this->array_query( $sql, 'permiso_rol', null );
         if( empty( $mtz ) ) return 'No existen permisos registrados para el rol seleccionado';
 
         # buscamos si existe el permiso all de superUsuario
-        
+
         $superUsuario = false;
         foreach ( $mtz as $fila ) {
             if ( $fila == 'all' ) {
@@ -449,20 +458,26 @@ class usuarios extends sigesop {
 
     public function actualizarUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
+        if ( !$this->estadoConexion )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
         if ( !$this->estadoConexionMysql )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );
 
         $validar = $this->verificaDatosNulos( $data, array(
-            'nombreUsuario', 'apellidosUsuario', 'RPEusuario',
-            'usuario', 'claveUsuario', 'areaTrabajo', 'rolUsuario',
-            'RPEusuarioUpdate', 'usuarioUpdate'
+            'nombreUsuario',
+            'apellidosUsuario',
+            'RPEusuario',
+            'usuario',
+            'claveUsuario',
+            'areaTrabajo',
+            'rolUsuario',
+            'RPEusuarioUpdate',
+            'usuarioUpdate'
         ));
 
         if ( $validar === 'OK' )
         {
-            $usuario = $data['usuario']['valor'];
+            $usuario        = $data['usuario']['valor'];
             $usuario_update = $data['usuarioUpdate']['valor'];
 
             # comprobamos que no intenten usar root o usuario de sesiones
@@ -478,7 +493,7 @@ class usuarios extends sigesop {
             # o que sea un usuario activo pero cambiando sus propios datos
 
             if ( $this->checkUserInsideLaVenta( $usuario ) &&
-                 $usuario != $usuario_update ) 
+                 $usuario != $usuario_update )
             {
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar usuario' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'key' => 'usuario', 'msj' => 'Usuario existente' );
@@ -492,7 +507,7 @@ class usuarios extends sigesop {
             {
                 $this->conexion->rollback();
                 $this->conexionMySQL->rollback();
-                
+
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar usuario' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'msj' => $updateUsuario );
                 return $rsp;
@@ -503,7 +518,7 @@ class usuarios extends sigesop {
             $updateUser = $this->__updateUser( $usuario, $usuario_update,
                 $data['claveUsuario']['valor'], $data['rolUsuario']['valor'] );
 
-            if ( $updateUser === 'OK' ) 
+            if ( $updateUser === 'OK' )
             {
                 $this->conexion->commit();
                 $this->conexionMySQL->commit();
@@ -524,7 +539,7 @@ class usuarios extends sigesop {
             $rsp[ 'eventos' ] = $validar[ 'eventos' ];
         }
 
-        return $rsp; 
+        return $rsp;
     }
 
     private function __updateUsuario( $data ) {
@@ -535,13 +550,13 @@ class usuarios extends sigesop {
         $password = $data['claveUsuario']['valor'];
         $areaTrabajo = utf8_encode( $data['areaTrabajo']['valor'] );
         $rol = utf8_encode( $data['rolUsuario']['valor'] );
-        
-        /* 
+
+        /*
          * Variables que guardan el RDE y el usuario actual, antes de actualizar los datos, esto se realiza
          * en el caso que se intente cambiar el RDE y el usuario tambien, de esta manera tendremos una referencia de quién
          * updetear en la sentencia de SQL
          */
-        
+
         $RPE_update = utf8_encode( $data['RPEusuarioUpdate']['valor'] );
         $Usuario_update = utf8_encode( $data['usuarioUpdate']['valor'] );
 
@@ -555,87 +570,89 @@ class usuarios extends sigesop {
         return $query;
     }
 
-    private function __updateUser( $usuario, $usuario_update, $password, $rol ){ 
+    private function __updateUser( $usuario, $usuario_update, $password, $rol ){
         $dropUser = $this->__dropUser( $usuario ); # si existía o no, siempre retorna OK;
 
         # creamos usuario en mysql
 
-        $createUser = $this->__createUser( $usuario, $password, $rol );        
+        $createUser = $this->__createUser( $usuario, $password, $rol );
         if ( $createUser == 'OK' )
         {
             # eliminamos usuario actualizado en mysql, si el usuario
             # es diferente al usuario anterior
             if( $usuario != $usuario_update )
                 $dropUser = $this->__dropUser( $usuario_update );
-            
+
             return 'OK';
         }
     }
 
     # actualizarAreaTrabajo ---------------
 
-    public function actualizarAreaTrabajo( $data ) {        
+    public function actualizarAreaTrabajo( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
+        if ( !$this->estadoConexion )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
         if ( !$this->estadoConexionMysql )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );
 
-        $validar = 
+        $validar =
             $this->verificaDatosNulos( $data, array(
                 'claveAreaTrabajo', 'descripcionAreaTrabajo', 'claveAreaTrabajoUpdate'
             ));
 
-        if ( $validar === 'OK' ) 
+        if ( $validar === 'OK' )
         {
             $clave_areaTrabajo =         $data[ 'claveAreaTrabajo' ][ 'valor' ];
             $descripcion_areaTrabajo =   $data[ 'descripcionAreaTrabajo' ][ 'valor' ];
             $clave_areaTrabajo_update =  $data[ 'claveAreaTrabajoUpdate' ][ 'valor' ];
-            $conexion = $this->conexion;  
-                     
+            $conexion = $this->conexion;
+
             $sql =  "UPDATE area_trabajo SET clave_areaTrabajo = '$clave_areaTrabajo', ".
                     "descripcion_areaTrabajo = '$descripcion_areaTrabajo' WHERE ".
                     "clave_areaTrabajo = '$clave_areaTrabajo_update' ";
 
             $query = $this->insert_query( $sql );
-            if ( $query === 'OK' ) 
+            if ( $query === 'OK' )
             {
                 $conexion->commit();
                 $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Área de trabajo actualizada satisfactoriamente.' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $clave_areaTrabajo_update, 'msj' => 'Actualizada' );
-            } 
-            else 
+            }
+            else
             {
                 $conexion->rollback();
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al actualizar Área de trabajo.' );
-                $rsp [ 'eventos' ][] = 
+                $rsp [ 'eventos' ][] =
                     array( 'estado' => 'ERROR', 'elem' => $clave_areaTrabajo_update, 'msj' => $query );
             }
-        } 
+        }
         else {
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
             $rsp[ 'eventos' ] = $validar[ 'eventos' ];
         }
 
         return $rsp;
-    }    
+    }
 
     # actualizarRolUsuario ----------------------
 
     public function actualizarRolUsuario( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
 
-        $validar =  
+        $validar =
             $this->verificaDatosNulos( $data, array(
-                'nombreRol', 'descripcionRol', 'matrizAreaAcceso', 
-                'matrizPermisoAcceso', 'nombreRolUpdate'
+                'nombreRol', 
+                'descripcionRol', 
+                'matrizAreaAcceso',
+                'matrizPermisoAcceso', 
+                'nombreRolUpdate'
             ));
 
-        if ( $validar == 'OK' ) {  
-            $rol = $data['nombreRol']['valor'];  
+        if ( $validar == 'OK' ) {
+            $rol = $data['nombreRol']['valor'];
 
             # limpiando areas de acceso
-
             $query = $this->__limpiarAreasAcceso( $rol );
             if ( $query != 'OK') {
                 $this->conexion->rollback();
@@ -646,7 +663,6 @@ class usuarios extends sigesop {
             }
 
             # limpiando permisos de acceso
-
             $query = $this->__limpiarPermisoAcceso( $rol );
             if ( $query != 'OK' ) {
                 $this->conexion->rollback();
@@ -657,9 +673,8 @@ class usuarios extends sigesop {
             }
 
             # actualizando datos de rol
-
             $query = $this->__updateRol( $data );
-            if ( $query == 'OK' ) {              
+            if ( $query == 'OK' ) {
                 $this->conexion->commit();
                 $this->conexionMySQL->commit();
 
@@ -675,12 +690,12 @@ class usuarios extends sigesop {
                 $rsp[ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => '', 'msj' => $query );
                 return $rsp;
             }
-        } 
+        }
 
         else {
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
             $rsp[ 'eventos' ] = $validar[ 'eventos' ];
-        }        
+        }
 
         return $rsp;
     }
@@ -704,8 +719,8 @@ class usuarios extends sigesop {
         $matrizPermisoAcceso =  $data[ 'matrizPermisoAcceso' ];
 
         $rolUpdate =            $data[ 'nombreRolUpdate' ][ 'valor' ];
-                    
-        $sql = 
+
+        $sql =
         "UPDATE roles SET ".
         "clave_rol = '$rol', ".
         "descripcion_areaTrabajo = '$descripcion' ".
@@ -724,54 +739,65 @@ class usuarios extends sigesop {
         $insertarPermisoAcceso = $this->__insertarPermisoAcceso ( $rol, $matrizPermisoAcceso );
         if ( $insertarPermisoAcceso != 'OK' ) return $insertarPermisoAcceso;
 
-        # actualizar los nuevos permisos a los usuarios previamente asignados            
+        # actualizar los nuevos permisos a los usuarios previamente asignados
         $reasignarPermisos = $this->__reasignarPermisos( $rol );
-        
+
         /* si la respuesta es [null] es porque no hay usuario para reasignar permisos
          * si es [OK] es porque se reasignaron a los usuarios pertenecientes al rol actualizado
-         */ 
+         */
         if ( $reasignarPermisos == 'OK' || $reasignarPermisos == null ) return 'OK';
         else return $reasignarPermisos." Permisos no reasignados.";
     }
 
     private function __insertarAreaAcceso ( $rol, $data ) {
-        foreach ( $data as $area ) {
-            foreach ( $this->matrizAreaAcceso as $filaNivel ) {
-                if ($filaNivel['paginaAcceso'] == $area) {
-                    $nivelBarra = $filaNivel['nivelBarra'];
-                    $nombreBarra = $filaNivel['nombrePagina'];
+        foreach ( $data as $_id_area_acceso ) {
+            # buscamos [nivelBarra] y [nombrePagina] dentro de la clase
+            # para almacenar con su elemento correspondiente
+            foreach ( $this->matrizAreaAcceso as $row ) {
+                if ( $row[ 'id_area_acceso' ] == $_id_area_acceso ) {
+                    $id_area_acceso = $row[ 'id_area_acceso' ];
+                    break;
                 }
             }
 
-            $sql = "insert into acceso_rol values( '$rol', $nivelBarra, '$nombreBarra', '$area')"; 
+            $sql = "INSERT INTO acceso_rol( ".
+                "clave_rol, ".
+                "id_area_acceso ".
+            ") VALUES( ".
+                "'$rol', ".
+                "$id_area_acceso ".
+            ")";
+            // return $sql;
 
             $query = $this->insert_query( $sql );
-            if ( $query != 'OK' ) return $query.'. Error al insertar fila de acceso de pagina';
+            if ( $query != 'OK' ) {
+                return $query.'. Error al insertar fila de acceso de pagina';
+            }
         }
 
         return 'OK';
     }
 
     private function __insertarPermisoAcceso( $rol, $data ) {
-        foreach ( $data as $permiso ) 
+        foreach ( $data as $permiso )
         {
-            $sql = "insert into permiso_rol values('$rol', '$permiso')"; 
+            $sql = "insert into permiso_rol values('$rol', '$permiso')";
 
             $insertaPermiso = $this->insert_query( $sql );
             if ( $insertaPermiso != 'OK' ) return $insertaPermiso.'. Error al insertar permisos de usuario';
-        } 
+        }
 
         return 'OK';
     }
 
     private function __reasignarPermisos( $rol ) {
-        $sql = 
+        $sql =
             "SELECT nombre_usuario FROM personal ".
             "WHERE clave_rol = '$rol'";
 
         $users = $this->array_query( $sql, 'nombre_usuario', null );
         if ( $users == null ) return null;
-            
+
         foreach ( $users as $usr ) {
             $updatePermisos = $this->__grantPrivileges( $usr, $rol );
             if ( $updatePermisos != 'OK' ) return $updatePermisos;
@@ -784,32 +810,32 @@ class usuarios extends sigesop {
 
     public function eliminarAreaTrabajo ( $data ) {
         $rsp = array( 'status' => array(), 'eventos' => array() );
-        if ( !$this->estadoConexion ) 
+        if ( !$this->estadoConexion )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: ". $this->baseDatos );
         if ( !$this->estadoConexionMysql )
             return $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Sin conexion a base de datos: MySQL" );
 
         $clave_areaTrabajo = $data[ 'clave_areaTrabajo' ];
 
-        if ( !empty( $clave_areaTrabajo ) ) 
+        if ( !empty( $clave_areaTrabajo ) )
         {
             $conexion = $this->conexion;
             $sql = "delete from area_trabajo where clave_areaTrabajo = '$clave_areaTrabajo' ";
             $query = $this->insert_query( $sql );
 
-            if ( $query == 'OK' ) 
+            if ( $query == 'OK' )
             {
                 $this->conexion->commit();
                 $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Área de trabajo eliminado satisfactoriamente.' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $clave_areaTrabajo, 'msj' => 'Eliminado' );
-            } else 
+            } else
             {
                 $this->conexion->rollback();
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar área de trabajo' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $clave_areaTrabajo, 'msj' => $query );
             }
-        } 
-        else 
+        }
+        else
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => 'El campo se encuentra nulo' );
 
         return $rsp;
@@ -823,7 +849,7 @@ class usuarios extends sigesop {
         {
             $sql = "DELETE from roles WHERE clave_rol = '$clave_rol'";
             $query = $this->insert_query( $sql );
-            if ($query === 'OK') 
+            if ($query === 'OK')
             {
                 $this->conexion->commit();
                 $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Rol de usuario eliminado satisfactoriamente' );
@@ -834,14 +860,14 @@ class usuarios extends sigesop {
                 $this->conexion->rollback();
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar rol de usuario' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $clave_rol, 'msj' => $query );
-            } 
+            }
         }
 
-        else 
+        else
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => 'El campo clave_rol es nulo' );
 
         return $rsp;
-    }    
+    }
 
     # eliminarUsuario ---------------
 
@@ -853,7 +879,7 @@ class usuarios extends sigesop {
         {
             $query = $this->__dropUsuario( $usuario );
 
-            if ($query === 'OK') 
+            if ($query === 'OK')
             {
                 $this->conexion->commit();
                 $this->conexionMySQL->commit();
@@ -868,8 +894,8 @@ class usuarios extends sigesop {
                 $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar usuario' );
                 $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $usuario, 'msj' => $query );
             }
-        } 
-        else 
+        }
+        else
             $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => 'El campo nombre_usuario es nulo' );
 
         return $rsp;
@@ -879,14 +905,14 @@ class usuarios extends sigesop {
         $sql = "DELETE FROM personal WHERE nombre_usuario = '$usuario'";
 
         $query = $this->insert_query( $sql );
-        if ( $query == 'OK' ) 
+        if ( $query == 'OK' )
         {
             $userMySQL = $this->__dropUser( $usuario );
             if( $userMySQL == 'OK' ) return 'OK';
                 else return $userMySQL;
         }
         else return $query;
-    } 
+    }
 
     private function __dropUser( $usuario ) {
         // ---------- verificamos la existencia del usuario
@@ -894,8 +920,8 @@ class usuarios extends sigesop {
         $user = $this->checkUserInsideMysql( $usuario );
         // return $user;
 
-        if ( $user ) 
-        {            
+        if ( $user )
+        {
             $sql = "DROP USER '$usuario'@'$this->host'";
             // return $sql;
 
@@ -905,7 +931,7 @@ class usuarios extends sigesop {
 
         # si retorna FALSO el usuario no existe
 
-        else return 'OK';        
+        else return 'OK';
     }
 
     # -------------------------------
@@ -916,7 +942,7 @@ class usuarios extends sigesop {
 
         $objetoRoles = array();
         $indice = 0;
-        foreach ( $tipoRol as $val ) 
+        foreach ( $tipoRol as $val )
         {
             $rolActual = $val['clave_rol'];
 
@@ -925,8 +951,8 @@ class usuarios extends sigesop {
             $permisoAcceso = $this->array_query( $sql, 'permiso_rol' );
 
             // buscamos las areas asignadas al rol
-            $sql = "select pagina_acceso_rol from acceso_rol where clave_rol = '$rolActual'";
-            $areaAcceso = $this->array_query( $sql, 'pagina_acceso_rol' );
+            $sql = "select id_area_acceso from acceso_rol where clave_rol = '$rolActual'";
+            $areaAcceso = $this->array_query( $sql, 'id_area_acceso' );
 
             // unimos los datos
             $objetoRoles[$indice] = $val;
@@ -952,9 +978,9 @@ class usuarios extends sigesop {
         $sql =  'SELECT RDE_trabajador, nombre_usuario, nombre_trabajador, '.
                 'apellidos_trabajador, clave_areaTrabajo, clave_rol FROM personal';
         $query = $this->array_query( $sql );
-        return $query;  
+        return $query;
     }
-    
+
     public function imprimir ( $get ) {
         require_once('../tcpdf/tcpdf.php');
 
@@ -969,10 +995,10 @@ class usuarios extends sigesop {
         $pdf->SetKeywords('');
 
         // set default header data
-        $pdf->SetHeaderData( 
-            PDF_HEADER_LOGO, 
-            30, 
-            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+        $pdf->SetHeaderData(
+            PDF_HEADER_LOGO,
+            30,
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA',
             'C.E. LA VENTA'
         );
 
@@ -1003,17 +1029,17 @@ class usuarios extends sigesop {
 
         # estructuring data for pdf
         $datos = $this->obtenerUsuarios(  );
-      
-        $html = 
+
+        $html =
             $this->struct_tabla(
-                array ( 
+                array (
                     array( 'titulo' => 'RDE', 'campo'=> 'RDE_trabajador', 'x'=>50 ),
                     array( 'titulo' => 'Nombre de Usuario', 'campo'=> 'nombre_usuario',  ),
                     array( 'titulo' => 'Nombre del Trabajador', 'campo'=> 'nombre_trabajador', ),
                     array( 'titulo' => 'Apellido', 'campo'=> 'apellidos_trabajador', ),
                     array( 'titulo' => 'Clave de Area del Trabajo', 'campo'=> 'clave_areaTrabajo', 'x'=>175 ),
                     array( 'titulo' => 'Clave del rol', 'campo'=> 'clave_rol'  )
-                ), 
+                ),
 
                 $datos
             );
@@ -1040,10 +1066,10 @@ class usuarios extends sigesop {
         $pdf->SetKeywords('');
 
         // set default header data
-        $pdf->SetHeaderData( 
-            PDF_HEADER_LOGO, 
-            30, 
-            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+        $pdf->SetHeaderData(
+            PDF_HEADER_LOGO,
+            30,
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA',
             'C.E. LA VENTA'
         );
 
@@ -1074,13 +1100,13 @@ class usuarios extends sigesop {
 
         # estructuring data for pdf
         $datos = $this->obtenerAreaTrabajo(  );
-      
-        $html = 
+
+        $html =
             $this->struct_tabla(
-                array ( 
+                array (
                     array( 'titulo' => 'clave de area de trabajo', 'campo'=> 'clave_areaTrabajo', 'x'=>200 ),
                     array( 'titulo' => 'descripcion ', 'campo'=> 'descripcion_areaTrabajo',  )
-                ), 
+                ),
 
                 $datos
             );
@@ -1107,10 +1133,10 @@ class usuarios extends sigesop {
         $pdf->SetKeywords('');
 
         // set default header data
-        $pdf->SetHeaderData( 
-            PDF_HEADER_LOGO, 
-            30, 
-            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+        $pdf->SetHeaderData(
+            PDF_HEADER_LOGO,
+            30,
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA',
             'C.E. LA VENTA'
         );
 
@@ -1141,14 +1167,14 @@ class usuarios extends sigesop {
 
         # estructuring data for pdf
        $datos = $this->obtenerTipoRolUsuario( $get );
-      
-        $html = 
+
+        $html =
             $this->struct_tabla(
-                array ( 
+                array (
                     array( 'titulo' => 'Clave de rol', 'campo'=> 'clave_rol', 'x'=>200 ),
-                   
+
                     array( 'titulo' => 'Descripcion', 'campo'=> 'descripcion_areaTrabajo', )
-                   
+
                 ),
                 $datos
             );

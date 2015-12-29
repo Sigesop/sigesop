@@ -11,7 +11,7 @@ sigesop.licencias = {
 				'<div id="formAnioLicencia' + suf + '" class="form-group">'+
 					'<label class="col-sm-3 control-label">Año de licencia: </label>'+
 					'<div class="col-sm-7">'+
-						'<input name="anio_licencia" id="anio-licencia-' + suf + '" class="form-control input-md eventoCambioMayuscula" placeholder="4 caracteres exactos. [0-9]" value="">'+
+						'<input name="anio_licencia" id="anio-licencia-' + suf + '" class="form-control input-md" placeholder="4 caracteres exactos. [0-9]" value="">'+
 					'</div>'+
 				'</div>'+
 

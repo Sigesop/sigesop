@@ -51,7 +51,7 @@ sigesop.unidades = {
 			var
 			doc = this,
 			form = doc.IDS.form,
-			$numero_unidad = $( doc.datos.numero_unidad.idHTML ),
+			$numero_unidad = $( doc.datos.numero_unidad.idHTML ).toUpperCase(),
 			$botonLimpiar = $( doc.IDS.botonLimpiar ),
 			$form = $( form ).formValidation({
 		        icon: {
@@ -103,7 +103,6 @@ sigesop.unidades = {
 			}
 
 			$botonLimpiar.on( 'click', function ( event ) { vaciarDatos.call( doc ); });
-			sigesop.eventoCambioMayuscula( '.MAYUS' );
 		},
 
 		datos = {

@@ -155,20 +155,81 @@
 		});
 
 
-		app.controller( 'click', [ '$scope', '$http', ctrlClick ] );
-
-		function ctrlClick ( $scope, $http ) {
+		app.controller( 'click', function ( $scope, $http, $q ) {
 			$scope.clickMe = function () {
-				sigesop.query( $http, {
-					data: { usuario: 'admin' },
-					class: 'mantenimiento',
-					query: 'obtenerOrdenTrabajo',
-					success: function ( data ) {
-						console.log( data );
-					}
-				});
+
+
+				// var deferredTimer function (success) {
+				// 	var deferred = $q.defer();
+
+				// 	$timeout(function() {
+				// 		if (success) {
+				// 			deferred.resolve({ message: "This is great!" });
+				// 		} else {
+				// 			deferred.reject({ message: "Really bad" });
+				// 		}
+				// 	}, 1000);
+
+				// 	return deferred.promise;
+				// }
+
+
+
+				var q1 = function () {
+					var deferred = $q.defer();
+
+					sigesop.query( $http, {
+						data: { usuario: 'admin' },
+						class: 'mantenimiento',
+						query: 'obtenerOrdenTrabajo',
+						success: function ( data ) {
+							deferred.resolve( data );
+							// console.log( data );
+						}
+					});
+
+					return deferred.promise;
+				}
+
+				var q2 = function () {
+					var deferred = $q.defer();
+
+					sigesop.query( $http, {
+						class: 'sistema',
+						query: 'keepAlive',
+						success: function ( data ) {
+							deferred.resolve( data );
+							// console.log( data );
+						}
+					});
+
+					return deferred.promise;
+				}
+
+				$q.all({q1: q1(), q2: q2()}).then(function ( values ) {
+					console.log( values );
+				})
+				
+
+				// var first  = $http.get("ajax/sistema/ajax.php?class=mantenimiento&action=obtenerOrdenTrabajo"),
+				//     second = $http.get("ajax/sistema/ajax.php?class=sistema&action=keepAlive"),
+				//     third  = $http.get("ajax/sistema/ajax.php?class=sistema&action=keepAlive");
+
+				// $q.all([first, second, third]).then(function(result) {
+				// 	var tmp = [];
+				// 	angular.forEach(result, function(response) {
+				// 		tmp.push(response.data);
+				// 	});
+					
+				// 	console.log( tmp );
+				// 	return tmp;
+				// }).then(function(tmpResult) {
+				// 	$scope.combinedResult = tmpResult.join(", ");
+				// });
+
+
 			}
-		}
+		});		
 	</script>
 </body>
 </html>

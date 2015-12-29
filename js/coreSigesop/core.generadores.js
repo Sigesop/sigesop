@@ -2,11 +2,11 @@
  *
  * [window.session.matrizGeneradores]
  * [window.session.matrizUnidades]
- * 
+ *
  */
 sigesop.generadores = {
 	document: function( opt ) {
-		var 
+		var
 
 		suf = opt.suf || '',
 
@@ -15,7 +15,7 @@ sigesop.generadores = {
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Número de unidad:</label>'+
 					'<div class="col-sm-7">'+
-						'<select name="numero_unidad" id="numero-unidad-' + suf + 
+						'<select name="numero_unidad" id="numero-unidad-' + suf +
 						'" class="form-control input-md" ></select>'+
 					'</div>'+
 				'</div>'+
@@ -23,7 +23,7 @@ sigesop.generadores = {
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Numero aerogenerador:</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="numero_aero" id="numero-generador-' + suf + 
+						'<input name="numero_aero" id="numero-generador-' + suf +
 						'" class="form-control input-md" placeholder="Ingrese nombre del generador ( 1-4 caracteres, signos aceptados [-_.] [A-Za-z] [0-9])">'+
 					'</div>'+
 				'</div>'+
@@ -31,16 +31,16 @@ sigesop.generadores = {
 				'<div class="form-group">'+
 					'<label class="col-sm-3 control-label">Capacidad efectiva</label>'+
 					'<div class="col-sm-7">'+
-						'<input name="capacidad_efectiva_aero" id="capacidad-efectiva-' + suf + '" class="form-control input-md eventoCambioEsNumero" placeholder="Defina capacidad efectiva del Aerogenerador (Números enteros y decimales)">'+
+						'<input name="capacidad_efectiva_aero" id="capacidad-efectiva-' + suf + '" class="form-control input-md" placeholder="Defina capacidad efectiva del Aerogenerador (Números enteros y decimales)">'+
 					'</div>'+
 				'</div>'+
 
 				'<div class="form-group">' +
 					'<div class="col-sm-3 control-label"></div>' +
 					'<p class="col-sm-7">' +
-						'<button type="submit" id="btn-guardar-generador-' + suf + 
+						'<button type="submit" id="btn-guardar-generador-' + suf +
 						'" class="btn btn-success"> <span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
-						'<button type="reset"  id="btn-limpiar-generador-' + suf + 
+						'<button type="reset"  id="btn-limpiar-generador-' + suf +
 						'" class="btn btn-success "><span class=" glyphicon glyphicon-repeat"></span> Limpiar Campos</button>' +
 					'</p>' +
 				'</div>' +
@@ -56,14 +56,14 @@ sigesop.generadores = {
 
 		javascript = function () {
 			var
-			doc = this,
-			datos = this.datos,
-			form = this.IDS.form,
-			$botonLimpiar = $( doc.IDS.botonLimpiar ),
-			$numero_unidad = $( datos.numero_unidad.idHTML ),
-			$numero_aero = $( datos.numero_aero.idHTML ),
+			doc                      = this,
+			datos                    = this.datos,
+			form                     = this.IDS.form,
+			$botonLimpiar            = $( doc.IDS.botonLimpiar ),
+			$numero_unidad           = $( datos.numero_unidad.idHTML ),
+			$numero_aero             = $( datos.numero_aero.idHTML ).toUpperCase(),
 			$capacidad_efectiva_aero = $( datos.capacidad_efectiva_aero.idHTML ),
-			$form = $( form )
+			$form                    = $( form )
 			.formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',
@@ -79,9 +79,9 @@ sigesop.generadores = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
@@ -105,9 +105,7 @@ sigesop.generadores = {
 
 		            numero_aero: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.numero_aero.valor = val;
-		            		data.element.val( val );
+		            		datos.numero_aero.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.numero_aero.valor = null;
@@ -159,7 +157,7 @@ sigesop.generadores = {
 			});
 
 			/* Enlazar publicamente instancias jQuery de los campos
-			 */		
+			 */
 			doc.IDS.$form = $form;
 			doc.IDS.$botonLimpiar = $botonLimpiar;
 			doc.IDS.$numero_unidad = $numero_unidad;
@@ -182,19 +180,19 @@ sigesop.generadores = {
 					success: function(data) {
 						window.sesion.matrizUnidades = data;
 						sigesop.combo({
-							arr: data, 
-							elem: datos.numero_unidad.idHTML, 
+							arr: data,
+							elem: datos.numero_unidad.idHTML,
 							campo: 'numero_unidad'
 						});
 
 						$numero_unidad.val( obj.numero_unidad );
 					}
 				});
-				
+
 				$numero_aero.val( obj.numero_aero );
 				$capacidad_efectiva_aero.val( obj.capacidad_efectiva_aero );
 
-				/* Guardamos el ID que se actualizará				
+				/* Guardamos el ID que se actualizará
 				 */
 				datos.numero_aero_update.valor = obj.numero_aero;
 			}
@@ -202,7 +200,7 @@ sigesop.generadores = {
 
 		datos = {
 			numero_unidad: {
-				valor: null,				
+				valor: null,
 				idHTML: '#numero-unidad-' + suf
 			},
 			numero_aero_update: { valor: null },
@@ -213,7 +211,7 @@ sigesop.generadores = {
 			capacidad_efectiva_aero: {
 				valor: null,
 				idHTML: '#capacidad-efectiva-' + suf
-			}					
+			}
 		},
 
 		IDS = {
@@ -234,90 +232,110 @@ sigesop.generadores = {
 			IDS: IDS
 		};
 
-		return doc;		
+		return doc;
 	},
 
-	registro: function ( opt ) {
-		var 
+	registeredGeneratorDocument: function ( opt ) {
+		var
 
-		suf = opt.suf || '',
+		that = this,
 
-		html = 
-			'<form id="form-registro-generador-' + suf + '" class="form-horizontal" role="form">'+
-				'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
-					'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
-						'<span aria-hidden="true">×</span>' +
-					'</button>' +
-					'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
-				'</div>' +
+		struct_document = function () {
+			var IDS = this.IDS;
 
-				'<div class="form-group">' +					
-					'<div class="col-sm-12 col-md-12" id="tabla-registro-generador-' + suf + '"></div>' +
-				'</div>' +
-			'</form>',
+			/*********************************
+			 ** JQuery objects
+			 ********************************/
+
+			IDS.$tableContent = $('<div></div>')
+				.addClass( 'col-sm-12 col-md-12' );
+
+			/* Estructuring document form
+			 */
+
+			IDS.$content = $( '<form></form>' )
+			.append(
+				$( '<div role="alert"></div>' )
+				.addClass( 'alert alert-danger alert-dismissible fade in' )
+				.append(
+					$( '<button aria-label="Close" data-dismiss="alert" type="button"></button>' )
+					.addClass( 'close' )
+					.append( '<span aria-hidden="true">×</span>' )
+				)
+				.append( '<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' )
+			)
+			.append(
+				$('<div class="form-group"></div>' )
+				.append( IDS.$tableContent )
+			)
+		},
 
 		javascript = function () {
-			var
-			doc = this,
-			table = 
-				sigesop.tablaRegistro({
-					head: 'NUMERO DE AEROGENERADOR, NUMERO DE UNIDAD, ESTADO LICENCIA, CAPACIDAD EFECTIVA, FECHA DE OPERACION',
-					campo: 'numero_aero, numero_unidad, estado_licencia, capacidad_efectiva_aero, fecha_operacion',
+			var IDS   = this.IDS,
+				table = IDS.$tableContent.dataTable({
+					head    : 'NUMERO DE AEROGENERADOR, NUMERO DE UNIDAD, ESTADO LICENCIA, CAPACIDAD EFECTIVA, FECHA DE OPERACION',
+					campo   : 'numero_aero, numero_unidad, estado_licencia, capacidad_efectiva_aero, fecha_operacion',
 					addClass: {
 						body: {
 							class: 'warning, danger, info, success, success',
 							campo: 'estado_licencia, estado_licencia, estado_licencia, estado_licencia, estado_licencia',
 							valor: 'C.A., FALLA, MTTO, F.A., DISPONIBLE'
 						}
+					},
+					contextMenu: {
+						selector: 'tr',
+						items: {
+				            editar: {
+				            	name: 'Editar',
+				            	icon: 'edit',
+				        		callback: function ( key, _opt ) {
+				        			var index = $( this ).attr( 'table-index' );
+				        			typeof opt.table.actions.editar == 'function' ?
+				        				opt.table.actions.editar( index ):
+				        				console.log( 'function editar is null' );
+				        		}
+				            },
+				            eliminar: {
+				            	name: 'Eliminar',
+				            	icon: 'delete',
+				        		callback: function ( key, _opt ) {
+				        			var index = $( this ).attr( 'table-index' );
+				        			typeof opt.table.actions.eliminar == 'function' ?
+				        				opt.table.actions.eliminar( index ):
+				        				console.log( 'function eliminar is null' );
+				        		}
+				            }
+						}
 					}
-				});			
+				})
+				.factory();
 
-			doc.table.update_table = table.update_table; // enlazamos a vista publica
-			doc.table.body = table.IDS.body;
-			document.getElementById( doc.IDS.idTabla.flushChar('#') )
-			.innerHTML = '<br>' + table.html;
-
-			$( table.IDS.body ).contextMenu({
-				selector: 'tr',
-				items: {
-		            editar: {
-		            	name: 'Editar', 
-		            	icon: 'edit',
-		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).attr( 'table-index' );
-		        			typeof opt.table.actions.editar == 'function' ?
-		        				opt.table.actions.editar( index ):
-		        				console.log( 'function editar is null' );
-		        		}
-		            },
-		            eliminar: {
-		            	name: 'Eliminar', 
-		            	icon: 'delete',
-		        		callback: function ( key, _opt ) {
-		        			var index = $( this ).attr( 'table-index' );
-		        			typeof opt.table.actions.eliminar == 'function' ?
-		        				opt.table.actions.eliminar( index ):
-		        				console.log( 'function eliminar is null' );
-		        		}
-		            }
-				}
-			});
+			this.table.update_table = table.update_table; // enlazamos a vista publica
 		},
 
-		IDS = {
-			idTabla: '#tabla-registro-generador-' + suf,
-			form: '#form-registro-generador-' + suf
+		factory = function () {
+			var IDS = this.IDS;
+
+			struct_document.call( this );
+			if ( typeof this !== 'undefined' ) {
+				$( that ).append( IDS.$content );
+				javascript.call( this );
+			}
+
+			return this;
 		},
 
 		doc = {
-			html: html,
-			javascript: javascript,
-			IDS: IDS,
+			IDS: {
+				$content     : null,
+				$tableContent: null
+			},
 			table: {
-				body: null,
 				update_table: null
 			}
 		};
+
+		doc.factory = factory.bind( doc );
 
 		return doc;
 	},
@@ -327,10 +345,10 @@ sigesop.generadores = {
 			obj = opt.obj || {},
 			suf = opt.suf || '';
 
-		var 
-		html = 
+		var
+		html =
 			'<form id="form-imprimir-reporte-' + suf + '" class="form-horizontal" role="form">'+
-			
+
 				'<div class="form-group">'+
 					'<label class="control-label col-sm-5 ">No. de Unidad: </label>'+
 					'<div class="col-sm-2">'+
@@ -340,9 +358,9 @@ sigesop.generadores = {
 				'<div class="form-group">'+
 					'<div class="col-sm-5 control-label"></div>'+
 					'<p class="col-sm-7">'+
-						//'<button type="button" id="btn-imprimir-reporte-2' + suf + '" class="btn btn-success" > <span></span> Reporte general</button>  '+					
+						//'<button type="button" id="btn-imprimir-reporte-2' + suf + '" class="btn btn-success" > <span></span> Reporte general</button>  '+
 						'<button type="submit" id="btn-consulta-reporte-' + suf + '" class="btn btn-success"  data-loading-text="Buscando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Consultar</button> ' +
-						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+					
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+
 					'</p>'+
 				'</div>'+
 
@@ -351,7 +369,7 @@ sigesop.generadores = {
 				'</form>',
 
 		javascript = function () {
-			var 
+			var
 			doc = this,
 			form = doc.IDS.form,
 			$numero_unidad = $( doc.datos.numero_unidad.idHTML ),
@@ -367,7 +385,7 @@ sigesop.generadores = {
 		        },
 
 		        onSuccess: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.success == 'function' ?
 		        		opt.success( doc.datos, doc.IDS ) :
 		        		console.log( 'success is null' );
@@ -376,9 +394,9 @@ sigesop.generadores = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
@@ -388,16 +406,16 @@ sigesop.generadores = {
 		                        message: 'Seleccione unidad de generador'
 		                    	}
 		                	}
-		                },	            
+		                },
 		        }
-			})			
+			})
 			.on( 'success.form.fv', function( e ) { $botonImprimir.prop( 'disabled', false ); })
 	        .on( 'err.field.fv', function( e ) { $botonImprimir.prop( 'disabled', true ); })
 			.on( 'success.field.fv', function( e, data ) { data.fv.disableSubmitButtons( false ); });
-	
+
 			doc.IDS.$form = $form;
 
-			var tabla_reporte = 
+			var tabla_reporte =
 			sigesop.tablaRegistro({
 				suf: '_reporte',
 				head: 'NUMERO DE AEROGENERADOR, NUMERO DE UNIDAD, ESTADO LICENCIA, CAPACIDAD EFECTIVA, FECHA DE OPERACION',
@@ -409,9 +427,9 @@ sigesop.generadores = {
 			doc.table.body = tabla_reporte.IDS.body;
 			document.getElementById( doc.IDS.idTabla.flushChar('#') ).innerHTML = '<br>' + tabla_reporte.html
 
-		
-			$botonImprimir.on( 'click', function ( event ) { 
-		
+
+			$botonImprimir.on( 'click', function ( event ) {
+
 				var url = sigesop.raizServidor + 'ajax.php?class=generadores' +
 					'&action=imprimir'+'&option=unidad' + '&numero_unidad=' + $numero_unidad.val(),
 					//console.log(url);
@@ -421,8 +439,8 @@ sigesop.generadores = {
 
 			 });
 
-			// $botonConsultar.on( 'click', function ( event ) { 
-		
+			// $botonConsultar.on( 'click', function ( event ) {
+
 			// 	var url = sigesop.raizServidor + 'ajax.php?class=generadores' +
 			// 		'&action=imprimir&option=general',
 
@@ -432,12 +450,12 @@ sigesop.generadores = {
 
 			//  });
 		},
-					
+
 		datos = {
 			numero_unidad:{
 				idHTML: '#numero-unidad-impresion-reporte-' + suf,
 				valor: null
-			} 
+			}
 		},
 
 		IDS = {
@@ -460,5 +478,187 @@ sigesop.generadores = {
 		}
 
 		return doc;
+	},
+
+	generatorReport : function ( opt ) {
+		var
+
+		that = this,
+
+		struct_document = function () {
+			var IDS = this.IDS;
+
+			/*********************************
+			 ** JQuery objects
+			 ********************************/
+			IDS.$tableContent = $('<div></div>')
+				.addClass( 'col-sm-12 col-md-12' );
+
+			 IDS.$numero_unidad = $('<select></select>')
+			 	.addClass('form-control input-md')
+			 	.prop( 'name', 'numero_unidad' );
+
+			var $botonConsultar = $('<button></button>')
+				.prop( 'type', 'submit' )
+				.addClass( 'btn btn-success' )
+				.html( 'Consultar' )
+				.append( '&nbsp;<span class="glyphicon glyphicon-floppy-disk"></span>' );
+
+			IDS.$botonImprimir = $( '<button></button>' )
+				.prop( 'type', 'button' )
+				.addClass( 'btn btn-success' )
+				.html( 'Imprimir' )
+				.append( '&nbsp;<span class="glyphicon glyphicon-floppy-disk"></span>' )
+
+			/* Estructuring document form
+			 */
+
+			IDS.$form = $( '<form></form>' )
+				.attr( 'role', 'form' )
+				.addClass( 'form-horizontal' )
+
+			.append(
+				$('<div class="form-group"></div>')
+				.append(
+					$('<label class="control-label col-sm-5"></label>')
+					.html( 'No. de Unidad: ' )
+				)
+				.append(
+					$('<div class="col-sm-2"></div>')
+					.append( IDS.$numero_unidad )
+				)
+			)
+
+			.append(
+				$('<div class="form-group"></div>' )
+				.append(
+					$('<p class="col-sm-offset-5 col-sm-7"></p>')
+					.append( $botonConsultar )
+					.append('&nbsp;')
+					.append( IDS.$botonImprimir )
+				)
+			)
+
+			.append(
+				$('<div class="form-group"></div>' )
+				.append( IDS.$tableContent )
+			)
+		},
+
+		javascript = function () {
+			var IDS   = this.IDS,
+				datos = this.datos;
+
+			IDS.$form.formValidation({
+		        icon: {
+		            valid: 'glyphicon glyphicon-ok',
+		            invalid: 'glyphicon glyphicon-remove',
+		            validating: 'glyphicon glyphicon-refresh'
+		        },
+
+		        onSuccess: function ( e ) {
+		        	e.preventDefault();
+		        	typeof opt.success == 'function' ?
+		        		opt.success( datos, IDS ) :
+		        		console.log( 'success is null' );
+
+		        	IDS.$form.data( 'formValidation' ).disableSubmitButtons( false );
+		        },
+
+		        onError: function ( e ) {
+		        	e.preventDefault();
+		        	typeof opt.error == 'function' ?
+		        		opt.error() : console.log( 'error is null' );
+		        },
+
+		        fields: {
+		        	numero_unidad: {
+						onSuccess: function ( e, data ) {
+		            		datos.numero_unidad.valor = data.element.val();
+		            	},
+		            	onError: function ( e, data ) {
+		            		datos.numero_unidad.valor = null;
+		            	},
+	                	onStatus: function ( e, data ) {
+	                		if ( data.status === 'NOT_VALIDATED' )
+	                			datos.numero_unidad.valor = null;
+	                	},
+		                validators: {
+		                    notEmpty: {
+		                        message: 'Seleccione unidad de generador'
+		                    	}
+		                	}
+		                },
+		        }
+			})
+			.on( 'success.form.fv', function( e ) { IDS.$botonImprimir.prop( 'disabled', false ); })
+	        .on( 'err.field.fv', function( e ) { IDS.$botonImprimir.prop( 'disabled', true ); })
+			.on( 'success.field.fv', function( e, data ) { data.fv.disableSubmitButtons( false ); });
+
+			var table = IDS.$tableContent.dataTable({
+				head: 'NUMERO DE AEROGENERADOR, NUMERO DE UNIDAD, ESTADO LICENCIA, CAPACIDAD EFECTIVA, FECHA DE OPERACION',
+				campo: 'numero_aero, numero_unidad, estado_licencia, capacidad_efectiva_aero, fecha_operacion',
+				addClass: {
+					body: {
+						class: 'warning, danger, info, success, success',
+						campo: 'estado_licencia, estado_licencia, estado_licencia, estado_licencia, estado_licencia',
+						valor: 'C.A., FALLA, MTTO, F.A., DISPONIBLE'
+					}
+				}
+			})
+			.factory();
+
+			doc.table.update_table = table.update_table; // enlazamos a vista publica
+
+			IDS.$botonImprimir.on( 'click', function ( event ) {
+				var url = sigesop.raizServidor + 'ajax.php?class=generadores' +
+					'&action=imprimir'+'&option=unidad' + '&numero_unidad=' + datos.numero_unidad.valor,
+					//console.log(url);
+				 	win = window.open( url );
+
+				 win.focus();
+			 });
+		},
+
+		datos = {
+			numero_unidad: { valor: null }
+		},
+
+		factory = function () {
+			var IDS = this.IDS;
+
+			struct_document.call( this );
+			if ( typeof this !== 'undefined' ) {
+				$( that ).append( IDS.$form );
+				javascript.call( this );
+			}
+
+			return this;
+		},
+
+		doc = {
+			datos: datos,
+			IDS: {
+				$form          : null,
+				$tableContent  : null,
+
+				$form          : null,
+				$numero_unidad : null,
+				$botonConsultar: null,
+				$botonImprimir : null
+			},
+			table: {
+				update_table: null
+			}
+		};
+
+		doc.factory = factory.bind( doc );
+
+		return doc;
 	}
 }
+
+$.extend( jQuery.fn, {
+	registeredGeneratorDocument: sigesop.generadores.registeredGeneratorDocument,
+	generatorReport            : sigesop.generadores.generatorReport
+});

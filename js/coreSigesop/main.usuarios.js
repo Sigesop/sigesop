@@ -3,45 +3,31 @@ $( document ).on('ready', main );
 function main () {
 	/* Documento principal
 	 */ 
-	doc = sigesop.usuarios.document({
-		error: error,
+	doc = $( '#main' ).newUserDocument({
+		error: sigesop.completeCampos,
 		success: nuevoElemento
-	});
-	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
-	doc.javascript();
+	})
+	.factory();
 
 	/* Tabla de registros
 	 */
-	docR = sigesop.usuarios.documentoRegistro({
+	docR = $( '#main2' ).registeredUsersDocument({
 		table: {
 			actions: {
 				editar: editarElemento,
 				eliminar: eliminarElemento
 			}
 		}
-	});
-	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
-	docR.javascript();
-
+	})
+	.factory();
+	
 	/* Descarga de datos
 	 */ 
 	$( 'header' ).barraHerramientas();
 	getData();
 }
 
-function error () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); }
-
 function nuevoElemento( datos, IDS, limpiarCampos ) {
-	/* Leemos los datos del formulario
-	 */ 
-    datos.nombreUsuario.valor = $( datos.nombreUsuario.idHTML ).val().trim();
-	datos.apellidosUsuario.valor = $( datos.apellidosUsuario.idHTML ).val().trim();	
-	datos.RPEusuario.valor = $( datos.RPEusuario.idHTML ).val().trim();
-	datos.usuario.valor = $( datos.usuario.idHTML ).val().trim();
-	datos.claveUsuario.valor = $( datos.claveUsuario.idHTML ).val().trim().SHA1();
-	datos.areaTrabajo.valor = $( datos.areaTrabajo.idHTML ).val();
-	datos.rolUsuario.valor = $( datos.rolUsuario.idHTML ).val();
-
 	/* Enviamos al servidor
 	 */ 
 	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
@@ -139,16 +125,6 @@ function editarElemento( index ) {
 	var
 
 	success = function ( datos, IDS ) {
-		/* Leemos los datos del formulario
-		 */ 
-	    datos.nombreUsuario.valor = $( datos.nombreUsuario.idHTML ).val().trim();
-		datos.apellidosUsuario.valor = $( datos.apellidosUsuario.idHTML ).val().trim();	
-		datos.RPEusuario.valor = $( datos.RPEusuario.idHTML ).val().trim();
-		datos.usuario.valor = $( datos.usuario.idHTML ).val().trim();
-		datos.claveUsuario.valor = $( datos.claveUsuario.idHTML ).val().trim().SHA1();
-		datos.areaTrabajo.valor = $( datos.areaTrabajo.idHTML ).val();
-		datos.rolUsuario.valor = $( datos.rolUsuario.idHTML ).val();
-
 		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI' );
 		sigesop.query({
 			data: datos,
@@ -177,28 +153,21 @@ function editarElemento( index ) {
 		});
 	},
 
-	_doc = sigesop.usuarios.document({
-		obj: elem, 
-		suf: 'edicion',
-		arr_areaTrabajo: window.sesion.matrizAreaTrabajo,
-		arr_roles: window.sesion.matrizTipoRol,
-		error: error,
-		success: success
-	});
+	_doc = $.fn.newUserDocument({
+		error  : sigesop.completeCampos,
+		success: success,
+		action : 'update',
+		obj    : elem
+	})
+	.factory();
 
-	/* capturamos el ID de la actualizacion
-	 */
-	_doc.datos.RPEusuarioUpdate.valor = elem.RDE_trabajador;
-	_doc.datos.usuarioUpdate.valor = elem.nombre_usuario;
-
-	var 
+	var
 
     win = BootstrapDialog.show({
         title: 'Edicion de usuario',
         type: BootstrapDialog.TYPE_DEFAULT,
-        message: _doc.html,
         onshown: function ( dialog ) {
-        	_doc.javascript();
+        	dialog.$modalBody.html( _doc.IDS.$form );
         },
         size: BootstrapDialog.SIZE_WIDE,        
         draggable: true,
@@ -232,9 +201,8 @@ function getData() {
 		success: function( data )
 		{			
 			window.sesion.matrizAreaTrabajo = data;
-			sigesop.combo({
-				arr: data, 
-				elem: doc.datos.areaTrabajo.idHTML, 
+			doc.IDS.$areaTrabajo.combo({
+				arr: data,
 				campo: 'clave_areaTrabajo, descripcion_areaTrabajo', 
 				campoValor: 'clave_areaTrabajo'
 			});			
@@ -247,9 +215,8 @@ function getData() {
 		success: function( data )
 		{
 			window.sesion.matrizTipoRol = data;
-			sigesop.combo({
-				arr: data, 
-				elem: doc.datos.rolUsuario.idHTML, 
+			doc.IDS.$rolUsuario.combo({
+				arr: data,
 				campo: 'clave_rol, descripcion_areaTrabajo', 
 				campoValor: 'clave_rol'
 			});			

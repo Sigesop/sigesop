@@ -6,7 +6,7 @@ use laventa_cfe;
 
 CREATE TABLE sessions (ID INT NOT NULL AUTO_INCREMENT PRIMARY KEY, SessionID CHAR(26), Data TEXT , DateTouched INT);
 CREATE USER '__session'@'localhost' identified by '162bed2fa894a934c3120893c9332c51cc4a5f43';
-grant all privileges on laventa_cfe.sessions to '__session'@'localhost';
+grant all privileges on laventa_cfe.* to '__session'@'localhost';
 
 -- ---------- roles -----------------------------------------------
 
@@ -249,7 +249,9 @@ CREATE TABLE `actividad_verificar` (
 	on delete restrict
 	on update cascade,
 	
-	actividad_verificar 			text NOT NULL
+	actividad_verificar 			text NOT NULL,
+
+	tipo 							ENUM('REQUERIDO','N_REQUERIDO') NOT NULL DEFAULT 'N_REQUERIDO'
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `parametro_actividad`(
@@ -338,8 +340,16 @@ CREATE TABLE `orden_trabajo`(
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `programacion_mtto`(	
+	# llave para enlazar una orden de trabajo con el
+	# libro relatorio y con los datos. Si una programacion es
+	# reprogramada el id_orden_trabajo se hereda a id_orden_reprog
+	# para saber el numero id_order_trabajo que se le fue asignado
+	# desde el principio, antes de que se reprogramara a la 
+	# siguiente programacion.
 	id_orden_trabajo		int unsigned PRIMARY KEY,
-	id_prog_mtto		 	int unsigned,
+
+	# llave de enlace a orden_trabajo														
+	id_prog_mtto		 	int unsigned, 
 	foreign key ( id_prog_mtto ) references orden_trabajo( id_prog_mtto )
 	ON DELETE RESTRICT 
 	ON UPDATE CASCADE,
@@ -354,20 +364,6 @@ CREATE TABLE `programacion_mtto`(
 
 	fecha_realizada			date DEFAULT NULL,
 	estado_asignado 		enum( 'ACTIVO', 'REPROGRAMADO', 'FINALIZADO' ) DEFAULT NULL
-)ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-CREATE TABLE `orden_trabajo_personal`(
-	id_orden_trabajo		int unsigned,
-	foreign key ( id_orden_trabajo ) references programacion_mtto( id_orden_trabajo )
-	on delete cascade
-	on update cascade,
-
-	usuario 			varchar( 16 ),
-	foreign key ( usuario ) references personal( nombre_usuario )
-	on delete cascade
-	on update cascade,
-
-	tipo_usuario			enum( 'AUXILIAR', 'RESPONSABLE', 'SUPERVISOR' )
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `orden_trabajo_material`(
@@ -473,7 +469,10 @@ CREATE TABLE `libro_licencia` (
 CREATE TABLE `libro_relatorio` (
 	id_libro_relatorio 		int unsigned primary key,
 
-	id_orden_trabajo 		int unsigned DEFAULT null,
+	# enlace de orden de trabajo cuando el evento de
+	# libro relatorio se le asocia una orden de trabajo
+	# de la programacion de mantenimiento
+	id_orden_trabajo 		int unsigned DEFAULT NULL,
 	foreign key ( id_orden_trabajo ) references programacion_mtto( id_orden_trabajo )
 	on delete restrict 
 	on update cascade,
@@ -532,6 +531,32 @@ CREATE TABLE `libro_relatorio_historial` (
 	condicion_operativa			enum('C.A.', 'DISPONIBLE', 'FALLA', 'MTTO', 'F.A.') NOT NULL,
 	descripcion_evento 			text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `orden_trabajo_personal`(
+	id_libro_relatorio 		int unsigned DEFAULT NULL,
+	foreign key( id_libro_relatorio ) references libro_relatorio( id_libro_relatorio )
+	ON DELETE RESTRICT
+	ON UPDATE CASCADE,
+	
+	id_prog_mtto			int unsigned NOT NULL,
+	foreign key ( id_prog_mtto ) references orden_trabajo ( id_prog_mtto )
+	ON DELETE RESTRICT
+	ON UPDATE CASCADE,
+
+	-- id_orden_trabajo		int unsigned,
+	-- foreign key ( id_orden_trabajo ) references programacion_mtto( id_orden_trabajo )
+	-- on delete cascade
+	-- on update cascade,
+
+	usuario 			varchar( 16 ),
+	foreign key ( usuario ) references personal( nombre_usuario )
+	on delete cascade
+	on update cascade,
+
+	tipo_usuario			enum( 'AUXILIAR', 'RESPONSABLE', 'SUPERVISOR' )
+
+	-- estado_asignado 	boolean DEFAULT FALSE
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- ---------------------------------------------------------------------------------------------------------------
 -- actualiza es estado del generador a disponible tras eliminar un evento de la tabla "libro_relatorio"

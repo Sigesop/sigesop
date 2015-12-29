@@ -53,6 +53,9 @@ sigesop.areaTrabajo = {
 		javascript = function () {
 			var
 			form = this.IDS.form,
+			datos = this.datos,
+			$clave_area_trabajo = $( datos.claveAreaTrabajo.idHTML ).toUpperCase(),
+			$descripcion_area_trabajo = $( datos.descripcionAreaTrabajo.idHTML ).toUpperCase(),
 			$form = $( form ).formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',
@@ -114,7 +117,6 @@ sigesop.areaTrabajo = {
 
 			this.IDS.$form = $form;
 
-			$( '.MAYUS' ).eventoCambioMayuscula();
 			$( this.IDS.botonLimpiar ).on('click', function ( event ) {	vaciarDatos(); });
 		},
 

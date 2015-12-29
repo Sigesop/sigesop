@@ -14,14 +14,14 @@ sigesop.sistemaGenerador = {
 				'<div class="form-group">' +
 					'<label class="col-sm-3 control-label">Nombre Sistema:</label>' +
 					'<div class="col-sm-7">' +
-						'<input name="nombre_sistema_aero" id="nombre-sistema-' + suf + '" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="De 1 – 50 caracteres" >' +
+						'<input name="nombre_sistema_aero" id="nombre-sistema-' + suf + '" type="text" class="form-control input-md" placeholder="De 1 – 50 caracteres" >' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
 					'<label class="col-sm-3 control-label">ID del Sistema:</label>' +
 					'<div class="col-sm-7">' +
-						'<input name="id_sistema_aero" id="id-sistema-' + suf + '" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="De 1 – 2 caracteres [- _ .] [0-9] [A-Z]">' +
+						'<input name="id_sistema_aero" id="id-sistema-' + suf + '" type="text" class="form-control input-md" placeholder="De 1 – 2 caracteres [- _ .] [0-9] [A-Z]">' +
 					'</div>' +
 				'</div>' +
 
@@ -56,8 +56,8 @@ sigesop.sistemaGenerador = {
 			form = doc.IDS.form,
 			datos = doc.datos,
 			$botonLimpiar = $( doc.IDS.botonLimpiar ),
-			$nombre_sistema_aero = $( doc.datos.nombre_sistema_aero.idHTML ),
-			$id_sistema_aero = $( doc.datos.id_sistema_aero.idHTML ),
+			$nombre_sistema_aero = $( doc.datos.nombre_sistema_aero.idHTML ).toUpperCase(),
+			$id_sistema_aero = $( doc.datos.id_sistema_aero.idHTML ).toUpperCase(),
 			$form = $( form )
 			.formValidation({
 		        icon: {
@@ -82,9 +82,7 @@ sigesop.sistemaGenerador = {
 		        fields: {
 		            nombre_sistema_aero: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.nombre_sistema_aero.valor = val;
-		            		data.element.val( val );
+		            		datos.nombre_sistema_aero.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.nombre_sistema_aero.valor = null;
@@ -110,9 +108,7 @@ sigesop.sistemaGenerador = {
 
 		            id_sistema_aero: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.id_sistema_aero.valor = val;
-		            		data.element.val( val );
+		            		datos.id_sistema_aero.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.id_sistema_aero.valor = null;

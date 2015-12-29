@@ -62,7 +62,27 @@ class operacion extends sigesop {
                 $query = $this->imprimir_reporte_periodo( $get );
                 echo json_encode( $query );
                 break;
-				
+			
+			case 'exportar_reporte_periodo':
+                $query = $this->exportar_reporte_periodo( $get );
+                echo json_encode( $query );
+                break;
+
+            case 'exportar_reporte_orden_trabajo_programado':
+                $q = $this->exportar_reporte_orden_trabajo_programado( $get );
+                echo json_encode( $q );
+                break;
+
+            case 'imprimir_reporte_orden_trabajo':
+                $query = $this->imprimir_reporte_orden_trabajo( $get );
+                echo json_encode( $query );
+                break; 
+
+            case 'imprimir_reporte_orden_trabajo_programado':
+                $q = $this->imprimir_reporte_orden_trabajo_programado( $get );
+                echo json_encode( $q );
+                break;                  
+
             case 'nuevo_evento_relatorio':
                 $query = $this->nuevo_evento_relatorio( $post );
                 echo json_encode( $query );
@@ -91,12 +111,17 @@ class operacion extends sigesop {
             case 'obtener_libro_relatorio':
                 $query = $this->obtener_libro_relatorio( $get );
                 echo json_encode( $query );
-                break; 
+                break;
+
+            case 'obtener_libro_relatorio_orden_trabajo':
+                $query = $this->obtener_libro_relatorio_orden_trabajo($get);
+                echo json_encode( $query );
+                break;
 
             case 'obtener_tipo_reporte':
                 $query = $this->obtener_tipo_reporte();
                 echo json_encode( $query );
-                break; 
+                break;
 
             default:
                 echo json_encode('Funcion no registrada en la clase operacion');
@@ -254,6 +279,9 @@ class operacion extends sigesop {
             return $rsp;
         }
 
+        # recalculamos las programaciones
+        $this->__reprogramacion_fecha();
+
         $id_libro_relatorio_historial = $this->auto_increment( 'libro_relatorio_historial', 'id_libro_relatorio_historial' );
         $id_libro_relatorio = $post[ 'id_libro_relatorio' ][ 'valor' ];
         $numero_aero = $post[ 'numero_aero' ][ 'valor' ];
@@ -306,38 +334,23 @@ class operacion extends sigesop {
             $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente' );
             $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' =>$fecha_evento, 'msj' => 'OK' );
             $this->conexion->commit();
-            return $rsp;
         } else {
             $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => $query );
             $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $fecha_evento, 'msj' => 'Error al ingresar evento' );
-            $this->conexion->rollback();
-            return $rsp;
+            $this->conexion->rollback();            
         }
+
+        return $rsp;
     } 
 
     public function __cerrar_evento ( $id_libro_relatorio, $fecha_termino_evento, $hora_termino_evento ) {
-        // $condicion_operativa = $data[ 'condicion_operativa' ];
-        // $id_libro_relatorio = $data[ 'id_libro_relatorio' ];
-        // $numero_aero = $data[ 'numero_aero' ];
-        // $fecha = Carbon::now( 'America/Mexico_City' )->format( 'd-m-Y' );
-        // $hora = Carbon::now( 'America/Mexico_City' )->toTimeString();
-        // $conexion = $this->conexion;        
-
-        # cerramos la orden de trabajo si se trata de un mantenimiento
-        // if ( $condicion_operativa == 'MTTO' ) {
-        //     $query = $this->__cerrar_orden_trabajo( $id_libro_relatorio, $fecha );
-        //     if ( $query != 'OK' ) {
-        //         $conexion->rollback();
-
-        //         $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al cerrar evento' );
-        //         $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
-        //         return $rsp;
-        //     }
-        // }
-
-        # Buscamos numero de aerogenerador
-        $sql = "SELECT numero_aero FROM libro_relatorio WHERE id_libro_relatorio = $id_libro_relatorio";
-        $numero_aero = $this->query( $sql, 'numero_aero', NULL );
+        # Buscamos numero de aerogenerador e investigamos si
+        # el evento que tiene asociada una orden de trabajo
+        # para que sea cerrada tambien.
+        $sql = "SELECT numero_aero, condicion_operativa FROM libro_relatorio WHERE id_libro_relatorio = $id_libro_relatorio";
+        $query = $this->query( $sql );
+        $numero_aero = $query[ 'numero_aero' ];
+        $condicion_operativa = $query[ 'condicion_operativa' ];
 
         # cerramos el evento del libro relatorio
         $sql =  
@@ -350,7 +363,13 @@ class operacion extends sigesop {
         // return $sql;
 
         $query = $this->insert_query( $sql );
-        if ( $query != 'OK' ) $query;
+        if ( $query != 'OK' ) return $query;
+
+        # si la condicion operativa es del tipo MANTENIMIENTO
+        if ( $condicion_operativa == 'MTTO' ) {
+            $query = $this->__cerrar_orden_trabajo( $id_libro_relatorio, $fecha_termino_evento );
+            if ( $query !== 'OK' ) return $query;
+        }
 
         # cambiamos el estado del generador para cambiar las graficas
         $query = $this->__cambiar_estado_generador( $numero_aero, 'DISPONIBLE', $fecha_termino_evento );
@@ -360,53 +379,120 @@ class operacion extends sigesop {
     }
 
     private function __cerrar_orden_trabajo ( $id_libro_relatorio, $fecha_realizada ) {
-        # buscamos [id_orden_trabajo] del evento
+        # buscamos [id_orden_trabajo, id_orden_reprog] del evento
+        # en la tabla [libro_relatorio]
         $sql = 
-        "SELECT id_orden_trabajo FROM libro_relatorio ".
-        "WHERE id_libro_relatorio = $id_libro_relatorio";
-        $id_orden_trabajo = $this->query( $sql, 'id_orden_trabajo', NULL );
+        "SELECT ".
+            "pm.id_orden_trabajo, pm.id_orden_reprog, ".
+            "pm.id_prog_mtto ".
+        "FROM libro_relatorio lr ".
+        "INNER JOIN programacion_mtto pm ".
+        "ON lr.id_orden_trabajo = pm.id_orden_trabajo ".
+        "WHERE lr.id_libro_relatorio = $id_libro_relatorio";
+        // return $sql;
+        
+        $query                     = $this->query( $sql );
+        $id_orden_trabajo          = $query[ 'id_orden_trabajo' ];
+        $id_orden_trabajo_original = $this->__retorna_id_orden_trabajo_original( $id_orden_trabajo );
+        $id_orden_reprog           = $query[ 'id_orden_reprog' ];
+        $id_prog_mtto              = $query[ 'id_prog_mtto' ];
+
+        # si el libro relatorio esta en MTTO y no tiene asociada
+        # una orden de trabajo, es porque se autorizó sin licencia
+        # asi que cerramos
+        if ( empty( $id_orden_trabajo ) ) return 'OK';
+
+        ##########################################################
+
+        # verificamos que todas las actividades de la lista de
+        # verificacion fueros hechas y tienen datos
+        // $query = $this->__verificar_datos_actividad( $id_prog_mtto );
+        // if ( $query !== 'OK' ) return $query;
+
+        ##########################################################
+
+        # buscamos la orden de trabajo mas proxima
+        # para activarla
+        $sql = 
+        "SELECT id_orden_trabajo, id_prog_mtto ".
+        "FROM programacion_mtto ".
+        # filtramos todas las ordenes de trabajo con [id_prog_mtto]
+        # y asi obtener el bloque completo de la programacion
+        "WHERE id_prog_mtto IN( ".
+            "SELECT id_prog_mtto ".
+            "FROM programacion_mtto ".
+            "WHERE id_orden_trabajo = $id_orden_trabajo ".
+        ") ".
+        # buscamos del bloque de programaciones a la siguiente orden 
+        # de trabajo que tiene una fecha mayor a la orden que se
+        # encuentra [ACTIVA]
+        "AND fecha_inicial > ( ".
+            "SELECT fecha_inicial ".
+            "FROM programacion_mtto ".
+            "WHERE estado_asignado = 'ACTIVO' ".
+            "AND id_orden_reprog = $id_orden_reprog ".
+        ") ".
+        # y que ademas no sea una orden que se encuentre con el 
+        # estatus: [REPROGRAMADA, ACTIVA, FINALIZADA]
+        "AND estado_asignado IS NULL ".
+        "ORDER BY fecha_inicial ASC ".
+        "LIMIT 1";
+
+        // return $sql;        
+        $next_orden = $this->query( $sql, 'id_orden_trabajo', NULL );
 
         # cerramos la programacion de orden de trabajo
+        # Rastreamos el id_orden_trabajo desde el campo id_orden_reprog
+        # en el caso de que la orden de trabajo haya sido reprogramada
+        # y asi no cerrar la orden de trabajo equivocada
         $sql =
-        "UPDATE programacion_mtto ".
-        "SET estado_asignado = 'FINALIZADO', ".
-        "fecha_realizada = STR_TO_DATE( '$fecha_realizada', '%d-%m-%Y' ) ".
-        "WHERE id_orden_trabajo = $id_orden_trabajo"; 
+        "UPDATE programacion_mtto ".        
+        "SET fecha_realizada = STR_TO_DATE( '$fecha_realizada', '%d-%m-%Y' ), ".
+        "estado_asignado = 'FINALIZADO' ".
+        "WHERE estado_asignado = 'ACTIVO' ".
+        "AND id_orden_reprog = $id_orden_trabajo_original";
+
+        // return $sql;
         $query = $this->insert_query( $sql );
         if ( $query !== 'OK' ) return $query;
 
-        # buscamos toda la programacion de mantenimiento de
-        # la orden de trabajo
-        $sql = 
-        "SELECT id_orden_trabajo FROM programacion_mtto ".
-        "WHERE id_prog_mtto IN( ".
-            "SELECT id_prog_mtto FROM programacion_mtto ".
-            "WHERE id_orden_trabajo = $id_orden_trabajo ".
-        ") ".
-        "ORDER BY fecha_inicial ASC";
-        $arr = $this->array_query( $sql, 'id_orden_trabajo', NULL );
-
-        # buscamos la posicion de la orden
-        $index = $this->indexof( $arr, $id_orden_trabajo );
-
-        # recorremos la orden activa a la siguiente programacion
+        # si existe una siguiente programacion la activamos
         # o de lo contrario cerramos completamente la orden
         # de trabajo
-        if ( $index < (sizeof( $arr ) - 1) ) {
-            $id_orden_trabajo = $index + 1;
+        if ( !empty( $next_orden ) ) {
+            // $id_orden_trabajo = $next_orden;
 
             $sql =
             "UPDATE programacion_mtto ".
-            "SET estado_asignado = 'ACTIVO', ".            
-            "WHERE id_orden_trabajo = $id_orden_trabajo"; 
-            $query = $this->insert_query( $sql );
-            if ( $query !== 'OK' ) return $query;
+            "SET estado_asignado = 'ACTIVO', ".
+            "id_orden_reprog = $next_orden ".
+            "WHERE id_orden_trabajo = $next_orden"; 
+            // return $sql;
+            return $this->insert_query( $sql );
         }
 
+        # Cerramos la orden de trabajo completa
         else {
+            $sql =
+            "SELECT id_prog_mtto FROM programacion_mtto ".
+            "WHERE id_orden_trabajo = $id_orden_trabajo";
+            $id_prog_mtto = $this->query( $sql, 'id_prog_mtto', NULL );
 
+            $sql =
+            "UPDATE orden_trabajo ".
+            "SET estado_asignado = 'FINALIZADO' ".
+            "WHERE id_prog_mtto = $id_prog_mtto";
+            // return $sql;
+            return $this->insert_query( $sql );
         }
-    } 
+    }
+
+    # verifica que el tipo de mantenimiento tenga una
+    # lista de verificacion asociada con actividades 
+    # registradas por lo menos 1 actividad
+    private function __verificar_lista_verificacion_mtto () {
+
+    }
 
     # nuevo_relatorio ----------------------
 
@@ -421,29 +507,29 @@ class operacion extends sigesop {
             ));
 
         if( $validar !== 'OK' ) {
-            $rsp[ 'status' ] = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
-            $rsp[ 'eventos' ] = $validar[ 'eventos' ];
+            $rsp[ 'status' ]    = array( 'transaccion' => 'NA', 'msj' => $validar[ 'msj' ] );
+            $rsp[ 'eventos' ]   = $validar[ 'eventos' ];
             return $rsp;
         }
 
-        $reporte_por = $post[ 'reporte_por' ][ 'valor' ];
-        $condicion_operativa = $post[ 'condicion_operativa' ][ 'valor' ];
-        $numero_unidad = $post[ 'numero_unidad' ][ 'valor' ];
-        $numero_aero = $post[ 'numero_aero' ][ 'valor' ];            
+        $reporte_por            = $post[ 'reporte_por' ][ 'valor' ];
+        $condicion_operativa    = $post[ 'condicion_operativa' ][ 'valor' ];
+        $numero_unidad          = $post[ 'numero_unidad' ][ 'valor' ];
+        $numero_aero            = $post[ 'numero_aero' ][ 'valor' ];            
 
         switch ( $condicion_operativa ) {
             case 'MTTO':
                 $query = $this->__mantto_por_aero( $post, $numero_aero );
                 if ( $query === 'OK' ) {
                     $this->conexion->commit();
-                    $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
-                    $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
+                    $rsp [ 'eventos' ][]    = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+                    $rsp [ 'status' ]       = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
                 }
 
                 else {
                     $this->conexion->rollback();
-                    $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
-                    $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar mantenimiento.' );
+                    $rsp [ 'eventos' ][]    = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+                    $rsp [ 'status' ]       = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar mantenimiento.' );
                 }                    
                 break;                  
             default:
@@ -451,14 +537,14 @@ class operacion extends sigesop {
                     $query = $this->__evento_por_aero( $post, $numero_aero, $condicion_operativa );
                     if ( $query === 'OK' ) {
                         $this->conexion->commit();
-                        $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
-                        $rsp [ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
+                        $rsp [ 'eventos' ][]    = array( 'estado' => 'OK', 'elem' => $numero_aero, 'msj' => 'Correcto' );
+                        $rsp [ 'status' ]       = array( 'transaccion' => 'OK', 'msj' => 'Elemento ingresado satisfactoriamente.' );
                     }
 
                     else {
                         $this->conexion->rollback();
-                        $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
-                        $rsp [ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar evento.' );
+                        $rsp [ 'eventos' ][]    = array( 'estado' => 'ERROR', 'elem' => $numero_aero, 'msj' => $query );
+                        $rsp [ 'status' ]       = array( 'transaccion' => 'ERROR', 'msj' => 'Error al ingresar evento.' );
                     }
                 }
 
@@ -578,24 +664,23 @@ class operacion extends sigesop {
     }
 
     private function __mantto_por_aero ( $data, $numero_aero ){        
-        $id_libro_relatorio = $this->autoincrement( "select id_libro_relatorio from libro_relatorio order by id_libro_relatorio asc", 'id_libro_relatorio' );
-        $id_libro_licencia = $data[ 'id_libro_licencia' ][ 'valor' ];
-        $fecha_inicio_evento = $data[ 'fecha_inicio_evento' ][ 'valor' ];
+        $id_libro_relatorio     = $this->auto_increment( 'libro_relatorio', 'id_libro_relatorio' );
+        $id_libro_licencia      = $data[ 'id_libro_licencia' ][ 'valor' ];
+        $fecha_inicio_evento    = $data[ 'fecha_inicio_evento' ][ 'valor' ];
 
         $fecha_termino_estimado = $data[ 'fecha_termino_estimado' ][ 'valor' ];
         $fecha_termino_estimado = !empty( $fecha_termino_estimado ) ? 
             "STR_TO_DATE( '$fecha_termino_estimado', '%d-%m-%Y' )" : 'NULL';
         
-        $hora_inicio_evento = $data[ 'hora_inicio_evento' ][ 'valor' ];          
-        $trabajador_solicito = $data[ 'trabajador_solicito' ][ 'valor' ];
-        $trabajador_autorizo = $data[ 'trabajador_autorizo' ][ 'valor' ];
-        $descripcion_evento = $data[ 'descripcion_evento' ][ 'valor' ];
+        $hora_inicio_evento     = $data[ 'hora_inicio_evento' ][ 'valor' ];          
+        $trabajador_solicito    = $data[ 'trabajador_solicito' ][ 'valor' ];
+        $trabajador_autorizo    = $data[ 'trabajador_autorizo' ][ 'valor' ];
+        $descripcion_evento     = $data[ 'descripcion_evento' ][ 'valor' ];
 
-        $mantto = $data[ 'condicion_operativa' ][ 'mantenimiento' ];
-        $id_orden_trabajo = $mantto[ 0 ][ 'id_orden_trabajo' ];        
-        $sin_licencia = $mantto[ 0 ][ 'sin_licencia' ];
-
-        $consecutivo_licencia = $data[ 'consecutivo_licencia' ][ 'valor' ];
+        $mantto                 = $data[ 'condicion_operativa' ][ 'mantenimiento' ];
+        $id_orden_trabajo       = $mantto[ 0 ][ 'id_orden_trabajo' ];        
+        $sin_licencia           = $mantto[ 0 ][ 'sin_licencia' ];
+        $consecutivo_licencia   = $data[ 'consecutivo_licencia' ][ 'valor' ];
         
         # verificamos si nos han enviado un consecutivo desde la 
         # interfaz del navegador
@@ -619,14 +704,17 @@ class operacion extends sigesop {
         # creamos consulta de inserción 
         switch ( $sin_licencia ) {
             case 'false':
+                # el usuario [root] no es un usuario registrado
+                # en la db [laventa_cfe] por lo tanto no puede
+                # crear relatorios
                 $sql = $trabajador_autorizo !== $this->root ?
-                "insert into libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
+                "INSERT INTO libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
                 "fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, trabajador_solicito, trabajador_autorizo, id_orden_trabajo, ".
                 "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', $consecutivo_licencia, ".
                 "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', $fecha_termino_estimado, '$trabajador_solicito', '$trabajador_autorizo', ".
                 "$id_orden_trabajo, '$descripcion_evento' )" :
 
-                "insert into libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
+                "INSERT INTO libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
                 "fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, trabajador_solicito, id_orden_trabajo, ".
                 "descripcion_evento ) values( $id_libro_relatorio, '$numero_aero', $id_libro_licencia, 'MTTO', $consecutivo_licencia, ".
                 "STR_TO_DATE( '$fecha_inicio_evento', '%d-%m-%Y' ), '$hora_inicio_evento', $fecha_termino_estimado, '$trabajador_solicito', ".
@@ -634,6 +722,9 @@ class operacion extends sigesop {
                 break;
             
             case 'true':
+                # el usuario [root] no es un usuario registrado
+                # en la db [laventa_cfe] por lo tanto no puede
+                # crear relatorios
                 $sql = $trabajador_autorizo !== $this->root ?
                 "INSERT INTO libro_relatorio( id_libro_relatorio, numero_aero, id_libro_licencia, condicion_operativa, consecutivo_licencia, ".
                 "fecha_inicio_evento, hora_inicio_evento, fecha_termino_estimado, trabajador_solicito, trabajador_autorizo, ".
@@ -655,8 +746,13 @@ class operacion extends sigesop {
         $query = $this->insert_query( $sql );
         if( $query != 'OK' ) return $query;
 
+        $query = $this->__asignar_orden_trabajo_personal
+                            ( $id_orden_trabajo, $id_libro_relatorio );
+        if ( $query != 'OK' ) return $query;
+
         # cambiamos la condicion operativa del generador
-        $query = $this->__cambiar_estado_generador( $numero_aero, 'MTTO', $fecha_inicio_evento );
+        $query = $this->__cambiar_estado_generador
+                            ( $numero_aero, 'MTTO', $fecha_inicio_evento );
         if( $query != 'OK' ) return $query.". Error al cambiar condicion operativa";
 
         return 'OK';
@@ -723,6 +819,46 @@ class operacion extends sigesop {
 
         $query = $this->query( $sql, 'id_libro_relatorio', NULL );
         return empty( $query ) ? TRUE : FALSE;
+    }
+
+    # asocia la tabla [orden_trabajo_personal] con un
+    # [id_libro_relatorio] de tal manera que la orden de trabajo
+    # tenga usuario para realizar el mantenimiento
+    # 
+    # En caso que aun no existan usuarios para la orden de trabajo
+    # el sistema no limitará la creacion del reporte libro relatorio
+    private function __asignar_orden_trabajo_personal( $id_orden_trabajo, $id_libro_relatorio ) {
+        # verificamos que existan usuarios asignado
+        $sql =
+        "SELECT usuario FROM orden_trabajo_personal ".
+        "WHERE id_libro_relatorio IS NULL ".
+        "AND id_prog_mtto = ( ".
+            "SELECT id_prog_mtto FROM programacion_mtto ".
+            "WHERE id_orden_trabajo = $id_orden_trabajo ".
+        ")";
+
+        // return $sql;
+        $query = $this->array_query( $sql );
+
+        # para esta orden de trabajo si no existen
+        # usuario saltamos la asignacion 
+        if ( empty( $query ) ) 
+            return  'No existen trabajadores asignados al mantenimiento. '.
+                    'Verifique la programación.';
+        
+        # Asignamos el [id_libro_relatorio] a la tabla
+        # [orden_trabajo_personal] y asi enlazar la orden de
+        # trabajo al usuario y las pueda descargar
+        $sql =
+        "UPDATE orden_trabajo_personal ".
+        "SET id_libro_relatorio = $id_libro_relatorio ".
+        "WHERE id_libro_relatorio IS NULL ".
+        "AND id_prog_mtto = ( ".
+            "SELECT id_prog_mtto FROM programacion_mtto ".
+            "WHERE id_orden_trabajo = $id_orden_trabajo ".
+        ")";
+        
+        return $this->insert_query( $sql );
     }
 
     # actualizar_relatorio ----------------------
@@ -856,21 +992,21 @@ class operacion extends sigesop {
 
     private function __update_mantto_por_aero ( $data, $numero_aero ){        
         $id_libro_relatorio_update = $data[ 'id_libro_relatorio_update' ][ 'valor' ];
-        $id_libro_licencia = $data[ 'id_libro_licencia' ][ 'valor' ];
-        $fecha_inicio_evento = $data[ 'fecha_inicio_evento' ][ 'valor' ];
-
+        $id_libro_licencia         = $data[ 'id_libro_licencia' ][ 'valor' ];
+        $fecha_inicio_evento       = $data[ 'fecha_inicio_evento' ][ 'valor' ];
+        
         $fecha_termino_estimado = $data[ 'fecha_termino_estimado' ][ 'valor' ];
         $fecha_termino_estimado = !empty( $fecha_termino_estimado ) ? 
             "STR_TO_DATE( '$fecha_termino_estimado', '%d-%m-%Y' )" : 'NULL';
         
-        $hora_inicio_evento = $data[ 'hora_inicio_evento' ][ 'valor' ];          
+        $hora_inicio_evento  = $data[ 'hora_inicio_evento' ][ 'valor' ];          
         $trabajador_solicito = $data[ 'trabajador_solicito' ][ 'valor' ];
         $trabajador_autorizo = $data[ 'trabajador_autorizo' ][ 'valor' ];
-        $descripcion_evento = $data[ 'descripcion_evento' ][ 'valor' ];
+        $descripcion_evento  = $data[ 'descripcion_evento' ][ 'valor' ];
 
-        $mantto = $data[ 'condicion_operativa' ][ 'mantenimiento' ];
+        $mantto           = $data[ 'condicion_operativa' ][ 'mantenimiento' ];
         $id_orden_trabajo = $mantto[ 0 ][ 'id_orden_trabajo' ];        
-        $sin_licencia = $mantto[ 0 ][ 'sin_licencia' ];
+        $sin_licencia     = $mantto[ 0 ][ 'sin_licencia' ];
 
         $consecutivo_licencia = $data[ 'consecutivo_licencia' ][ 'valor' ];
         
@@ -1060,6 +1196,194 @@ class operacion extends sigesop {
         $query = $this->array_query( $sql ); 
         return $query;
     }
+
+    // -----------------------------------------------------------------------------------
+    //   17-Sep-2015 julioe
+    // -----------------------------------------------------------------------------------
+    public function obtener_libro_relatorio_orden_trabajo ( $get ) {
+        $tipo_orden_trabajo = $get[ 'tipo_orden_trabajo' ];
+        $fecha_inf = $get[ 'fecha_inf' ];
+        $fecha_sup = $get[ 'fecha_sup' ];
+        $estado_evento = $get[ 'estado_evento' ];
+        $aeros = $get[ 'aeros' ];
+        $aeros = !is_array($aeros) ? explode(",", $aeros) : $aeros; 
+            $sql =  
+            "SELECT ".
+                "ot.id_prog_mtto,ot.numero_orden,ot.trabajo_solicitado,a.numero_unidad,ot.id_aero, ".
+                // "pm.fecha_inicial fecha_prog," .
+                "DATE_FORMAT(pm.fecha_inicial, '%d-%m-%Y') AS fecha_prog, ".
+                // "DATE_FORMAT(pm.fecha_final, '%d-%m-%Y') AS fecha_final, ".
+                "pm.fecha_final, ".
+                "'horas_prog' horas_prog,".
+                "lr.fecha_inicio_evento,lr.hora_inicio_evento, ".
+                "lr.fecha_termino_evento,lr.hora_termino_evento,".
+                "'horas_reales' horas_reales,pm.estado_asignado,lr.descripcion_evento,lr.id_libro_relatorio ".
+            "FROM orden_trabajo ot ". 
+            "INNER JOIN programacion_mtto pm ON (pm.id_prog_mtto = ot.id_prog_mtto) ".
+            "INNER JOIN aeros a ON (a.numero_aero=ot.id_aero) ".
+            "INNER JOIN libro_relatorio lr ON (pm.id_orden_trabajo=lr.id_orden_trabajo) ";
+
+            $sql.=  "WHERE ";
+                        
+            empty( $fecha_inf ) ? # si fecha_inf está vacia busca todas los reportes existentes hasta la fecha superior
+            $sql.= "pm.fecha_inicial <= STR_TO_DATE( '$fecha_sup', '%d-%m-%Y' ) " : 
+            $sql.= "pm.fecha_inicial >= STR_TO_DATE( '$fecha_inf', '%d-%m-%Y' ) ".
+               "AND pm.fecha_inicial <= STR_TO_DATE( '$fecha_sup', '%d-%m-%Y' ) ";
+            $sql.= "AND ot.id_aero IN ('" . implode("','", $aeros) ."') ";
+            //---------------------------------------------
+            switch ( $tipo_orden_trabajo ) {
+                case 'PROGRAMADAS':
+                    $sql.= "AND (pm.estado_asignado='ACTIVO') ";
+                    break;
+                case 'REPROGRAMADAS':
+                    $sql.= "AND (pm.estado_asignado='REPROGRAMADO') ";
+                    break;
+                case 'TERMINADAS':
+                    $sql.= "AND (pm.estado_asignado='FINALIZADO') ";
+                    break;
+                default: // 'TODAS'
+                    //$sql.= "AND (pm.estado_asignado='FINALIZADO') ";
+                    break;
+            }
+        
+            $sql .= "ORDER BY a.numero_unidad ASC, ot.id_aero ASC";
+        
+            // return $sql;
+        $query = $this->array_query( $sql );
+        $arr = array();        
+
+        // return $query;
+        $tiempo_muerto_horas=0;
+        $tiempo_muerto_minutos=0;
+        # calculamos las horas para cada evento
+        
+        $rw[][]="";
+        $corte_aero_hp=0;
+        $corte_aero_hr=0;
+        $corte_unidad_hp=0;
+        $corte_unidad_hr=0;
+        $total_hp=0;
+        $total_hr=0;
+        $temp_aero=$query[0]['id_aero'];
+        $temp_unidad=$query[0]['numero_unidad'];
+        
+        foreach ($query as $val)
+        {
+            if($temp_aero!=$val['id_aero'])
+            {
+                $rw[++$i]['numero_unidad']      ="";
+                $rw[$i]['id_aero']              ="";
+                $rw[$i]['fecha_prog']           ="";
+                $rw[$i]['numero_orden']         ="";
+                $rw[$i]['fecha_inicio_evento']  ="Corte Aero:";
+                $rw[$i]['horas_prog']           =$corte_aero_hp;
+                $rw[$i]['horas_reales']         =$corte_aero_hr;
+                $arr[] = $rw[$i];
+                $corte_aero_hp=0;
+                $corte_aero_hr=0;
+                $temp_aero=$val['id_aero'];
+                $i++;
+            }
+            if($temp_unidad!=$val['numero_unidad'])
+            {
+                $rw[++$i]['numero_unidad']      ="";
+                $rw[$i]['id_aero']              ="";
+                $rw[$i]['fecha_prog']           ="";
+                $rw[$i]['numero_orden']         ="";
+                $rw[$i]['fecha_inicio_evento']  ="Corte Unidad:";
+                $rw[$i]['horas_prog']           =$corte_unidad_hp;
+                $rw[$i]['horas_reales']         =$corte_unidad_hr;
+                $arr[] = $rw[$i];
+                $corte_unidad_hp=0;
+                $corte_unidad_hr=0;
+                $temp_unidad=$val['numero_unidad'];
+                $i++;
+            }
+            $fecha_inicio = Carbon::parse( $val[ 'fecha_prog' ]." 00:00:00", 'America/Mexico_City' );
+            $fecha_final = Carbon::parse( $val[ 'fecha_final' ]." 00:00:00", 'America/Mexico_City' );
+            $horas_prog = $fecha_final->diffInHours( $fecha_inicio );
+            $val['horas_prog']=$horas_prog;
+            
+            $fecha_inicio = Carbon::parse( $val[ 'fecha_inicio_evento' ]." ".$val[ 'hora_inicio_evento' ], 'America/Mexico_City' );
+            $fecha_final = $val['fecha_termino_evento'];
+            $hora_final = $val['hora_termino_evento'];
+            if(empty($fecha_final) && empty($hora_final))
+            {
+                $fecha_final = Carbon::now( 'America/Mexico_City' );
+                $val['fecha_termino_evento']="ABIERTO";
+                $val['hora_termino_evento']="ABIERTO";
+            }
+            else
+            {
+                $fecha_final = Carbon::parse( $val[ 'fecha_termino_evento' ]." ".$val[ 'hora_termino_evento' ], 'America/Mexico_City' );
+            }
+            $horas_reales = $fecha_final->diffInHours( $fecha_inicio );
+            $min_reales   = $fecha_final->diffInMinutes( $fecha_inicio );
+            $min = $min_reales % 60;
+            $val[ 'horas_reales' ] = $horas_reales.':'. (($min<10) ? '0'.$min : $min);
+            
+            $rw[$i]['id_libro_relatorio']   =$val['id_libro_relatorio'];
+            $rw[$i]['id_prog_mtto']         =$val['id_prog_mtto'];
+            $rw[$i]['numero_unidad']        =$val['numero_unidad'];
+            $rw[$i]['id_aero']              =$val['id_aero'];
+            $rw[$i]['numero_orden']         =$val['numero_orden'];
+            $rw[$i]['trabajo_solicitado']   =$val['trabajo_solicitado'];
+            $rw[$i]['fecha_prog']           =$val['fecha_prog'];
+            $rw[$i]['fecha_inicio_evento']  =$val['fecha_inicio_evento'];
+            $rw[$i]['horas_prog']           =$val['horas_prog'];
+            $rw[$i]['horas_reales']         =$val['horas_reales'];
+            $rw[$i]['estado_asignado']      =$val['estado_asignado'];
+            $rw[$i]['descripcion_evento']   =$val['descripcion_evento'];
+            
+            $corte_aero_hp   +=$val['horas_prog'];
+            $corte_aero_hr   =$this->sumar_horas($corte_aero_hr,$val['horas_reales']);
+            $corte_unidad_hp +=$val['horas_prog'];
+            $corte_unidad_hr =$this->sumar_horas($corte_unidad_hr,$val['horas_reales']);
+            $total_hp        +=$val['horas_prog'];
+            $total_hr        =$this->sumar_horas($total_hr,$val['horas_reales']);
+
+            $arr[] = $rw[$i];
+            $i++;
+        }
+        $rw[++$i]['numero_unidad']      ="";
+        $rw[$i]['id_aero']              ="";
+        $rw[$i]['fecha_prog']           ="";
+        $rw[$i]['numero_orden']         ="";
+        $rw[$i]['fecha_inicio_evento']  ="Corte Aero:";
+        $rw[$i]['horas_prog']           =$corte_aero_hp;
+        $rw[$i]['horas_reales']         =$corte_aero_hr;
+        $arr[] = $rw[$i];
+        $rw[++$i]['numero_unidad']      ="";
+        $rw[$i]['id_aero']              ="";
+        $rw[$i]['fecha_prog']           ="";
+        $rw[$i]['numero_orden']         ="";
+        $rw[$i]['fecha_inicio_evento']  ="Corte Unidad:";
+        $rw[$i]['horas_prog']           =$corte_unidad_hp;
+        $rw[$i]['horas_reales']         =$corte_unidad_hr;
+        $arr[] = $rw[$i];
+        $rw[++$i]['numero_unidad']      ="";
+        $rw[$i]['id_aero']              ="";
+        $rw[$i]['fecha_prog']           ="";
+        $rw[$i]['numero_orden']         ="";
+        $rw[$i]['fecha_inicio_evento']  ="Total Reporte:";
+        $rw[$i]['horas_prog']           =$total_hp;
+        $rw[$i]['horas_reales']         =$total_hr;
+        $arr[] = $rw[$i];
+        return $arr;
+    }
+
+    private function sumar_horas ( $hora1,$hora2 ) {
+        $hora1=explode(":",$hora1);
+        $hora2=explode(":",$hora2);
+        $horas=(int)$hora1[0]+(int)$hora2[0];
+        $minutos=(int)$hora1[1]+(int)$hora2[1];
+        $horas+=(int)($minutos/60);
+        $minutos=$minutos%60;
+        if($minutos<10)$minutos="0".$minutos ;
+        return $horas.":".$minutos;
+    }
+    
+    // -----------------------------------------------------------------------------------
     
     public function obtener_libro_relatorio ( $get ) {
         $option = $get[ 'option' ];
@@ -1140,8 +1464,27 @@ class operacion extends sigesop {
                 $sql .= "WHERE t_lr.fecha_termino_evento IS NULL AND t_lr.fecha_termino_evento IS NULL ".
                         "AND estado_evento = TRUE ";
                 break;
+
+            case 'programacion_mtto':
+                "LEFT JOIN programacion_mtto pm ".
+                "ON pm.id_prog_mtto = ( ".
+                    "SELECT id_prog_mtto FROM orden_trabajo_personal ".
+                    "WHERE id_libro_relatorio = t_lr.id_libro_relatorio ".
+                    "LIMIT 1 ".
+                ") ".
+                "WHERE pm.estado_asignado = 'ACTIVO' ";
+                
+                $sql .= "WHERE t_lr.condicion_operativa = 'MTTO' ";
+
+                empty( $fecha_inf ) ? # si fecha_inf está vacia busca todas los reportes existentes hasta la fecha superior
+                    $sql.= "AND t_lr.fecha_termino_evento <= STR_TO_DATE( '$fecha_sup', '%d-%m-%Y' ) ": 
+                    $sql.= "AND t_lr.fecha_termino_evento >= STR_TO_DATE( '$fecha_inf', '%d-%m-%Y' ) AND ".
+                           "t_lr.fecha_termino_evento <= STR_TO_DATE( '$fecha_sup', '%d-%m-%Y' ) ";
+
+                return $sql;
+                break;
             
-            default: return array();        
+            default: return array();  
                 break;
         }
 
@@ -1150,32 +1493,34 @@ class operacion extends sigesop {
         // return $sql;
 
         $query = $this->array_query( $sql );
-        $arr = array();        
+        $arr = array();
 
         // return $query;
-		$tiempo_muerto_horas=0;
-        $tiempo_muerto_minutos=0;
+        $tiempo_muerto_horas   =0;
+        $tiempo_muerto_minutos =0;
         # calculamos las horas para cada evento
         foreach ( $query as $val ) {
             $fecha_termino_evento = $val [ 'fecha_termino_evento' ];
-            $hora_termino_evento = $val [ 'hora_termino_evento' ];
-            $estado_evento = $val [ 'estado_evento' ]; 
-			
-            $id_libro_relatorio = $val[ 'id_libro_relatorio' ];
-            $id_libro_licencia = $val[ 'id_libro_licencia' ];
+            $hora_termino_evento  = $val [ 'hora_termino_evento' ];
+            $estado_evento        = $val [ 'estado_evento' ]; 
+            
+            $id_libro_relatorio   = $val[ 'id_libro_relatorio' ];
+            $id_libro_licencia    = $val[ 'id_libro_licencia' ];
             $consecutivo_licencia = $val[ 'consecutivo_licencia' ];
 
             if( empty( $fecha_termino_evento ) 
                 && empty( $hora_termino_evento ) ) { // si el evento no esta finalizado
-
+                date_default_timezone_set('America/Mexico_City');
+                
                 $fecha_inicio = Carbon::parse( $val[ 'fecha_inicio_evento' ]." ".$val[ 'hora_inicio_evento' ], 'America/Mexico_City' );
                 $fecha_final = $dia_reporte != '7AM' ?
                     Carbon::now( 'America/Mexico_City' ): # el dia de hoy desde las 00:00 hasta la hora del instante
-                    Carbon::parse( Carbon::now()->toDateString()." "."07:00:00" ,'America/Mexico_City' ); # el dia de hoy desde las 00:00 hasta las 7:00 A.M.
+                    // Carbon::now( 'America/Mexico_City' );
+                    Carbon::parse( Carbon::now()->toDateString()." "."07:00:00" ); # el dia de hoy desde las 00:00 hasta las 7:00 A.M
 
 				/*  julioe 09-09-2015  */
-				$val['fecha_termino_evento']="ABIERTO";
-				$val['hora_termino_evento']="ABIERTO";
+                $val['fecha_termino_evento'] ="ABIERTO";
+                $val['hora_termino_evento']  ="ABIERTO";
 				/*  julioe 09-09-2015  */
 
                 #------------
@@ -1184,27 +1529,34 @@ class operacion extends sigesop {
 
                 #------------
 
-                $horas = $fecha_inicio->diffInHours( $fecha_final, false );
+                $horas     = $fecha_inicio->diffInHours( $fecha_final, false );
                 $min_total = $fecha_final->diffInMinutes( $fecha_inicio );
 				//$tiempo_muerto_minutos = $min_total;
                 $min = $min_total % 60;
-                $val[ 'horas_acumuladas_evento' ] = $horas.':'.$min;
+
+                # formateamos la cadena para dejar una estructura
+                # similar a 00:00:00
+                $val[ 'horas_acumuladas_evento' ] = $this->__struct_string_time( $horas, $min );
             }
 
             else { // si el evento esta finalizado            
                 $val[ 'fecha_termino_evento' ] = Carbon::parse( $fecha_termino_evento, 'America/Mexico_City' )->format( 'd-m-Y' );
-                $val[ 'horas_dia_reporte' ] = null;
+                $val[ 'horas_dia_reporte' ]    = null;
 
                 #------------
 
                 $fecha_inicio = Carbon::parse( $val[ 'fecha_inicio_evento' ]." ".$val[ 'hora_inicio_evento' ], 'America/Mexico_City' );
-                $fecha_final = Carbon::parse( $val[ 'fecha_termino_evento' ]." ".$val[ 'hora_termino_evento' ], 'America/Mexico_City' );
+                $fecha_final  = Carbon::parse( $val[ 'fecha_termino_evento' ]." ".$val[ 'hora_termino_evento' ], 'America/Mexico_City' );
 
-                $horas = $fecha_final->diffInHours( $fecha_inicio );
+                $horas     = $fecha_final->diffInHours( $fecha_inicio );
                 $min_total = $fecha_final->diffInMinutes( $fecha_inicio );
-                $min = $min_total % 60;
-                $val[ 'horas_acumuladas_evento' ] = $horas.':'.$min;
+                $min       = $min_total % 60;
+
+                # formateamos la cadena para dejar una estructura
+                # similar a 00:00:00
+                $val[ 'horas_acumuladas_evento' ] = $this->__struct_string_time ( $horas, $min );
             }
+
 			$tiempo_muerto_minutos = $min_total;
             # Calculamos el numero de subeventos
             $sql =
@@ -1231,8 +1583,8 @@ class operacion extends sigesop {
             // 2015-09-08 Julioe
             //------------------------------------------------------------------------------------------------------------------------
             
-            $sumatoria_horas=0;
-            $sumatoria_minutos=0;
+            $sumatoria_horas   = 0;
+            $sumatoria_minutos = 0;
 
 			//$tiempo_muerto_horas=$horas;
             //$tiempo_muerto_minutos=$min;
@@ -1240,14 +1592,14 @@ class operacion extends sigesop {
             foreach ($subeventos as $row)
             {
                 $fecha_inicio = Carbon::parse( $row[ 'fecha_inicio_evento' ]." ".$row[ 'hora_inicio_evento' ], 'America/Mexico_City' );
-                $fecha_final = Carbon::parse( $row[ 'fecha_termino_evento' ]." ".$row[ 'hora_termino_evento' ], 'America/Mexico_City' );
-
-                $horas = $fecha_final->diffInHours( $fecha_inicio );
+                $fecha_final  = Carbon::parse( $row[ 'fecha_termino_evento' ]." ".$row[ 'hora_termino_evento' ], 'America/Mexico_City' );
+                
+                $horas     = $fecha_final->diffInHours( $fecha_inicio );
                 $min_total = $fecha_final->diffInMinutes( $fecha_inicio );
                 
 
-                $sumatoria_horas+=$horas;
-                $sumatoria_minutos+=$min_total;
+                $sumatoria_horas   +=$horas;
+                $sumatoria_minutos +=$min_total;
 
             }
 
@@ -1255,7 +1607,7 @@ class operacion extends sigesop {
             $min = $sumatoria_minutos % 60;
             //$row['horas_acumuladas_evento'] = $sumatoria_horas.':'.$min;
 
-            $val[ 'sum_subeventos' ] = $sumatoria_horas.':'.$min;
+            $val[ 'sum_subeventos' ] = $this->__struct_string_time( $sumatoria_horas, $min );
 			
             //------------------------------------------------------------------------------------------------------------------------
             // 2015-09-09 Julioe
@@ -1264,7 +1616,7 @@ class operacion extends sigesop {
 			//$tiempo_muerto_horas-=$sumatoria_horas;
             $tiempo_muerto_minutos-=$sumatoria_minutos;
 			
-			$val[ 'tiempo_muerto' ] = intval($tiempo_muerto_minutos/60) . ":" . $tiempo_muerto_minutos%60;
+			$val[ 'tiempo_muerto' ] = $this->__struct_string_time( intval($tiempo_muerto_minutos/60), $tiempo_muerto_minutos%60 );
 			
 			//
 			//  end - julioe
@@ -1291,7 +1643,7 @@ class operacion extends sigesop {
     }
 
     public function imprimir ( $get ) {
-        require_once('../tcpdf/tcpdf.php');
+        require_once( $this->path_file_pdf );
 
         // create new PDF document
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -1408,7 +1760,7 @@ class operacion extends sigesop {
 //  julioe 09-09-2015
 //  ----------------------------------------------------------------------
     public function imprimir_reporte_periodo ( $get ) {
-        require_once('../tcpdf/tcpdf.php');
+        require_once( $this->path_file_pdf );
 
         // create new PDF document
         $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -1526,6 +1878,487 @@ class operacion extends sigesop {
 //  ----------------------------------------------------------------------
 //  end julioe
 //  ----------------------------------------------------------------------	
+
+//  ----------------------------------------------------------------------
+//  julioe 10-09-2015 al 14-09-2015
+//  ----------------------------------------------------------------------    
+    public function exportar_reporte_periodo ( $get ) {
+        $datos = $this->obtener_libro_relatorio($get);
+        $i = 0;
+		$hist=$get['historial'];
+		//$j = 0;
+		$rw[][]="";
+		foreach($datos as $row )
+		{
+            $id_libro_relatorio                =$row['id_libro_relatorio'];
+            $rw[$i]['id_libro_relatorio']      =$row['id_libro_relatorio'];
+            $rw[$i]['numero_aero']             =$row['numero_aero'];
+            $rw[$i]['condicion_operativa']     =$row['condicion_operativa'];
+            $rw[$i]['descripcion_evento']      =$row['descripcion_evento'];
+            $rw[$i]['fecha_inicio_evento']     =$row['fecha_inicio_evento'];
+            $rw[$i]['hora_inicio_evento']      =$row['hora_inicio_evento'];
+            $rw[$i]['fecha_termino_evento']    =$row['fecha_termino_evento'];
+            $rw[$i]['hora_termino_evento']     =$row['hora_termino_evento'];
+            $rw[$i]['horas_acumuladas_evento'] =$row['horas_acumuladas_evento'];
+            $rw[$i]['num_subeventos']          =$row['num_subeventos'];
+            $rw[$i]['sum_subeventos']          =$row['sum_subeventos'];
+            $rw[$i]['tiempo_muerto']           =$row['tiempo_muerto'];
+			if($hist=='SI')
+			{			
+				$sql =
+					"SELECT condicion_operativa,descripcion_evento,".
+					"DATE_FORMAT( fecha_inicio_evento, '%d-%m-%Y') AS fecha_inicio_evento, ".
+					"DATE_FORMAT( fecha_termino_evento, '%d-%m-%Y') AS fecha_termino_evento, ".
+					"hora_inicio_evento, hora_termino_evento ".
+					"FROM libro_relatorio_historial ".
+					"WHERE id_libro_relatorio = $id_libro_relatorio ".
+					"ORDER BY fecha_inicio_evento ASC, hora_inicio_evento ASC";			
+				$query = $this->array_query($sql);
+				if(!empty($query))
+				{
+					foreach($query as $log)
+					{
+						$rw[++$i]['id_libro_relatorio']    =$row['id_libro_relatorio'];
+						$rw[$i]['numero_aero']             ="-";//$row['numero_aero'];
+						$rw[$i]['condicion_operativa']     =$log['condicion_operativa'];
+						$rw[$i]['descripcion_evento']      =$log['descripcion_evento'];
+						$rw[$i]['fecha_inicio_evento']     =$log['fecha_inicio_evento'];
+						$rw[$i]['hora_inicio_evento']      =$log['hora_inicio_evento'];
+						$rw[$i]['fecha_termino_evento']    =$log['fecha_termino_evento'];
+						$rw[$i]['hora_termino_evento']     =$log['hora_termino_evento'];
+						// Calcular la duracion del evento
+				
+						#------------
+						//$log[ 'fecha_termino_evento' ] = Carbon::parse( $fecha_termino_evento, 'America/Mexico_City' )->format( 'd-m-Y' );
+						//$val[ 'horas_dia_reporte' ] = null;
+
+						$_fecha_inicio = Carbon::parse( $log[ 'fecha_inicio_evento' ]." ".$log[ 'hora_inicio_evento' ], 'America/Mexico_City' );
+						$_fecha_final = Carbon::parse( $log[ 'fecha_termino_evento' ]." ".$log[ 'hora_termino_evento' ], 'America/Mexico_City' );
+
+						$_horas = $_fecha_final->diffInHours($_fecha_inicio);
+						$_min_total = $_fecha_final->diffInMinutes( $_fecha_inicio );
+						$_min = $_min_total % 60;
+						$rw[$i]['horas_acumuladas_evento'] = $_horas.':'.$_min;
+						#------------
+						
+						//$rw[$i]['horas_acumuladas_evento'] =$log['horas_acumuladas_evento'];
+						$rw[$i]['num_subeventos']          ="-";
+						$rw[$i]['sum_subeventos']          ="-";
+						$rw[$i]['tiempo_muerto']           ="-";
+					}
+				}
+			}
+			$i++;
+        }
+
+		// -----
+		//  Archivo en Excel
+		// -----
+		
+		error_reporting(E_ALL | E_WARNING | E_STRICT );
+		ini_set('display_errors', FALSE);
+        // set_include_path('/var/www/html/LaVenta/ajax/pear');
+		set_include_path( $this->path_pear );
+		require_once( $this->path_file_pear );
+		//mb_internal_encoding('ISO-8859-1');
+		$workbook = new Spreadsheet_Excel_Writer();
+		//$workbook->setVersion(8);
+
+		$format_title =& $workbook->addFormat(array('Size' => 11,
+                                      'Align' => 'left',
+									  'bold'=> 1));
+		$format_normal =& $workbook->addFormat(array('Size' => 8,
+                                      'Align' => 'left'));
+		$format_normal_center =& $workbook->addFormat(array('Size' => 8,
+                                      'Align' => 'center'));
+		$format_normal_center_h =& $workbook->addFormat(array('Size' => 8,
+                                      'Align' => 'center',
+									  'FgColor' => 26));
+		$format_bold =& $workbook->addFormat(array('Size' => 10,
+                                      'Align' => 'center',
+                                      'Color' => 'white',
+                                      'Pattern' => 1,
+                                      'FgColor' => 'green',
+									  'VAlign' => 'vcenter',
+									  'HAlign' => 'hcenter',
+									  'bold'=> 1));
+		$format_bold->setTextWrap();							  
+		
+		$worksheet  =& $workbook->addWorksheet("Reporte");
+		//$worksheet->insertBitmap(0,0,'/css/7images/cfe.bmp','1','1','2','2');
+		$worksheet->writeString(0, 0, "Gerencia Regional de Produccion Sureste", $format_title);
+		$worksheet->setMerge(0, 0, 0, 4);
+		$worksheet->writeString(1, 0, "Subgerencia Regional de Generacion Hidroelectrica Grijalva", $format_title);
+		$worksheet->setMerge(1, 0, 1, 4);
+		$worksheet->writeString(2, 0, "C.E. La Venta", $format_title);
+		$worksheet->setMerge(2, 0, 2, 4);
+		$worksheet->writeString(4, 0, "NO. AEREO", $format_bold);
+		$worksheet->writeString(4, 1, "CONDICION", $format_bold);
+		$worksheet->writeString(4, 2, "FECHA INICIO EVENTO", $format_bold);
+		$worksheet->writeString(4, 3, "HORA INICIO EVENTO", $format_bold);
+		$worksheet->writeString(4, 4, "FECHA TERMINO EVENTO", $format_bold);
+		$worksheet->writeString(4, 5, "HORA TERMINO EVENTO", $format_bold);
+		$worksheet->writeString(4, 6, "TIEMPO TOTAL", $format_bold);
+		$worksheet->writeString(4, 7, "NO. SUBEVENTOS", $format_bold);
+		$worksheet->writeString(4, 8, "T. TOTAL SUBEVENTOS", $format_bold);
+		$worksheet->writeString(4, 9, "TIEMPO MUERTO", $format_bold);
+		
+		$i = 5;
+        foreach( $rw as $row )
+        {
+            $id_libro_relatorio = $row['id_libro_relatorio'];
+			$string = iconv("UTF-8", "ISO-8859-1//TRANSLIT",$row['descripcion_evento']);
+			$string1=($row['fecha_termino_evento']=="ABIERTO") ? "Abierto" : $row['fecha_termino_evento'];
+			$string2=($row['hora_termino_evento']=="ABIERTO") ? "Abierto" : $row['hora_termino_evento'];
+			$string3=$row['numero_aero'];
+			$worksheet->writeString($i,0,$string3,($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,1,$row['condicion_operativa'],($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeNote($i,1,$string,($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,2,$row['fecha_inicio_evento'],($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,3,$row['hora_inicio_evento'],($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,4,$string1,($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,5,$string2,($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,6,$row['horas_acumuladas_evento'],($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			if($row['num_subeventos']=="-")
+				$worksheet->writeString($i,7,"-",($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			else
+				$worksheet->writeNumber($i,7,$row['num_subeventos'],($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,8,$row['sum_subeventos'],($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$worksheet->writeString($i,9,$row['tiempo_muerto'],($hist=="SI" and $string3=="-") ? $format_normal_center : $format_normal_center_h);
+			$i++;
+        }
+		$worksheet->setRow(4,27);
+		$worksheet->setColumn(0,1,11);
+		$worksheet->setColumn(2,3,13);
+		$worksheet->setColumn(4,5,16);
+		$worksheet->setColumn(6,6,11);
+		$worksheet->setColumn(7,9,14);
+		$workbook->send('reporte.xls');
+		$workbook->close();
+    }
+//  ----------------------------------------------------------------------
+//  end julioe
+//  ----------------------------------------------------------------------	
+
+//  ----------------------------------------------------------------------
+//  julioe 17-09-2015
+//  ----------------------------------------------------------------------
+    public function imprimir_reporte_orden_trabajo ($get) {
+        require_once( $this->path_file_pdf );
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de Mantenimiento' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        $datos = $this->obtener_libro_relatorio_orden_trabajo($get);
+        $i = 0;
+        /*
+         -------------------------------------------------
+        */
+        $hist=$get['historial'];
+        $rw[][]="";
+        foreach($datos as $row )
+        {
+            $id_libro_relatorio             =$row['id_libro_relatorio'];
+            $rw[$i]['id_libro_relatorio']   =$row['id_libro_relatorio'];
+            $rw[$i]['id_prog_mtto']         =$row['id_prog_mtto'];
+            $rw[$i]['numero_unidad']        =$row['numero_unidad'];
+            $rw[$i]['id_aero']              =$row['id_aero'];
+            $rw[$i]['numero_orden']         =$row['numero_orden'];
+            $rw[$i]['trabajo_solicitado']   =$row['trabajo_solicitado'];
+            $rw[$i]['fecha_prog']           =$row['fecha_prog'];
+            $rw[$i]['fecha_inicio_evento']  =$row['fecha_inicio_evento'];
+            $rw[$i]['horas_prog']           =$row['horas_prog'];
+            $rw[$i]['horas_reales']         =$row['horas_reales'];
+            $rw[$i]['estado_asignado']      =$row['estado_asignado'];
+            $rw[$i]['descripcion_evento']   =$row['descripcion_evento'];
+            
+            //$rw[$i]['fecha_final']            =$row['fecha_final'];
+            //$rw[$i]['fecha_termino_evento']   =$row['fecha_termino_evento'];
+            //$rw[$i]['hora_termino_evento']    =$row['hora_termino_evento'];
+            //echo $id_libro_relatorio;
+            if($hist=='SI' and $id_libro_relatorio!=NULL)
+            {           
+                $sql = "SELECT ".
+                        "id_libro_relatorio_historial," .
+                        "id_libro_relatorio," .
+                        "fecha_inicio_evento," .
+                        "hora_inicio_evento," .
+                        "fecha_termino_estimado_evento," .
+                        "hora_termino_estimado_evento," .
+                        "fecha_termino_evento," .
+                        "hora_termino_evento," .
+                        "condicion_operativa," .
+                        "descripcion_evento " .
+                    "FROM libro_relatorio_historial ".
+                    "WHERE id_libro_relatorio = $id_libro_relatorio ".
+                    "ORDER BY fecha_inicio_evento ASC, hora_inicio_evento ASC";         
+                $query = $this->array_query($sql);
+                
+                if(!empty($query))
+                {
+                    foreach($query as $log)
+                    {
+                        $rw[++$i]['id_libro_relatorio'] =$log['id_libro_relatorio'];
+                        $rw[$i]['id_prog_mtto']         =$row['id_prog_mtto'];
+                        $rw[$i]['numero_unidad']        ="";//$row['numero_unidad'];
+                        $rw[$i]['id_aero']              ="";//$row['id_aero'];
+                        $rw[$i]['numero_orden']         =$log['condicion_operativa'];
+                        $rw[$i]['trabajo_solicitado']   =$row['trabajo_solicitado'];
+                        $rw[$i]['fecha_prog']           =$row['fecha_prog'];
+                        $rw[$i]['fecha_inicio_evento']  =$log['fecha_inicio_evento'];
+                        $rw[$i]['horas_prog']           =$row['horas_prog'];
+
+                        $_fecha_inicio = Carbon::parse( $log[ 'fecha_inicio_evento' ]." ".$log[ 'hora_inicio_evento' ], 'America/Mexico_City' );
+                        $_fecha_final = Carbon::parse( $log[ 'fecha_termino_evento' ]." ".$log[ 'hora_termino_evento' ], 'America/Mexico_City' );
+
+                        $_horas = $_fecha_final->diffInHours($_fecha_inicio);
+                        $_min_total = $_fecha_final->diffInMinutes( $_fecha_inicio );
+                        $_min = $_min_total % 60;
+                        $rw[$i]['horas_reales'] = $_horas.':'.$_min;
+                        $rw[$i]['estado_asignado']      =$row['estado_asignado'];
+                        $rw[$i]['descripcion_evento']    =$log['descripcion_evento'];
+                    }
+                }
+            }
+            $i++;
+        }
+        /*
+         -------------------------------------------------
+        */
+        //return $rw;
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'UNIDAD', 'campo'=> 'numero_unidad', 'x'=>50 ),
+                    array( 'titulo' => 'AERO', 'campo'=> 'id_aero','x'=>70 ),
+                    array( 'titulo' => 'No ORDEN', 'campo'=> 'numero_orden','x'=>70 ),
+                    array( 'titulo' => 'DESCRIPCIÓN', 'campo'=> 'trabajo_solicitado','x'=>370 ),
+                    array( 'titulo' => 'FECHA PROG.', 'campo'=> 'fecha_prog', 'x'=>110 ),
+                    array( 'titulo' => 'FECHA REAL', 'campo'=> 'fecha_inicio_evento', 'x'=>110 ),
+                    array( 'titulo' => 'HORAS PROG.', 'campo'=> 'horas_prog', 'x'=>82 ),
+                    array( 'titulo' => 'HORAS REALES', 'campo'=> 'horas_reales' , 'x'=>82  ),
+                ), 
+                $rw
+                //$datos
+            );
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_Ordenes_Trabajo.pdf', 'I');
+    }   
+//  ----------------------------------------------------------------------
+//  end julioe
+//  ----------------------------------------------------------------------  
+
+    public function imprimir_reporte_orden_trabajo_programado ($get) {
+        require_once( $this->path_file_pdf );
+
+        // create new PDF document
+        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
+
+        // set document information
+        $pdf->SetCreator( 'Sistema de Gestión Operativa' );
+        $pdf->SetAuthor( 'Comisión Federal del Electricidad' );
+        $pdf->SetTitle( 'Reporte de Mantenimiento' );
+        $pdf->SetSubject('');
+        $pdf->SetKeywords('');
+
+        // set default header data
+        $pdf->SetHeaderData( 
+            PDF_HEADER_LOGO, 
+            30, 
+            'GERENCIA REGIONAL DE PRODUCCION SURESTE SUBGERENCIA REGIONAL HIDROELECTRICA GRIJALVA', 
+            'C.E. LA VENTA'
+        );
+
+        // set header and footer fonts
+        $pdf->setHeaderFont(Array(PDF_FONT_NAME_MAIN, '', PDF_FONT_SIZE_MAIN));
+        $pdf->setFooterFont(Array(PDF_FONT_NAME_DATA, '', PDF_FONT_SIZE_DATA));
+
+        // set default monospaced font
+        $pdf->SetDefaultMonospacedFont(PDF_FONT_MONOSPACED);
+
+        // set margins
+        $pdf->SetMargins(PDF_MARGIN_LEFT, PDF_MARGIN_TOP, PDF_MARGIN_RIGHT);
+        $pdf->SetHeaderMargin(PDF_MARGIN_HEADER);
+        $pdf->SetFooterMargin(PDF_MARGIN_FOOTER);
+
+        // set auto page breaks
+        $pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
+
+        // set image scale factor
+        $pdf->setImageScale(PDF_IMAGE_SCALE_RATIO);
+
+        // set font
+        // $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetFont('courier', '', 8);
+
+        // add a page
+        $pdf->AddPage('L', 'A4');
+
+        # estructuring data for pdf
+        require_once 'mantenimiento.class.php';
+        $obj = new mantenimiento( $this->usuario, $this->clave );
+        $datos = $obj->obtenerOrdenTrabajo( $get );
+
+        $html = 
+            $this->struct_tabla(
+                array ( 
+                    array( 'titulo' => 'UNIDAD', 'campo'=> 'numero_unidad', 'x'=>50 ),
+                    array( 'titulo' => 'AERO', 'campo'=> 'numero_aero','x'=>70 ),
+                    array( 'titulo' => 'No. ORDEN', 'campo'=> 'numero_orden','x'=>70 ),
+                    array( 'titulo' => 'DESCRIPCIÓN EVENTO', 'campo'=> 'descripcion_evento','x'=>340 ),
+                    array( 'titulo' => 'FECHA PROG.', 'campo'=> 'fecha_programada', 'x'=>85 ),
+                    array( 'titulo' => 'FECHA REPROG.', 'campo'=> 'fecha_reprogramada', 'x'=>85 ),
+                    array( 'titulo' => 'HORAS PROG.', 'campo'=> 'horas_programadas', 'x'=>82 ),
+                    array( 'titulo' => 'HORAS REALES', 'campo'=> 'horas_reales' , 'x'=>82  ),
+                    array( 'titulo' => 'ACTIVIDADES FALTANTES', 'campo'=> 'actividades_faltantes' , 'x'=>82  )
+                ), 
+                
+                $datos
+            );
+        // output the HTML content
+        $pdf->writeHTML( $html, true, false, true, false, '' );
+
+        // reset pointer to the last page
+        $pdf->lastPage();
+        $pdf->Output('/Reporte_Ordenes_Trabajo_programado.pdf', 'I');
+    } 
+
+    public function exportar_reporte_orden_trabajo_programado ( $get ) {
+        require_once 'mantenimiento.class.php';
+        $obj = new mantenimiento( $this->usuario, $this->clave );
+        $data = $obj->obtenerOrdenTrabajo( $get );
+
+        // -----
+        //  Archivo en Excel
+        // -----
+        
+        error_reporting(E_ALL | E_WARNING | E_STRICT );
+        ini_set('display_errors', FALSE);
+        set_include_path( $this->path_pear );
+        require_once( $this->path_file_pear );
+        //mb_internal_encoding('ISO-8859-1');
+        $workbook = new Spreadsheet_Excel_Writer();
+        //$workbook->setVersion(8);
+
+        $format_title =& $workbook->addFormat(array('Size' => 11,
+                                      'Align' => 'left',
+                                      'bold'=> 1));
+        $format_normal =& $workbook->addFormat(array('Size' => 8,
+                                      'Align' => 'left'));
+        $format_normal_justify_h =& $workbook->addFormat(array('Size' => 8,
+                                      'Align' => 'justify',
+                                      'FgColor' => 26));
+        $format_normal_center =& $workbook->addFormat(array('Size' => 8,
+                                      'Align' => 'center'));
+        $format_normal_center_h =& $workbook->addFormat(array('Size' => 8,
+                                      'Align' => 'center',
+                                      'FgColor' => 26));
+        $format_bold =& $workbook->addFormat(array('Size' => 10,
+                                      'Align' => 'center',
+                                      'Color' => 'white',
+                                      'Pattern' => 1,
+                                      'FgColor' => 'green',
+                                      'VAlign' => 'vcenter',
+                                      'HAlign' => 'hcenter',
+                                      'bold'=> 1));
+        $format_bold->setTextWrap(); 
+        $format_normal_center_h->setTextWrap();
+        $format_normal_justify_h->setTextWrap();
+        
+        $worksheet  =& $workbook->addWorksheet("Reporte");
+        //$worksheet->insertBitmap(0,0,'/css/7images/cfe.bmp','1','1','2','2');
+        $worksheet->writeString(0, 0, "Gerencia Regional de Produccion Sureste", $format_title);
+        $worksheet->setMerge(0, 0, 0, 4);
+
+        $worksheet->writeString(1, 0, "Subgerencia Regional de Generacion Hidroelectrica Grijalva", $format_title);
+        $worksheet->setMerge(1, 0, 1, 4);
+
+        $worksheet->writeString(2, 0, "C.E. La Venta", $format_title);
+        $worksheet->setMerge(2, 0, 2, 4);
+
+        $worksheet->writeString(4, 0, "UNIDAD", $format_bold);
+        $worksheet->writeString(4, 1, "NO. AEREO", $format_bold);        
+        $worksheet->writeString(4, 2, "No. ORDEN", $format_bold);
+        $worksheet->writeString(4, 3, "DESCRIPCION EVENTO", $format_bold);        
+        $worksheet->writeString(4, 4, "FECHA PROG.", $format_bold);
+        $worksheet->writeString(4, 5, "FECHA REPROG.", $format_bold);
+        $worksheet->writeString(4, 6, "HORAS PROG.", $format_bold);
+        $worksheet->writeString(4, 7, "HORAS REALES", $format_bold);
+        $worksheet->writeString(4, 8, "ACTIVIDADES FALTANTES", $format_bold);
+        
+        $i = 5;
+        foreach( $data as $row )
+        {
+            $descripcion_evento = iconv("UTF-8", "ISO-8859-1//TRANSLIT",$row['descripcion_evento']);
+            
+            $worksheet->writeString( $i, 0, $row['numero_unidad'], $format_normal_center_h );
+            $worksheet->writeString( $i, 1, $row['numero_aero'], $format_normal_center_h );
+            $worksheet->writeString( $i, 2, $row['numero_orden'], $format_normal_center_h );
+            $worksheet->writeString( $i, 3, $descripcion_evento, $format_normal_justify_h );
+            $worksheet->writeString( $i, 4, $row['fecha_programada'], $format_normal_center_h );
+            $worksheet->writeString( $i, 5, $row['fecha_reprogramada'], $format_normal_center_h );
+            $worksheet->writeString( $i, 6, $row['horas_programadas'], $format_normal_center_h );
+            $worksheet->writeString( $i, 7, $row['horas_reales'], $format_normal_center_h );
+            $worksheet->writeString( $i, 8, $row['actividades_faltantes'], $format_normal_center_h );
+            $i++;
+        }
+        
+        $worksheet->setRow( 4, 27 );
+        $worksheet->setColumn( 0, 1, 11 );
+        $worksheet->setColumn( 2, 2, 11 );
+        $worksheet->setColumn( 3, 3, 60 );
+        $worksheet->setColumn( 4, 5, 16 );
+        $worksheet->setColumn( 6, 6, 11 );
+        $worksheet->setColumn( 7, 9, 14 );
+        $workbook->send('reporte.xls');
+        $workbook->close();
+    }
+
     public function eliminar_libro_relatorio ( $get ) {
         $rsp = array();
 
@@ -1542,18 +2375,11 @@ class operacion extends sigesop {
 
         $id_libro_relatorio = $get[ 'id_libro_relatorio' ];
 
-        # eliminar el historial de eventos secundarios
-        // $sql =
-        // "DELETE FROM libro_relatorio_historial ".
-        // "WHERE id_libro_relatorio = $id_libro_relatorio";
-
-        // $query = $this->insert_query( $sql );
-        // if ( $query !== 'OK' ) {
-        //     $this->conexion->rollback();
-        //     $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al eliminar historial' );
-        //     $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'key' => 'id_libro_relatorio', 'msj' => $query );
-        //     return $rsp;
-        // }
+        # solo usuario root no puede eliminar libro relatorio 
+        if ( $this->usuario != $this->root ) {
+            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => "Error... solo usuario $this->root puede eliminar eventos del relatorio." );
+            return $rsp;
+        }
 
         $sql =
         "DELETE FROM libro_relatorio ".
@@ -1616,17 +2442,5 @@ class operacion extends sigesop {
             $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'key' => 'id_libro_relatorio', 'msj' => $query );
             return $rsp;
         }
-    }
-
-    # verifica si existen relatorios asociados a un año especifico
-    // public function verifica_anio_licencia ( $id_libro_licencia ) {
-    //     if ( empty( $consecutivo_licencia ) ) return NULL;
-
-    //     $sql =
-    //     "SELECT anio_licencia FROM libro_licencia ".
-    //     "WHERE id_libro_licencia = $id_libro_licencia";
-        
-    //     $query = $this->query( $sql, 'anio_licencia', NULL );
-    //     return !empty( $query ) ? 'OK' : NULL;
-    // }  
+    } 
 }

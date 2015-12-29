@@ -220,8 +220,8 @@ function insertarUsuarios( index ) {
 		datos.supervisor.valor = window.localStorage.usuario;
 		datos.responsable.valor = $( datos.responsable.idHTML ).val();
 
-		datos.id_orden_trabajo = {};
-		datos.id_orden_trabajo.valor = elem.id_orden_trabajo;
+		datos.id_prog_mtto = {};
+		datos.id_prog_mtto.valor = elem.id_prog_mtto;
 
 		/* capturar usuarios auxiliares
 		 */

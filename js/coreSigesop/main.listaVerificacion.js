@@ -3,12 +3,19 @@ $( document ).on( 'ready', main );
 function main () {
 	/* documento de creacion de listas de verificacion
 	 */
-	doc = sigesop.listaVerificacion.document({
+	doc = $( '#main' ).newListDocument({
 		success: nuevoElemento,
-		error: error
-	});
-	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
-	doc.javascript();
+		error  : error,
+		// view   : 'update'
+	})
+	.factory();
+
+	// doc = sigesop.listaVerificacion.document({
+	// 	success: nuevoElemento,
+	// 	error: error
+	// });
+	// document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
+	// doc.javascript();
 
 	/* documento de registro de listas de verificacion
 	 */
@@ -19,20 +26,20 @@ function main () {
 				// actividades: verActividades,
 				agregar: agregarActividades,
 				editar: editarElemento,
-				eliminar: eliminarElemento				
+				eliminar: eliminarElemento
 			}
 		}
 	});
-	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
+	document.getElementById( 'main-2' ).innerHTML = '<br>' + docR.html;
 	docR.javascript();
 
-	/* Documento impresion reporte	
+	/* Documento impresion reporte
 	 */
 	docRF = sigesop.listaVerificacion.documentFiltro({
 		success: imprimirLista,
 		error: sigesop.completeCampos
 	});
-	document.getElementById( 'main3' ).innerHTML = '<br>' + docRF.html;
+	document.getElementById( 'main-3' ).innerHTML = '<br>' + docRF.html;
 	docRF.javascript();
 
 	// ----------------------------------------------------------
@@ -48,10 +55,9 @@ function getData() {
 		success: function ( data )
 		{
 			window.sesion.matrizTipoMantto = data;
-			
-			sigesop.combo({
-				arr: data, 
-				elem: doc.datos.id_mantenimiento.idHTML,
+
+			doc.IDS.$id_mantenimiento.combo({
+				arr: data,
 				campo: 'nombre_mantenimiento',
 				campoValor: 'id_mantenimiento'
 			});
@@ -75,9 +81,6 @@ function getData() {
 function error() { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); }
 
 function nuevoElemento( datos, IDS, limpiarCampos ) {
-	datos.id_mantenimiento.valor = IDS.$id_mantenimiento.val().trim();
-	datos.lista_verificacion.valor = IDS.$lista_verificacion.val().trim();
-
 	sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
 	sigesop.query({
 		data: datos,
@@ -97,7 +100,7 @@ function nuevoElemento( datos, IDS, limpiarCampos ) {
 }
 
 function editarElemento ( index ) {
-	if ( index < 0 ) 
+	if ( index < 0 )
 		throw new Error( 'function editarElemento: index fuera de rango' );
 
 	var elem = window.sesion.lista_verificacion[ index ];
@@ -109,9 +112,6 @@ function editarElemento ( index ) {
 	var
 
 	success = function ( datos, IDS, limpiarCampos ) {
-		datos.id_mantenimiento.valor = IDS.$id_mantenimiento.val();
-		datos.lista_verificacion.valor = IDS.$lista_verificacion.val().trim();
-
 		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
 		sigesop.query({
 			data: datos,
@@ -130,20 +130,19 @@ function editarElemento ( index ) {
 		}) ;
 	},
 
-	_doc = sigesop.listaVerificacion.document({
-		suf: 'edit',
-		vista: 'editar_lista_verificacion',
+	_doc = $.fn.newListDocument({
+		view: 'update',
 		obj: elem,
 		success: success,
 		error: sigesop.completeCampos
-	}),
+	})
+	.factory(),
 
 	win = BootstrapDialog.show({
         title: 'Editar lista de verificación',
         type: BootstrapDialog.TYPE_DEFAULT,
-        message: _doc.html,
         onshown: function ( dialog ) {
-        	_doc.javascript();
+        	dialog.$modalBody.html( _doc.IDS.$form )
         },
         size: BootstrapDialog.SIZE_WIDE,
         closable: false,
@@ -159,7 +158,7 @@ function editarElemento ( index ) {
 }
 
 function eliminarElemento ( index ) {
-	if ( index < 0 ) 
+	if ( index < 0 )
 		throw new Error( 'function editarElemento: index fuera de rango' );
 
 	var elem = window.sesion.lista_verificacion[ index ];
@@ -168,9 +167,9 @@ function eliminarElemento ( index ) {
 		throw new Error('function editarElemento: elemento es indefinido');
 	}
 
-	var 
+	var
 
-	action = function ( dialog ) {		
+	action = function ( dialog ) {
 		sigesop.msgBlockUI( 'Enviando...', 'loading', 'blockUI' );
 		dialog.close();
 		sigesop.query({
@@ -185,13 +184,13 @@ function eliminarElemento ( index ) {
 			},
 			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
 			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
-		});	
+		});
 	};
 
 	BootstrapDialog.show({
         title: 'Autorización requerida',
         type: BootstrapDialog.TYPE_DEFAULT,
-        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',        
+        message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',
         size: BootstrapDialog.SIZE_NORMAL,
         draggable: true,
         buttons: [{
@@ -208,7 +207,7 @@ function eliminarElemento ( index ) {
 }
 
 function agregarActividades ( index ) {
-	if ( index < 0 ) 
+	if ( index < 0 )
 		throw new Error( 'function editarElemento: index fuera de rango' );
 
 	var elem = window.sesion.lista_verificacion[ index ];
@@ -241,19 +240,18 @@ function agregarActividades ( index ) {
 		}) ;
 	},
 
-	activity = sigesop.listaVerificacion.document({
-		suf: 'nueva-actividad',
-		vista: 'agregar_actividad',
+	addActivity = $.fn.newListDocument({
+		view: 'addActivity',
 		error: sigesop.completeCampos,
 		success: success
-	}),
+	})
+	.factory(),
 
 	win = BootstrapDialog.show({
         title: 'Editar lista de verificación',
         type: BootstrapDialog.TYPE_DEFAULT,
-        message: activity.html,
         onshown: function ( dialog ) {
-        	activity.javascript();
+        	dialog.$modalBody.html( addActivity.IDS.$form )
         },
         size: BootstrapDialog.SIZE_WIDE,
         closable: false,
@@ -268,135 +266,11 @@ function agregarActividades ( index ) {
     });
 }
 
-function editarActividadVerificar ( index, update_table ) {
-	if ( index < 0 ) 
-		throw new Error( 'function editarActividad: index fuera de rango' );
-
-	var elem = window.sesion.actividades_into_lista[ index ];
-	if( !elem ) {
-		sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
-		throw new Error('function editarActividad: elem es indefinido');
-	}
-
-	var
-
-	success = function ( datos, IDS ) {
-		datos.actividad_verificar.valor = 
-			$( datos.actividad_verificar.idHTML ).val().trim();
-
-		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
-		sigesop.query({
-			data: datos,
-			class: 'listaVerificacion',
-			query: 'actualizar_actividad_verificar',
-			queryType: 'sendData',
-			type: 'POST',
-			OK: function ( msj, eventos ) 
-			{
-				update_table();
-				$.unblockUI();
-				win.close();
-				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-			},
-			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
-			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
-		}) ;
-	},
-
-	actividadVerificar = sigesop.listaVerificacion.actividadVerificar({
-		obj: elem,
-		suf: 'win-editar',
-		success: success
-	}),
-
-	win = BootstrapDialog.show({
-	    title: 'Editar actividad',
-	    type: BootstrapDialog.TYPE_DEFAULT,
-	    message: actividadVerificar.html,
-	    onshown: function ( dialog ) {
-	    	actividadVerificar.javascript();
-	    },
-	    size: BootstrapDialog.SIZE_WIDE,
-	    closable: false,
-	    draggable: true,
-	    buttons: [{
-	        label: 'Cancelar',
-	        cssClass: 'btn-danger',
-	        action: function( dialog ) {
-	            dialog.close();
-	        }
-	    }]
-	});
-}
-
-function editarParametroAceptacion ( index, update_table ) {
-	if ( index < 0 ) 
-		throw new Error( 'function editarParametroAceptacion: index fuera de rango' );
-
-	var elem = window.sesion.actividades_into_lista[ index ];
-	if( !elem ) {
-		sigesop.msg( 'Advertencia', 'Seleccione un elemento para continuar', 'warning' );
-		throw new Error('function editarParametroAceptacion: elemento es indefinido');
-	}
-
-	var 
-
-	success = function ( datos, IDS ) {		
-		sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
-		sigesop.query({
-			data: {
-				id_actividad_verificar_update: elem.id_actividad_verificar,
-				parametro_actividad: datos.parametro_actividad,
-				lectura_actual: datos.lectura_actual,
-				lectura_posterior: datos.lectura_posterior
-			},
-			class: 'listaVerificacion',
-			query: 'actualizar_parametro_actividad',
-			queryType: 'sendData',
-			type: 'POST',
-			OK: function ( msj, eventos ) {
-				update_table();
-				$.unblockUI();
-				win.close();
-				sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
-			},
-			NA: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
-			DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
-		}) ;
-	},
-
-	_doc = sigesop.listaVerificacion.activity({
-		suf: 'edicion',
-		vista: 'editar_parametros',
-		error: sigesop.completeCampos,
-		success: success
-	}),
-
-	win = BootstrapDialog.show({
-	    title: 'Editar parámetro',
-	    type: BootstrapDialog.TYPE_DEFAULT,
-	    message: _doc.html,
-	    onshown: function ( dialog ) {
-	    	_doc.javascript();
-	    },
-	    size: BootstrapDialog.SIZE_WIDE,
-	    closable: false,
-	    draggable: true,
-	    buttons: [{
-	        label: 'Cancelar',
-	        cssClass: 'btn-danger',
-	        action: function( dialog ) {
-	            dialog.close();
-	        }
-	    }]
-	});
-}
-
 function imprimirLista ( datos, IDS, limpiarCampos ) {
 	/* capturar nombre de listas de verificacion
 	 */
 	datos.id_lista_verificacion.length = 0; // vaciar matriz
-	var 
+	var
 		i = 0,
 		lon = IDS.mtz_auxiliar.length,
 		url = sigesop.raizServidor + 'ajax.php?class=listaVerificacion' +
@@ -408,12 +282,12 @@ function imprimirLista ( datos, IDS, limpiarCampos ) {
 			// url += $.param( { 'id_lista_verificacion[]': IDS.mtz_auxiliar[ i ].valor} ) + '&';;
 		}
 	}
-				
+
 	win.focus();
 }
 
 function verActividades ( index ) {
-	if ( index < 0 ) 
+	if ( index < 0 )
 		throw new Error( 'function verActividades: index fuera de rango' );
 
 	var elem = window.sesion.lista_verificacion[ index ];
@@ -422,10 +296,10 @@ function verActividades ( index ) {
 		throw new Error('function verActividades: elemento es indefinido');
 	}
 
-	var 
+	var
 
 	activate_actividades = function ( id, value ) {
-		var 
+		var
 
 		actividades = sigesop.tablaRegistro({
 			head: 	'ACTIVIDAD, PARAMETRO DE ACEPTACION, LECTURA ACTUAL,' +
@@ -443,12 +317,12 @@ function verActividades ( index ) {
 				},
 				class: 'listaVerificacion',
 				query: 'actividades_into_equipo',
-				success: function ( data ) {	
+				success: function ( data ) {
 					if ( !$.isEmptyObject( data ) )	{
 						window.sesion.actividades_into_lista = data;
 						actividades.update_table( data );
-					} 
-					else 
+					}
+					else
 						elem
 						.innerHTML = '<h3 class=" text-center ">SIN ACTIVIDADES...</h3>';
 				}
@@ -462,7 +336,7 @@ function verActividades ( index ) {
 			selector: 'tr',
 			items: {
 	            actividad: {
-	            	name: 'Editar Actividad', 
+	            	name: 'Editar Actividad',
 	            	icon: 'edit',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -470,7 +344,7 @@ function verActividades ( index ) {
 	        		}
 	            },
 	            parametro_aceptacion: {
-	            	name: 'Editar Paramentro, lectura actual y posterior', 
+	            	name: 'Editar Paramentro, lectura actual y posterior',
 	            	icon: 'edit',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -490,7 +364,7 @@ function verActividades ( index ) {
 			},
 			class: 'listaVerificacion',
 			query: 'equipo_into_systems_mantto',
-			success: function ( data ) {	
+			success: function ( data ) {
 				if ( !$.isEmptyObject( data ) )	{
 					var
 					docEM = sigesop.listaVerificacion.documentAcordion({
@@ -500,7 +374,7 @@ function verActividades ( index ) {
 						campo: 'nombre_equipo_aero',
 						dataValue: 'id_equipo_aero',
 						activate: activate_actividades
-					});						
+					});
 
 					document.getElementById( id ).innerHTML = docEM.html;
 					docEM.javascript();
@@ -556,7 +430,7 @@ function verActividades ( index ) {
 }
 
 function _verActividades( index ) {
-	if ( index < 0 ) 
+	if ( index < 0 )
 		throw new Error( 'function verActividades: index fuera de rango' );
 
 	var elem = window.sesion.lista_verificacion[ index ];
@@ -567,32 +441,24 @@ function _verActividades( index ) {
 
 	var
 
-	actividades = sigesop.tablaRegistro({
+	actividades = $.fn.dataTable({
 		head: 	'ACTIVIDAD, PARAMETRO DE ACEPTACION, LECTURA ACTUAL,' +
 				'LECTURA POSTERIOR',
 		campo:  'actividad_verificar, parametro_aceptacion.texto, ' +
 				'lectura_actual.texto, lectura_posterior.texto',
-		suf: 	'tabla-actividades'
-	}),
-
-	getLista = function () {
-		sigesop.query({
-			data: {	id_lista_verificacion: elem.id_lista_verificacion },
-			class: 'listaVerificacion',
-			query: 'actividades_into_lista',
-			success: function ( data ) { 
-				window.sesion.actividades_into_lista = data;
-				actividades.update_table( data ); 
+		addClass: {
+			body: {
+				class: 'danger',
+				campo: 'tipo_actividad',
+				valor: 'REQUERIDO'
 			}
-		});
-	},
+		},
 
-	onshown = function ( dialog ) {
-		$( actividades.IDS.body ).contextMenu({
+		contextMenu: {
 			selector: 'tr',
 			items: {
 	            actividad: {
-	            	name: 'Editar Actividad', 
+	            	name: 'Editar Actividad',
 	            	icon: 'edit',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -600,24 +466,217 @@ function _verActividades( index ) {
 	        		}
 	            },
 	            parametro_aceptacion: {
-	            	name: 'Editar Parametro, lectura actual y posterior', 
+	            	name: 'Editar Parametro, lectura actual y posterior',
 	            	icon: 'edit',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
 	        			editarParametroAceptacion( index, getLista );
 	        		}
+	            },
+	            eliminar_actividad: {
+	            	name: 'Eliminar Actividad',
+	            	icon: 'delete',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).attr( 'table-index' );
+	        			eliminarActividad( index, getLista );
+	        		}
 	            }
 			}
-		});
+		}
+	})
+	.factory(),
 
-		getLista();
-    },
+	getLista = function () {
+		sigesop.query({
+			data: {	id_lista_verificacion: elem.id_lista_verificacion },
+			class: 'listaVerificacion',
+			query: 'actividades_into_lista',
+			success: function ( data ) {
+				window.sesion.actividades_into_lista = data;
+				actividades.update_table( data );
+			}
+		});
+	},
+
+	editarActividadVerificar = function  ( index, update_table ) {
+		if ( index < 0 )
+			throw new Error( 'function editarActividad: index fuera de rango' );
+
+		var elem = window.sesion.actividades_into_lista[ index ];
+		if( !elem ) {
+			sigesop.msg( 'Advertencia', 'Seleccione un elem para continuar', 'warning' );
+			throw new Error('function editarActividad: elem es indefinido');
+		}
+
+		var
+
+		success = function ( datos, IDS ) {
+			sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+			sigesop.query({
+				data: datos,
+				class: 'listaVerificacion',
+				query: 'actualizar_actividad_verificar',
+				queryType: 'sendData',
+				type: 'POST',
+				OK: function ( msj, eventos ) {
+					update_table();
+					$.unblockUI();
+					win.close();
+					sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+				},
+				NA     : function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+				DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+			}) ;
+		},
+
+		_activity = $.fn.newActivity({
+			obj    : elem,
+			view   : 'update_activity',
+			success: success
+		})
+		.factory(),
+
+		win = BootstrapDialog.show({
+		    title: 'Editar actividad',
+		    type: BootstrapDialog.TYPE_DEFAULT,
+		    onshown: function ( dialog ) {
+		    	dialog.$modalBody.html( _activity.IDS.$form )
+		    },
+		    size: BootstrapDialog.SIZE_WIDE,
+		    closable: false,
+		    draggable: true,
+		    buttons: [{
+		        label: 'Cancelar',
+		        cssClass: 'btn-danger',
+		        action: function( dialog ) {
+		            dialog.close();
+		        }
+		    }]
+		});
+	},
+
+	editarParametroAceptacion = function ( index, update_table ) {
+		if ( index < 0 )
+			throw new Error( 'function editarParametroAceptacion: index fuera de rango' );
+
+		var elem = window.sesion.actividades_into_lista[ index ];
+		if( !elem ) {
+			sigesop.msg( 'Advertencia', 'Seleccione un elemento para continuar', 'warning' );
+			throw new Error('function editarParametroAceptacion: elemento es indefinido');
+		}
+
+		var
+
+		success = function ( datos, IDS ) {
+			sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+			sigesop.query({
+				data: {
+					id_actividad_verificar_update: elem.id_actividad_verificar,
+					parametro_actividad: datos.parametro_actividad,
+					lectura_actual: datos.lectura_actual,
+					lectura_posterior: datos.lectura_posterior
+				},
+				class: 'listaVerificacion',
+				query: 'actualizar_parametro_actividad',
+				queryType: 'sendData',
+				type: 'POST',
+				OK: function ( msj, eventos ) {
+					update_table();
+					$.unblockUI();
+					win.close();
+					sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+				},
+				NA     : function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'warning' ); },
+				DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos, IDS.$form ), 'error' ); }
+			}) ;
+		},
+
+		_doc = $.fn.newActivity({
+			view: 'editar_parametros',
+			error: sigesop.completeCampos,
+			success: success
+		})
+		.factory(),
+
+		win = BootstrapDialog.show({
+		    title: 'Editar parámetro',
+		    type: BootstrapDialog.TYPE_DEFAULT,
+		    onshown: function ( dialog ) {
+		    	dialog.$modalBody.html( _doc.IDS.$form );
+		    },
+		    size: BootstrapDialog.SIZE_WIDE,
+		    closable: false,
+		    draggable: true,
+		    buttons: [{
+		        label: 'Cancelar',
+		        cssClass: 'btn-danger',
+		        action: function( dialog ) {
+		            dialog.close();
+		        }
+		    }]
+		});
+	},
+
+	eliminarActividad = function ( index, update_table ) {
+		if ( index < 0 )
+			throw new Error( 'function editarParametroAceptacion: index fuera de rango' );
+
+		var elem = window.sesion.actividades_into_lista[ index ];
+		if( !elem ) {
+			sigesop.msg( 'Advertencia', 'Seleccione un elemento para continuar', 'warning' );
+			throw new Error('function editarParametroAceptacion: elemento es indefinido');
+		}
+
+		var
+
+		action = function ( dialog ) {			
+			sigesop.msgBlockUI('Enviando...', 'loading', 'blockUI');
+			dialog.close();
+			sigesop.query({
+				data: { id_actividad_verificar: elem.id_actividad_verificar	},
+				class: 'listaVerificacion',
+				query: 'eliminar_actividad',
+				queryType: 'sendData',
+				type: 'GET',
+				OK: function ( msj, eventos ) {
+					update_table();					
+					$.unblockUI();
+					sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
+				},
+				NA     : function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'warning' ); },
+				DEFAULT: function ( msj, eventos ) { $.unblockUI(); sigesop.msg( msj, sigesop.parseMsj( eventos ), 'error' ); }
+			}) ;
+		},
+
+		win = BootstrapDialog.show({
+		    title: 'Autorización requerida',
+		    type: BootstrapDialog.TYPE_DEFAULT,
+		    message: '<div class="alert alert-danger text-center"><h4>¿Está seguro de eliminar elemento y los registros dependientes de éste?</h4></div>',
+		    size: BootstrapDialog.SIZE_NORMAL,
+		    draggable: true,
+		    buttons: [{
+		        label: 'Cancelar',
+		        action: function( dialog ) {
+		            dialog.close();
+		        }
+		    },{
+		        label: 'Aceptar',
+		        cssClass: 'btn-danger',
+		        action: action
+		    }]
+		});
+	},
 
 	win = BootstrapDialog.show({
         title: 'Actividades',
         type: BootstrapDialog.TYPE_DEFAULT,
         message: actividades.html,
-        onshown: onshown,
+        onshown: function ( dialog ) {        	
+        	dialog.$modalBody.html( '<label>Nomenclatura:</label>' )
+	        	.append( '&nbsp;<span class="label label-danger">Actividades criticas</span><br><br>' )
+	        	.append( actividades.IDS.$content );
+        	getLista();
+        },
         size: BootstrapDialog.SIZE_WIDE,
         closable: true,
         draggable: true,
@@ -630,4 +689,3 @@ function _verActividades( index ) {
         }]
     });
 }
-

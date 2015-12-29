@@ -12,29 +12,24 @@ function main () {
 
 	/* Tabla de registro
 	 */
-	docR = sigesop.generadores.registro({
+	docR = $( '#main-2' ).registeredGeneratorDocument({
 		table: {
 			actions: {
 				editar: editarElemento,
 				eliminar: eliminarElemento
 			}
 		}
-	});
-
-	document.getElementById( 'main2' ).innerHTML = '<br>' + docR.html;
-	docR.javascript();
+	})
+	.factory();
 
 	/* documento de impresion de reportes
 	 */
-	docRR = sigesop.generadores.registroReporte({ 
+	docRR = $( '#main-3' ).generatorReport({
 		success: consultaReporteI,
-		error: function () {
-			sigesop.msg( 'Info', 'existe campo vacio', 'info' )
-		}
-	});
-	document.getElementById( 'main3' ).innerHTML = '<br>' + docRR.html;
-	docRR.javascript();
-
+		error: sigesop.completeCampos
+	})
+	.factory();
+	
 	/* Descarga de datos
 	 */
 	$( 'header' ).barraHerramientas();
@@ -57,9 +52,8 @@ function getData() {
 				numero_unidad: 'TODAS'
 			});
 
-			sigesop.combo({
+			docRR.IDS.$numero_unidad.combo({
 				arr: data,
-				elem: docRR.datos.numero_unidad.idHTML,
 				campo: 'numero_unidad'
 			});
 		}
@@ -205,14 +199,10 @@ function eliminarElemento ( index ) {
 }
 
 function consultaReporteI ( datos ) {
-	$( docRR.table.body ).empty();
-	var
-	numero_unidad = $( datos.numero_unidad.idHTML ).val();
-
 	sigesop.query({
 		data: { 		
 			option: 'unidad',
-			numero_unidad: numero_unidad,
+			numero_unidad: datos.numero_unidad.valor,
 		},
 		class: 'generadores',
 		query: 'obtenerGeneradores',

@@ -1,7 +1,6 @@
 <?php
 
-class session
-{
+class session {
     private $conexion;
     private $host = 'localhost';
     private $user = '__session';

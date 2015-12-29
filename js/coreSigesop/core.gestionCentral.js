@@ -3,7 +3,7 @@ sigesop.gestionCentral = {
 		var
 		suf = opt.suf || '',
 
-		html = 
+		html =
 		'<form id="form-gestion-central-' + suf + '" class="form-horizontal" role="form" method="post">'+
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Clave:</label>'+
@@ -17,7 +17,7 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Clave SAP:</label>'+
 				'<div class="col-sm-7">'+
-					'<input name="clave_sap" id="clave-SAP-central-' + suf + 
+					'<input name="clave_sap" id="clave-SAP-central-' + suf +
 					'" class="form-control input-md MAYUS" disabled ' +
 					'placeholder="4 caracteres exactos. [0-9] [A-Z]" >'+
 				'</div>'+
@@ -26,7 +26,7 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Centro Costo:</label>'+
 				'<div class="col-sm-7">'+
-					'<input name="centro_costo" id="centro-costo-central-' + suf + 
+					'<input name="centro_costo" id="centro-costo-central-' + suf +
 					'" class="form-control input-md MAYUS" disabled ' +
 					'placeholder="De 1-6 caracteres. [- _ .] [0-9] [A-Z]">'+
 				'</div>'+
@@ -35,7 +35,7 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Nombre:</label>'+
 				'<div class="col-sm-7">'+
-					'<input name="nombre_central" id="nombre-central-' + suf + 
+					'<input name="nombre_central" id="nombre-central-' + suf +
 					'" class="form-control input-md MAYUS" disabled ' +
 					'placeholder="De 1-100 caracteres."  >' +
 				'</div>'+
@@ -44,7 +44,7 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Dirección:</label>'+
 				'<div class="col-sm-7">'+
-					'<textarea name="direccion" id="direccion-central-' + suf + 
+					'<textarea name="direccion" id="direccion-central-' + suf +
 					'" class="form-control input-md MAYUS" disabled ' +
 					'placeholder="De 1-100 caracteres." ></textarea>' +
 				'</div>'+
@@ -53,7 +53,7 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Teléfono:</label>'+
 				'<div class="col-sm-7">'+
-					'<input name="telefono" id="telefono-central-' + suf + 
+					'<input name="telefono" id="telefono-central-' + suf +
 					'" class="form-control input-md MAYUS" disabled ' +
 					'placeholder="De 1-50 caracteres." >' +
 				'</div>'+
@@ -62,7 +62,7 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Código Postal:</label>'+
 				'<div class="col-sm-7">'+
-					'<input name="cp" id="codigo-postal-central-' + suf + 
+					'<input name="cp" id="codigo-postal-central-' + suf +
 					'" class="form-control input-md" disabled ' +
 					'placeholder="De 1-5 caracteres. [0-9]" >'+
 				'</div>'+
@@ -71,13 +71,13 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Superintendente</label>'+
 				'<div class="col-sm-4">'+
-					'<input name="superintendente" id="superintendente-central-' + suf + 
+					'<input name="superintendente" id="superintendente-central-' + suf +
 					'" placeholder="5 caracteres exactos. [0-9] [A-Z]" class="form-control input-md MAYUS" disabled >' +
 				'</div>'+
 
 				'<div class="col-sm-4">'+
 					'<p>'+
-						'<button id="btn-superintendente-central-' + suf + 
+						'<button id="btn-superintendente-central-' + suf +
 						'" class="btn btn-primary" disabled> ' +
 						'<span class="glyphicon glyphicon-user"></span> ' +
 						'Seleccione superintendente</button>'+
@@ -88,7 +88,7 @@ sigesop.gestionCentral = {
 			'<div class="form-group">'+
 				'<label class="col-sm-3 control-label">Capacidad Instalada</label>'+
 				'<div class="col-sm-7">'+
-					'<input id="capacidad-instalada-central-' + suf + 
+					'<input id="capacidad-instalada-central-' + suf +
 					'" class="form-control input-md" disabled>'+
 				'</div>'+
 			'</div>' +
@@ -116,7 +116,7 @@ sigesop.gestionCentral = {
 			var
 
 			doc = this,
-			
+
 			// clickAceptar = function( event ) {
 			// 	event.preventDefault();
 			// 	enable.call( doc );
@@ -152,7 +152,7 @@ sigesop.gestionCentral = {
 			// 		document.getElementById( this.idBody )
 			// 		.innerHTML = '<div class="alert alert-danger text-center"><h4>¿Está seguro de editar datos de la central?</h4></div>';
 			// 	}
-			// });	
+			// });
 		},
 
 		/**
@@ -163,7 +163,7 @@ sigesop.gestionCentral = {
 		enable = function () {
 			var doc = this;
 
-			/* habilitamos los elementos					 
+			/* habilitamos los elementos
 			 */
 			$( doc.datos.clave_20.idHTML ).prop( 'disabled', false );
 			$( doc.datos.clave_sap.idHTML ).prop( 'disabled', false );
@@ -173,14 +173,14 @@ sigesop.gestionCentral = {
 			$( doc.datos.telefono.idHTML ).prop( 'disabled', false );
 			$( doc.datos.cp.idHTML ).prop( 'disabled', false );
 			$( doc.datos.superintendente.idHTML ).prop( 'disabled', false );
-			
+
 			$( doc.IDS.botonGuardar ).prop( 'disabled',false );
 			$( doc.IDS.botonLimpiar ).prop( 'disabled',false );
 			$( doc.IDS.botonSuperintendente ).prop( 'disabled', false );
 			$( doc.IDS.botonEditar ).prop( 'disabled', true );
 
 			/*guardamos la clave original para tener una referencia
-			*/			
+			*/
 			doc.datos.clave_20_update.valor = $( doc.datos.clave_20.idHTML ).val();
 		},
 
@@ -192,7 +192,7 @@ sigesop.gestionCentral = {
 		disable = function () {
 			var doc = this;
 
-			/* desabilitar los elementos					 
+			/* desabilitar los elementos
 			 */
 			$( doc.datos.clave_20.idHTML ).prop( 'disabled', true );
 			$( doc.datos.clave_sap.idHTML ).prop( 'disabled', true );
@@ -202,7 +202,7 @@ sigesop.gestionCentral = {
 			$( doc.datos.telefono.idHTML ).prop( 'disabled', true );
 			$( doc.datos.cp.idHTML ).prop( 'disabled', true );
 			$( doc.datos.superintendente.idHTML ).prop( 'disabled', true );
-			
+
 			$( doc.IDS.botonGuardar ).prop( 'disabled',true );
 			$( doc.IDS.botonLimpiar ).prop( 'disabled',true );
 			$( doc.IDS.botonSuperintendente ).prop( 'disabled', true );
@@ -257,7 +257,7 @@ sigesop.gestionCentral = {
 		 */
 		vaciarDatos = function () {
 			var doc = this;
-			doc.datos.clave_20_update.valor = null;			
+			doc.datos.clave_20_update.valor = null;
 			doc.datos.clave_20.valor = null;
 			doc.datos.clave_sap.valor = null;
 			doc.datos.centro_costo.valor = null;
@@ -265,32 +265,32 @@ sigesop.gestionCentral = {
 			doc.datos.direccion.valor = null;
 			doc.datos.telefono.valor = null;
 			doc.datos.cp.valor = null;
-			doc.datos.superintendente.valor = null;	
+			doc.datos.superintendente.valor = null;
 			if( doc.IDS.$form !== null )
-				doc.IDS.$form.formValidation( 'resetForm' );		
+				doc.IDS.$form.formValidation( 'resetForm' );
 		},
 
 		dialog_superintendente = function () {
 			var
 
-			tabla = 
+			tabla =
 				sigesop.tablaSeleccion({
 					color_select: 'success',
 					head: 'RPE, USUARIO, NOMBRE, APELLIDOS, AREA DE TRABAJO, ROL DE USUARIO',
-					campo: 'RDE_trabajador, nombre_usuario, nombre_trabajador, apellidos_trabajador, clave_areaTrabajo, clave_rol',						
+					campo: 'RDE_trabajador, nombre_usuario, nombre_trabajador, apellidos_trabajador, clave_areaTrabajo, clave_rol',
 				}),
-			
-			doc = this, 
+
+			doc = this,
 
 			actionOK = function( dialog ) {
 				/* Guardamos el id del sistema y ponenos el nombre del sistema en la caja
 				 */
-											
+
 				if ( jQuery.isEmptyObject( tabla.matrizInput ) ) {
 					console.log( '[tabla.matrizInput] es nula' );
 					return null;
 				};
-				
+
 				var index = sigesop.getDataRadio( tabla.matrizInput[ 0 ] ) ? // impedir que no sea seleccionado alguno
 					sigesop.getDataRadio( tabla.matrizInput[ 0 ] ) : -1;
 
@@ -304,7 +304,7 @@ sigesop.gestionCentral = {
 				var val = window.sesion.matrizUsuario[ index ]['RDE_trabajador'];
 				$( doc.datos.superintendente.idHTML ).val( val );
 				doc.IDS.$form.formValidation( 'revalidateField', 'superintendente' );
-				dialog.close();				
+				dialog.close();
 			},
 
 		    win = BootstrapDialog.show({
@@ -315,14 +315,14 @@ sigesop.gestionCentral = {
 					sigesop.query({
 						class: 'usuarios',
 						query: 'obtenerUsuarios',
-						success: function ( data ) 
+						success: function ( data )
 						{
 							window.sesion.matrizUsuario = data;
 							tabla.update_table( data );
 						}
 					});
 		        },
-		        size: BootstrapDialog.SIZE_WIDE,        
+		        size: BootstrapDialog.SIZE_WIDE,
 		        draggable: true,
 		        buttons: [{
 		            label: 'Cancelar',
@@ -339,15 +339,24 @@ sigesop.gestionCentral = {
 		    });
 		},
 
-		javascript = function () { 
+		javascript = function () {
 			var
-			doc = this,
-			form = doc.IDS.form,
-			$botonEditar = $( doc.IDS.botonEditar ),
+			doc                   = this,
+			datos                 = this.datos,			
+			form                  = doc.IDS.form,
+			$botonEditar          = $( doc.IDS.botonEditar ),
 			$botonSuperintendente = $( doc.IDS.botonSuperintendente ),
-			$botonLimpiar = $( doc.IDS.botonLimpiar ),
-			$botonImprimir = $( doc.IDS.botonImprimir ),		
-			$form = $( form )
+			$botonLimpiar         = $( doc.IDS.botonLimpiar ),
+			$botonImprimir        = $( doc.IDS.botonImprimir ),
+			$clave_20             = $( datos.clave_20.idHTML ).toUpperCase(),
+			$clave_sap            = $( datos.clave_sap.idHTML ).toUpperCase(),
+			$centro_costo         = $( datos.centro_costo.idHTML ).toUpperCase(),
+			$nombre_central       = $( datos.nombre_central.idHTML ).toUpperCase(),
+			$direccion            = $( datos.direccion.idHTML ).toUpperCase(),
+			$telefono             = $( datos.telefono.idHTML ).toUpperCase(),
+			// $cp                   = $( datos.cp.idHTML ).toUpperCase(),
+			$superintendente      = $( datos.superintendente.idHTML ).toUpperCase(),
+			$form                 = $( form )
 			.formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',
@@ -363,9 +372,9 @@ sigesop.gestionCentral = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
@@ -469,7 +478,7 @@ sigesop.gestionCentral = {
 		                    	message: 'Caracteres inválidos'
 		                    }
 		                }
-		            },	
+		            },
 
 		            cp: {
 		                validators: {
@@ -482,8 +491,8 @@ sigesop.gestionCentral = {
 		                    	max: 5,
 		                    	message: 'Número de caracteres inválido'
 		                    },
-		                    
-		                    integer: {		                    	
+
+		                    integer: {
 		                    	message: 'Caracteres inválidos, sólo números'
 		                    }
 		                }
@@ -511,7 +520,7 @@ sigesop.gestionCentral = {
 				data.fv.disableSubmitButtons( false );
 			});
 
-			doc.IDS.$form = $form;			
+			doc.IDS.$form = $form;
 
 			$botonSuperintendente.on('click', function ( event ) {
 				event.preventDefault();
@@ -527,15 +536,13 @@ sigesop.gestionCentral = {
 				dialog_anable.call( doc );
 			});
 
-			$botonImprimir.on( 'click', function ( event ) { 
+			$botonImprimir.on( 'click', function ( event ) {
 				var url = sigesop.raizServidor + 'ajax.php?class=gestionCentral' +
 					'&action=imprimir',
 					win = window.open( url );
 
 				win.focus();
 			});
-
-			$( '.MAYUS' ).eventoCambioMayuscula();
 		},
 
 		datos = {
@@ -595,6 +602,6 @@ sigesop.gestionCentral = {
 			enable     : enable
 		};
 
-		return doc;	
+		return doc;
 	}
 }

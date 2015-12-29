@@ -127,9 +127,12 @@ class unidades extends sigesop
 
     public function obtenerUnidades() {
         $sql = 
-            "SELECT clave_20, numero_unidad, capacidad_instalada, ".
-            "capacidad_efectiva_unidad ".
+            "SELECT clave_20, numero_unidad, ".
+                "ROUND( capacidad_instalada, 2 ) AS capacidad_instalada, ".
+                "ROUND( capacidad_efectiva_unidad, 2 ) AS capacidad_efectiva_unidad ".
             "FROM unidad_aero";
+
+        // return $sql;
 
         $query = $this->array_query( $sql );
         return $query;

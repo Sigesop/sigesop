@@ -24,7 +24,7 @@ sigesop.roles = {
 				'<div class="form-group">' +
 					'<label class="col-sm-2 col-md-2 control-label">Nombre del Rol:</label>' +
 					'<div class="col-sm-9 col-md-9">' +
-						'<input name="nombreRol" id="nombreRol' + suf + '" class="form-control input-md eventoCambioMayuscula" ' +
+						'<input name="nombreRol" id="nombreRol' + suf + '" class="form-control input-md" ' +
 						'placeholder="De 1 – 25 caracteres." value="' + 
 						obj.clave_rol + '">' +
 					'</div>' +
@@ -43,7 +43,7 @@ sigesop.roles = {
 				'<div class="form-group">' +
 					'<label class="col-sm-2 col-md-2 control-label">Descripción:</label>' +
 					'<div class="col-sm-9 col-md-9">' +
-						'<textarea name="descripcionRol" id="descripcionRol' + suf + '" class="form-control eventoCambioMayuscula' +
+						'<textarea name="descripcionRol" id="descripcionRol' + suf + '" class="form-control' +
 						'" rows="3" placeholder="Descripción área de trabajo" >' + obj.descripcion_areaTrabajo + '</textarea>' +
 					'</div>' +
 				'</div>' +
@@ -75,7 +75,7 @@ sigesop.roles = {
 				var id = arr_areaAcceso[ i ].idAcceso + suf;
 				mtz.push({
 					idHTML: '#' + id,
-					valor: arr_areaAcceso[ i ].paginaAcceso
+					valor: arr_areaAcceso[ i ].id_area_acceso
 				});
 
 				html += 
@@ -83,7 +83,7 @@ sigesop.roles = {
 					    '<div class="input-group checkbox-inline">'+
 					      '<span class="input-group-addon">'+
 					        '<input name="areaAcceso[]" id="' + id + '" value="' + 
-					        arr_areaAcceso[ i ].paginaAcceso + '" type="checkbox">' + 
+					        arr_areaAcceso[ i ].id_area_acceso + '" type="checkbox">' + 
 					        arr_areaAcceso[ i ].nombrePagina +
 					      '</span>'+
 					    '</div>'+
@@ -239,13 +239,16 @@ sigesop.roles = {
 		},
 
 		javascript = function () {
-			$( '.eventoCambioMayuscula' ).eventoCambioMayuscula();
 			this.update_areaAcceso( opt.arr_areaAcceso );
 			this.update_permisoAcceso( opt.arr_permisoAcceso );				
 			fill_check_rol.call( this, obj.areaAcceso, obj.permisoAcceso ); // rellenamos los check de areas de acceso y permisos de acuedo al rol				
 		
 			var
 			form = this.IDS.form,
+			datos = this.datos,
+			IDS = this.IDS,
+			$nombre_rol = $( datos.nombreRol.idHTML ).toUpperCase(),
+			$descripcion_rol = $( datos.descripcionRol.idHTML ).toUpperCase(),
 			$form = $( form ).formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',

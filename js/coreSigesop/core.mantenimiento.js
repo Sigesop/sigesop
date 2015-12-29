@@ -6,7 +6,7 @@ sigesop.mantenimiento = {
 		 * error
 		 */
 
-		var 
+		var
 
 		suf = opt.suf || '',
 
@@ -29,7 +29,7 @@ sigesop.mantenimiento = {
 							'<select name="numero_aero" id="numero_aero' + suf + '" class="form-control"></select>' +
 						'</div>' +
 					'</div>' +
-						
+
 					'<div class="form-group">' +
 						'<label for="" class="control-label col-sm-3">Tipo Mantenimiento: </label>' +
 						'<div class="col-sm-7">' +
@@ -64,15 +64,15 @@ sigesop.mantenimiento = {
 						'<div class="col-sm-4">' +
 							'<input name="fecha_final" id="fecha_final' + suf + '" type="text" class="form-control">' +
 						'</div>' +
-					'</div>' +				
+					'</div>' +
 
 					'<div class="form-group">' +
 						'<label class="control-label col-sm-3">Trabajo solicitado: </label>' +
 						'<div class="col-sm-7">' +
-							'<textarea name="trabajo_solicitado" id="trabajo_solicitado' + suf + '" class="form-control eventoCambioMayuscula' + suf + '" ></textarea>' +
+							'<textarea name="trabajo_solicitado" id="trabajo_solicitado' + suf + '" class="form-control' + suf + '" ></textarea>' +
 						'</div>' +
 					'</div>' +
-							
+
 					'<div class="form-group">' +
 						'<div class="col-sm-3 control-label"></div>' +
 						'<p class="col-sm-9">' +
@@ -84,23 +84,21 @@ sigesop.mantenimiento = {
 			'</div>',
 
 		javascript = function () {
-			sigesop.eventoCambioMayuscula( '.eventoCambioMayuscula' );
-
-			var 
-			doc = this,
-			datos = this.datos,
-			IDS = this.IDS,
-			form = this.IDS.form,
-			$botonLimpiar = $( this.IDS.botonLimpiar ),
-			$numero_unidad = $( datos.numero_unidad.idHTML ),
-			$numero_aero = $( datos.numero_aero.idHTML ),
-			$id_mantenimiento = $( datos.id_mantenimiento.idHTML ),
-			$duracion = $( datos.duracion.idHTML ),
-			$magnitud_duracion = $( datos.magnitud_duracion.idHTML ),
-			$fecha_inicial = $( datos.fecha_inicial.idHTML ),
-			$fecha_final = $( datos.fecha_final.idHTML ),
-			$trabajo_solicitado = $( datos.trabajo_solicitado.idHTML ),
-			$form = $( form ).formValidation({
+			var
+			doc                 = this,
+			datos               = this.datos,
+			IDS                 = this.IDS,
+			form                = this.IDS.form,
+			$botonLimpiar       = $( this.IDS.botonLimpiar ),
+			$numero_unidad      = $( datos.numero_unidad.idHTML ),
+			$numero_aero        = $( datos.numero_aero.idHTML ),
+			$id_mantenimiento   = $( datos.id_mantenimiento.idHTML ),
+			$duracion           = $( datos.duracion.idHTML ),
+			$magnitud_duracion  = $( datos.magnitud_duracion.idHTML ),
+			$fecha_inicial      = $( datos.fecha_inicial.idHTML ),
+			$fecha_final        = $( datos.fecha_final.idHTML ),
+			$trabajo_solicitado = $( datos.trabajo_solicitado.idHTML ).toUpperCase(),
+			$form               = $( form ).formValidation({
 		        icon: {
 		            valid: 'glyphicon glyphicon-ok',
 		            invalid: 'glyphicon glyphicon-remove',
@@ -108,16 +106,16 @@ sigesop.mantenimiento = {
 		        },
 
 		        onSuccess: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.success == 'function' ?
 		        		generar_elementos.call( doc, opt.success ) :
 		        		console.log( 'success is null' );
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
@@ -253,9 +251,7 @@ sigesop.mantenimiento = {
 		            },
 		            trabajo_solicitado: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.trabajo_solicitado.valor = val;
-		            		data.element.val( val );
+		            		datos.trabajo_solicitado.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.trabajo_solicitado.valor = null;
@@ -273,25 +269,25 @@ sigesop.mantenimiento = {
 		                        message: 'Caracteres inválidos'
 		                    }
 		                }
-		            }			            
+		            }
 		        }
 			})
 			.on( 'success.field.fv', function( e, data ) {
 				data.fv.disableSubmitButtons( false );
 			});
 
-			/* Enlazar vista publica			
+			/* Enlazar vista publica
 			 */
-			IDS.$form = $form;
-			IDS.$numero_unidad = $numero_unidad;
-			IDS.$numero_aero = $numero_aero;
-			IDS.$id_mantenimiento = $id_mantenimiento;
-			IDS.$duracion = $duracion;
-			IDS.$magnitud_duracion = $magnitud_duracion;
-			IDS.$fecha_inicial = $fecha_inicial;
-			IDS.$fecha_final = $fecha_final;
+			IDS.$form               = $form;
+			IDS.$numero_unidad      = $numero_unidad;
+			IDS.$numero_aero        = $numero_aero;
+			IDS.$id_mantenimiento   = $id_mantenimiento;
+			IDS.$duracion           = $duracion;
+			IDS.$magnitud_duracion  = $magnitud_duracion;
+			IDS.$fecha_inicial      = $fecha_inicial;
+			IDS.$fecha_final        = $fecha_final;
 			IDS.$trabajo_solicitado = $trabajo_solicitado;
-			IDS.$botonLimpiar = $botonLimpiar;
+			IDS.$botonLimpiar       = $botonLimpiar;
 
 			$numero_unidad.change( function () {
 				$numero_aero.empty();
@@ -304,14 +300,14 @@ sigesop.mantenimiento = {
 						class: 'generadores',
 						query: 'obtenerGeneradores',
 						queryType: 'sendGetData',
-						success: function ( data ) 
+						success: function ( data )
 						{
 							$numero_aero.combo({
-								arr: data, 
+								arr: data,
 								campo: 'numero_aero'
-							});	
+							});
 
-							$form.formValidation( 'revalidateField', 'numero_aero' );							
+							$form.formValidation( 'revalidateField', 'numero_aero' );
 						}
 					});
 				}
@@ -325,7 +321,7 @@ sigesop.mantenimiento = {
 			});
 
 			$id_mantenimiento.change(function ( e ) {
-				var 
+				var
 				numero_aero = datos.numero_aero.valor,
 				id_mantenimiento = datos.id_mantenimiento.valor;
 
@@ -340,28 +336,28 @@ sigesop.mantenimiento = {
 				if ( !id_mantenimiento ) return null;
 
 				sigesop.query({
-					data: { 
+					data: {
 						option: 'ultima_orden',
-						numero_aero: numero_aero, 
+						numero_aero: numero_aero,
 						id_mantenimiento: id_mantenimiento
 					},
 					class: 'mantenimiento',
 					query: 'obtenerOrdenTrabajo',
 					queryType: 'sendGetData',
 					success: function ( ultimaFecha ) {
-						/* seteamos la fecha proviniente del servidor							
-						 */ 
-						if ( ultimaFecha ) {							
+						/* seteamos la fecha proviniente del servidor
+						 */
+						if ( ultimaFecha ) {
 							$form.formValidation( 'resetField', 'fecha_inicial' );
 							$fecha_inicial.val( ultimaFecha )
 							.prop( 'disabled', true );
 
 							datos.fecha_inicial.valor = ultimaFecha;
-							
+
 							$form.formValidation( 'revalidateField', 'fecha_final' );
-						} 
+						}
 						/* limpiamos los campos de fecha
-						 */ 
+						 */
 						else {
 							// datos.fecha_inicial.valor = null;
 							$fecha_inicial.prop( 'disabled', false );
@@ -369,18 +365,18 @@ sigesop.mantenimiento = {
 							$form.formValidation( 'revalidateField', 'fecha_final' );
 						}
 					}
-				});	
+				});
 			})
-			.on( 'err.field.fv', function ( e, data ) {				
+			.on( 'err.field.fv', function ( e, data ) {
 				$fecha_inicial.prop( 'disabled', false );
-				$form.formValidation( 'revalidateField', 'fecha_inicial' );				
+				$form.formValidation( 'revalidateField', 'fecha_inicial' );
 				$form.formValidation( 'revalidateField', 'fecha_final' );
 			});
 
 			$duracion.spinner({
-				spin: function (event, ui) 
+				spin: function (event, ui)
 				{
-					if ( $.isNumeric( ui.value ) ) 
+					if ( $.isNumeric( ui.value ) )
 					{
 						if (ui.value <= 0) {
 							$( this ).spinner('value', 1);
@@ -406,13 +402,13 @@ sigesop.mantenimiento = {
 				}
 			})
 			.on( 'success.field.fv', function ( e, data ) {
-				var 
+				var
 					fecha_1 = moment( $fecha_inicial.val(), 'DD-MM-YYYY' ),
 					fecha_2 = moment( $fecha_final.val(), 'DD-MM-YYYY' );
 
 				if( $fecha_inicial.val() && $fecha_final.val() )
 					if ( fecha_2.isBefore( fecha_1 ) )
-					{			
+					{
 						$form.data( 'formValidation' ).updateStatus( 'fecha_inicial', 'INVALID' );
 						$fecha_inicial.val('');
 						sigesop.msg( 'Advertencia', 'Fecha fuera de rango', 'warning' );
@@ -431,13 +427,13 @@ sigesop.mantenimiento = {
 				}
 			})
 			.on( 'success.field.fv', function ( e, data ) {
-				var 
+				var
 					fecha_1 = moment( $fecha_inicial.val(), 'DD-MM-YYYY' ),
 					fecha_2 = moment( $fecha_final.val(), 'DD-MM-YYYY' );
 
 				if( $fecha_inicial.val() && $fecha_final.val() )
 					if ( fecha_2.isBefore( fecha_1 ) )
-					{			
+					{
 						$form.data( 'formValidation' ).updateStatus( 'fecha_final', 'INVALID' );
 						$fecha_final.val('');
 						sigesop.msg( 'Advertencia', 'Fecha fuera de rango', 'warning' );
@@ -448,23 +444,23 @@ sigesop.mantenimiento = {
 		},
 
 		limpiarCampos = function () {
-			var 
+			var
 			doc = this,
 			IDS = this.IDS;
 
 			IDS.$numero_unidad.val( '' );
 			IDS.$numero_aero.val( '' );
-			IDS.$id_mantenimiento.val( '' );    
+			IDS.$id_mantenimiento.val( '' );
 			IDS.$duracion.val( '' );
 			IDS.$magnitud_duracion.val('');
 			IDS.$fecha_inicial.val( moment().format( 'DD-MM-YYYY' ) );
 			IDS.$fecha_final.val( '' );
-			IDS.$trabajo_solicitado.val( '' );				
+			IDS.$trabajo_solicitado.val( '' );
 			vaciarDatos.call( doc );
 		},
 
 		vaciarDatos = function () {
-			var 
+			var
 			IDS = this.IDS,
 			datos = this.datos;
 			IDS.$fecha_inicial.prop( 'disabled', false );
@@ -478,28 +474,28 @@ sigesop.mantenimiento = {
 			datos.trabajo_solicitado.valor = null;
 			datos.programacion_mtto.length = 0;
 
-			IDS.$form.formValidation( 'resetForm' );		
+			IDS.$form.formValidation( 'resetForm' );
 		},
 
 		generar_elementos = function ( success ) {
-			var 
+			var
 			doc = this,
 			datos = this.datos;
 
-			/* buscamos la frecuencia y la magnitud 
+			/* buscamos la frecuencia y la magnitud
 			 * de la frecuencia en el arreglo de tipos de mantenimiento
-			 */ 
-			var posicion = 
-				sigesop.indexOfObjeto( 	window.sesion.matrizTipoMantto, 
-										'id_mantenimiento', 
+			 */
+			var posicion =
+				sigesop.indexOfObjeto( 	window.sesion.matrizTipoMantto,
+										'id_mantenimiento',
 										datos.id_mantenimiento.valor );
-			
+
 			if ( posicion === -1 )
-			throw new Error( 'ID Mantenimiento: ' + datos.id_mantenimiento.valor + ' no encontrado' );			
+			throw new Error( 'ID Mantenimiento: ' + datos.id_mantenimiento.valor + ' no encontrado' );
 
 			/* calculamos los periodos
-			 */ 
-			var 
+			 */
+			var
 			fechaLocal = sigesop.mantenimiento.calculaPeriodoMantenimiento({
 				fechaInicial: datos.fecha_inicial.valor,
 				fechaFinal: datos.fecha_final.valor,
@@ -507,10 +503,10 @@ sigesop.mantenimiento = {
 				magnitudDuracion: datos.magnitud_duracion.valor,
 				frecuencia: window.sesion.matrizTipoMantto[ posicion ].numero_frecuencia,
 				magnitudFrecuencia: window.sesion.matrizTipoMantto[ posicion ].tipo_frecuencia
-			}),	
+			}),
 
 			/* objeto con los datos para graficar
-			 */ 
+			 */
 			obj = {
 				nombre: datos.numero_aero.valor + ' - ' + datos.id_mantenimiento.valor ,
 				colorGrafica: '#5bc0de',
@@ -534,7 +530,7 @@ sigesop.mantenimiento = {
 
 					sigesop.mantenimiento.graficaMantenimiento( [ obj ], _doc.IDS.grafica );
 		        },
-		        size: BootstrapDialog.SIZE_WIDE,        
+		        size: BootstrapDialog.SIZE_WIDE,
 		        draggable: true,
 		        buttons: [{
 		            label: 'Cancelar',
@@ -617,7 +613,7 @@ sigesop.mantenimiento = {
 	registro: function ( opt ) {
 		var suf = opt.suf || '';
 
-		var 
+		var
 		html =
 			'<form id="formRegistroMantto' + suf + '">' +
 				'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
@@ -627,7 +623,7 @@ sigesop.mantenimiento = {
 					'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 				'</div>' +
 
-				'<div class="form-group">' +					
+				'<div class="form-group">' +
 					'<div class="col-sm-12 col-md-12" id="tabla_registro_mantto' + suf + '"></div>' +
 				'</div>' +
 			'</form>',
@@ -643,7 +639,7 @@ sigesop.mantenimiento = {
 						'orden_trabajo_personal.supervisor, orden_trabajo_personal.responsable, ' +
 						'orden_trabajo_personal.auxiliar, fecha_programada, fecha_reprogramada'
 			});
-			
+
 			this.table.update_table = tabla.update_table; // enlazamos a vista publica
 			this.table.body = tabla.IDS.body;
 			document.getElementById( this.IDS.idTabla.flushChar('#') )
@@ -651,7 +647,7 @@ sigesop.mantenimiento = {
 
 			var items = {
 	            insertar: {
-	            	name: 'Asignar orden de trabajo', 
+	            	name: 'Asignar orden de trabajo',
 	            	icon: 'user',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -662,7 +658,7 @@ sigesop.mantenimiento = {
 	            },
 
 	            materiales: {
-	            	name: 'Materiales', 
+	            	name: 'Materiales',
 	            	icon: 'add',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -673,7 +669,7 @@ sigesop.mantenimiento = {
 	            },
 
 	            eliminar: {
-	            	name: 'Eliminar programación', 
+	            	name: 'Eliminar programación',
 	            	icon: 'delete',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -684,7 +680,7 @@ sigesop.mantenimiento = {
 	            }
 
 	          //   programacion: {
-	          //   	name: 'Ver programación de mantenimiento', 
+	          //   	name: 'Ver programación de mantenimiento',
 	          //   	icon: 'copy',
 	        		// callback: function ( key, _opt ) {
 	        		// 	var index = $( this ).attr( 'table-index' );
@@ -697,7 +693,7 @@ sigesop.mantenimiento = {
 
 			$( tabla.IDS.body ).contextMenu({
 				selector: 'tr',
-				items: items 
+				items: items
 			});
 		},
 
@@ -722,11 +718,11 @@ sigesop.mantenimiento = {
 	documentoVistaPreliminar: function ( suf ) {
 		// ---------- ID de los botones
 
-		var 
+		var
 
 		suf = suf || '',
 
-		html = 
+		html =
 			'<form class="form-horizontal" role="form">' +
 				'<div id="div-grafica-' + suf + '" class="text-center" > <h4> CARGANDO DATOS... </h4></div> <br><br>' +
 				'<div class="form-group">' +
@@ -736,7 +732,7 @@ sigesop.mantenimiento = {
 					'</p>' +
 				'</div>' +
 			'</form>',
-		
+
 		doc = {
 			html: html,
 			IDS: {
@@ -754,12 +750,12 @@ sigesop.mantenimiento = {
 		 * arr_user
 		 */
 
-		var  
+		var
 			obj = opt.obj || {},
 			suf = opt.suf || '';
 
-		var 
-			html = 
+		var
+			html =
 				'<form id="formAgregarUsuarios" class="form-horizontal" role="form">' +
 					'<div class="form-group">' +
 						'<label class="control-label col-sm-3">Trabajador Responsable: </label>' +
@@ -769,7 +765,7 @@ sigesop.mantenimiento = {
 					'</div>' +
 
 					'<div class="form-group">' +
-						'<label for="" class="control-label col-sm-3">Trabajador Auxiliar: </label>' +				
+						'<label for="" class="control-label col-sm-3">Trabajador Auxiliar: </label>' +
 						'<div id="divUsuarioAuxiliar' + suf + '" class="col-sm-7"></div>'+
 					'</div>' +
 
@@ -784,9 +780,9 @@ sigesop.mantenimiento = {
 
 			change_check = function ( state, value, $elem )
 			{
-				if ( value == $( doc.datos.responsable.idHTML ).val() ) 
+				if ( value == $( doc.datos.responsable.idHTML ).val() )
 				{
-					if ( state === true ) 
+					if ( state === true )
 					{
 						doc.IDS.$form.data( 'formValidation' ).updateStatus( 'responsable', 'INVALID' );
 						sigesop.msg( 'Info', 'El usuario auxiliar debe ser distinto al usuario responsable', 'info' );
@@ -817,22 +813,22 @@ sigesop.mantenimiento = {
 			update_user = function ( arr ) {
 				var doc = this;
 				sigesop.combo({
-					arr: arr, 
-					elem: doc.datos.responsable.idHTML, 
-					campo: 'nombre_trabajador, apellidos_trabajador', 
+					arr: arr,
+					elem: doc.datos.responsable.idHTML,
+					campo: 'nombre_trabajador, apellidos_trabajador',
 					campoValor: 'nombre_usuario',
 					del: ' '
 				});
-	
+
 				tabla.update_table( arr );
 				// update_auxiliar.call( doc, arr );
 			},
 
-			/* verifica que exista al menos un elemento valido	
-			 * dentro de un arreglo de datos		
-			 */ 
+			/* verifica que exista al menos un elemento valido
+			 * dentro de un arreglo de datos
+			 */
 			check_arr = function ( arr ) {
-				var 
+				var
 					i = 0,
 					lon = arr.length;
 
@@ -859,7 +855,7 @@ sigesop.mantenimiento = {
 
 			        	/* verificamos que la matriz [mtz_auxiliar] tenga seleccionado
 			        	 * por lo menos a un elemento
-			        	 */ 
+			        	 */
 			        	if ( check_arr( doc.IDS.mtz_auxiliar ) )
 			        	{
 				        	typeof opt.success == 'function' ?
@@ -867,30 +863,30 @@ sigesop.mantenimiento = {
 				        		console.log( 'success is null' );
 				        }
 
-				        else 
+				        else
 				        sigesop.msg( 'Advertencia', 'Seleccione usuario auxiliar', 'warning' );
 			        },
 
 			        onError: function ( e ) {
-			        	e.preventDefault();			        	
+			        	e.preventDefault();
 			        	typeof opt.error == 'function' ?
-			        		opt.error() : console.log( 'error is null' );			        	
+			        		opt.error() : console.log( 'error is null' );
 			        },
 
-			        fields: {			            
+			        fields: {
 			            responsable: {
 			                validators: {
 			                    notEmpty: {
 			                        message: 'Campo requerido'
 			                    }
 			                }
-			            }				            
+			            }
 			        }
 				})
 				.on( 'success.field.fv', function( e, data ) {
 					data.fv.disableSubmitButtons( false );
 				});
-				
+
 				doc.IDS.$form = $form;
 
 				document.getElementById( doc.IDS.divUsuarioAuxiliar.flushChar('#') )
@@ -946,7 +942,7 @@ sigesop.mantenimiento = {
 				doc.datos.responsable.valor = null;
 				doc.datos.auxiliar.length = 0;
 				tabla.reset();
-				doc.IDS.$form.formValidation( 'resetForm' );		
+				doc.IDS.$form.formValidation( 'resetForm' );
 			},
 
 			datos = {
@@ -979,7 +975,7 @@ sigesop.mantenimiento = {
 	},
 
 	documentMateriales: function ( opt ) {
-		var 
+		var
 
 		suf = opt.suf || '',
 
@@ -989,11 +985,11 @@ sigesop.mantenimiento = {
 			campo: 'codigo_material, descripcion_material, tipo_material, cantidad'
 		}),
 
-		html = 
+		html =
 			'<form id="form-agregar-materiales-' + suf + '" class="form-horizontal" role="form">' +
 				'<div class="panel panel-success">' +
 					'<div class="panel-heading">Agregar Materiales</div><br>' +
-					
+
 					'<div class="form-group">' +
 						'<label class="control-label col-sm-3">Material: </label>' +
 						'<div class="col-sm-7">' +
@@ -1047,9 +1043,9 @@ sigesop.mantenimiento = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
@@ -1098,7 +1094,7 @@ sigesop.mantenimiento = {
 			});
 
 			/* Enlazar publicamente instancias jQuery de los campos
-			 */		
+			 */
 			doc.IDS.$form = $form;
 			doc.IDS.$botonLimpiar = $botonLimpiar;
 			doc.IDS.$codigo_material = $codigo_material;
@@ -1124,11 +1120,11 @@ sigesop.mantenimiento = {
 
 			/* Añadir menú contextual a la tabla de materiales
 			 * registrados
-			 */ 
-			var 
+			 */
+			var
 			items = {
 	            eliminar: {
-	            	name: 'Eliminar', 
+	            	name: 'Eliminar',
 	            	icon: 'delete',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -1141,12 +1137,12 @@ sigesop.mantenimiento = {
 
 			$( table.IDS.body ).contextMenu({
 				selector: 'tr',
-				items: items 
+				items: items
 			});
 		},
 
 		vaciarDatos = function () {
-			var 
+			var
 			datos = this.datos,
 			$form = this.IDS.$form;
 
@@ -1157,7 +1153,7 @@ sigesop.mantenimiento = {
 		},
 
 		limpiarCampos = function () {
-			var 
+			var
 			IDS = this.IDS,
 			doc = this;
 
@@ -1212,27 +1208,27 @@ sigesop.mantenimiento = {
 	 * @param {String} mangnitudDuracion
 	 * @param {Int} frecuencia
 	 * @param {String} mangnitudFrecuencia
-	 */ 		
+	 */
 	calculaPeriodoMantenimiento: function ( opt ) {
-		var 
+		var
 		inicio = moment( opt.fechaInicial, 'DD-MM-YYYY' ),
 		fin = moment( opt.fechaFinal, 'DD-MM-YYYY' );
 
 		if ( !inicio.isValid || !fin.isValid )
 		throw new Error( '[calculaPeriodoMantenimiento] fechas invalidas' );
 
-		var 
+		var
 		ff = fin, // fecha final del periodo
 		fr_i = moment( opt.fechaInicial, 'DD-MM-YYYY' ), // fecha recorrido inicial
 		fr_f = moment( opt.fechaInicial, 'DD-MM-YYYY' ), // fecha recorrido final
 		fechas = [];
-		
+
 		do {
 			fr_f.add( opt.duracion, opt.magnitudDuracion );
 			// console.log( 'fr_i: ' + fr_i.format( 'DD-MM-YYYY' ) );
 			// console.log( 'fr_f: ' + fr_f.format( 'DD-MM-YYYY' ) );
 			// console.log( 'ff: ' + ff.format( 'DD-MM-YYYY' ) );
-			
+
 			if ( ff.isAfter( fr_i ) && ff.isAfter( fr_f ) ) {
 				fechas.push( {
 					from: fr_i.utc().valueOf(),
@@ -1242,19 +1238,19 @@ sigesop.mantenimiento = {
 				fr_f.add( opt.frecuencia, opt.magnitudFrecuencia );
 				fr_i.add( opt.duracion, opt.magnitudDuracion ).add( opt.frecuencia, opt.magnitudFrecuencia );
 			}
-							
+
 			// console.log( 'fr_i recorrido: ' + fr_i.format( 'DD-MM-YYYY' ) );
 			// console.log( '\n' );
 		}
 		while ( ff.isAfter( fr_i ) && ff.isAfter( fr_f ) );
 
-		return fechas;		
+		return fechas;
 	},
 
 	estructuraDatosOrdenTrabajo: function ( array ) {
 		if ( !jQuery.isEmptyObject( array ) )
 		{
-			jQuery.each( data, function( i, unidad ) 
+			jQuery.each( data, function( i, unidad )
 			{
 				var numeroUnidad = unidad.numeroUnidad,
 					matrizAeros = unidad.matrizAeros;
@@ -1275,7 +1271,7 @@ sigesop.mantenimiento = {
 				 		{
 				 			var numeroOrden = datos.numero_orden,
 				 				duracion = datos.duracion,
-				 				magnitudDuracion = datos.magnitud_duracion,	
+				 				magnitudDuracion = datos.magnitud_duracion,
 				 				fechaProgramada = datos.fecha_programada,
 				 				fechaReprogramada = datos.fecha_reprogramada,
 				 				fechaRelizada = datos.fecha_realizada;
@@ -1316,7 +1312,7 @@ sigesop.mantenimiento = {
 		{
 			var from = moment( parseInt( arr[ i ].from ) ).format( 'DD-MM-YYYY' ),
 				to = moment( parseInt( arr[ i ].to ) ).format( 'DD-MM-YYYY' );
-				
+
 			r.push({
 				from: from,
 				to: to
@@ -1332,7 +1328,7 @@ sigesop.mantenimiento = {
 
 		if ( !Highcharts ) throw new Error('Libreria Highcharts es indefinida');
 
-        var 
+        var
         tasks = data,
         // re-structure the tasks into line seriesvar series = [];
         series = [];
@@ -1340,10 +1336,10 @@ sigesop.mantenimiento = {
         jQuery.each( tasks.reverse(), function ( i, task ) {
             var item = {
                 color: task.colorGrafica,
-                name: task.nombre,                            
+                name: task.nombre,
                 data: []
             };
-            
+
             jQuery.each( task.intervalos, function ( j, interval ) {
                 item.data.push({
                     x: interval.from,
@@ -1357,7 +1353,7 @@ sigesop.mantenimiento = {
                     from: interval.from,
                     to: interval.to
                 });
-                
+
                 // add a null value between intervalos
                 if ( task.intervalos[ j + 1 ] ) {
                     item.data.push(
@@ -1376,7 +1372,7 @@ sigesop.mantenimiento = {
                 // renderTo: idHTML
                 // width: null
             },
-            
+
             title: {
                 text: 'Programa de Mantenimiento'
             },
@@ -1415,7 +1411,7 @@ sigesop.mantenimiento = {
                 formatter: function() {
                     return '<b>'+ tasks[this.y].nombre + '</b><br/>' +
                         Highcharts.dateFormat('%d %B %Y', this.point.options.from)  +
-                        ' - ' + Highcharts.dateFormat('%d %B %Y', this.point.options.to); 
+                        ' - ' + Highcharts.dateFormat('%d %B %Y', this.point.options.to);
                 }
             },
 
@@ -1439,10 +1435,10 @@ sigesop.mantenimiento = {
                         duration: 3000
                     },
                     turboThreshold: 10000
-                } 
+                }
             },
 
             series: series
-        });        	
+        });
 	}
 };

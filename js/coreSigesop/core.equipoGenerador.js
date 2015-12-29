@@ -1,7 +1,7 @@
 /* Cache de datos para manipulacion local
  *
  * [window.session.matrizEquipos]
- * 
+ *
  */
 sigesop.equipoGenerador = {
 	document: function ( opt ) {
@@ -19,21 +19,21 @@ sigesop.equipoGenerador = {
 				'<div class="form-group">' +
 					'<label class="col-sm-3 control-label">Nombre Equipo:</label>' +
 					'<div class="col-sm-7">' +
-						'<input name="nombre_equipo_aero" id="nombre-equipo-' + suf + '" class="form-control input-md eventoCambioMayuscula" placeholder="De 1 – 50 caracteres">' +
+						'<input name="nombre_equipo_aero" id="nombre-equipo-' + suf + '" class="form-control input-md" placeholder="De 1 – 50 caracteres">' +
 					'</div>' +
 				'</div>' +
-			
+
 				'<div class="form-group">' +
 					'<label class="col-sm-3 control-label">ID del Equipo:</label>' +
 					'<div class="col-sm-7">' +
-						'<input name="id_equipo_aero" id="id-equipo-' + suf + '" type="text" class="form-control input-md eventoCambioMayuscula" placeholder="De 1 – 4 caracteres [- _ .] [0-9] [A-Z]" />' +
+						'<input name="id_equipo_aero" id="id-equipo-' + suf + '" type="text" class="form-control input-md" placeholder="De 1 – 4 caracteres [- _ .] [0-9] [A-Z]" />' +
 					'</div>' +
 				'</div>' +
 
 				'<div class="form-group">' +
 					'<label class="col-sm-3 control-label">Sistema:</label>' +
 					'<div class="col-sm-5">' +
-						'<input name="id_sistema_aero" id="id-sistema-' + suf + '" class="form-control input-md eventoCambioMayuscula" placeholder="De 1 – 2 caracteres [- _ .] [0-9] [A-Z]">' +
+						'<input name="id_sistema_aero" id="id-sistema-' + suf + '" class="form-control input-md" placeholder="De 1 – 2 caracteres [- _ .] [0-9] [A-Z]">' +
 					'</div>' +
 					'<div class="col-sm-2">' +
 						'<button type="button" id="btn-sistema-' + suf + '" class="btn btn-primary">Seleccione sistema</button>' +
@@ -44,7 +44,7 @@ sigesop.equipoGenerador = {
 					'<div class="col-sm-3"></div>' +
 					'<div class="col-sm-7">' +
 						'<p>' +
-							'<button type="submit" id="btn-guardar-nuevo-equipo-' + suf + 
+							'<button type="submit" id="btn-guardar-nuevo-equipo-' + suf +
 							'" class="btn btn-success"><span class="glyphicon glyphicon-floppy-disk"></span> Guardar</button> ' +
 							'<button type="reset"  id="btn-limpiar-nuevo-equipo-' + suf +
 							'" class="btn btn-success"><span class="glyphicon glyphicon-repeat"></span> Limpiar</button>' +
@@ -61,15 +61,15 @@ sigesop.equipoGenerador = {
 				// color_fila: 'success',
 				color_select: 'success',
 				head: 'ID SISTEMA, NOMBRE SISTEMA',
-				campo: 'id_sistema_aero, nombre_sistema_aero'				
+				campo: 'id_sistema_aero, nombre_sistema_aero'
 			}),
 
 			action = function () {
-				/* Guardamos el id del sistema y ponenos el 
+				/* Guardamos el id del sistema y ponenos el
 				 * nombre del sistema en la caja
 				 */
 				if ( !$.isEmptyObject( docS.matrizInput ) ) {
-					var 
+					var
 					index = sigesop.getDataRadio( docS.matrizInput[ 0 ] ) ? // impedir que no sea seleccionado alguno
 					sigesop.getDataRadio( docS.matrizInput[ 0 ] ) : -1;
 
@@ -81,11 +81,11 @@ sigesop.equipoGenerador = {
 						// $( win.idDiv ).modal( 'hide' );
 					}
 
-					else 
+					else
 						sigesop.msg( 'Info', 'Sistema no seleccionado' );
 				}
 
-				else 
+				else
 					console.log( '[docS.matrizInput] es nula' );
 			},
 
@@ -103,7 +103,7 @@ sigesop.equipoGenerador = {
 						}
 					});
 		        },
-		        size: BootstrapDialog.SIZE_WIDE,        
+		        size: BootstrapDialog.SIZE_WIDE,
 		        draggable: true,
 		        buttons: [{
 		            label: 'Cancelar',
@@ -124,7 +124,7 @@ sigesop.equipoGenerador = {
 			var datos = this.datos;
 			$( datos.nombre_equipo_aero.idHTML ).val( '' );
 			$( datos.id_equipo_aero.idHTML ).val( '' );
-			$( datos.id_sistema_aero.idHTML ).val( '' );			
+			$( datos.id_sistema_aero.idHTML ).val( '' );
 
 			if( this.IDS.$form !== null )
 				this.IDS.$form.formValidation( 'resetForm' );
@@ -136,10 +136,10 @@ sigesop.equipoGenerador = {
 			datos = this.datos,
 			form = doc.IDS.form,
 			$botonLimpiar = $( doc.IDS.botonLimpiar ),
-			$nombre_equipo_aero = $( doc.datos.nombre_equipo_aero.idHTML ),
-			$id_equipo_aero = $( doc.datos.id_equipo_aero.idHTML ),
-			$id_sistema_aero = $( doc.datos.id_sistema_aero.idHTML ),
-			$botonSistema = $( doc.datos.id_sistema_aero.boton ),			
+			$nombre_equipo_aero = $( doc.datos.nombre_equipo_aero.idHTML ).toUpperCase(),
+			$id_equipo_aero = $( doc.datos.id_equipo_aero.idHTML ).toUpperCase(),
+			$id_sistema_aero = $( doc.datos.id_sistema_aero.idHTML ).toUpperCase(),
+			$botonSistema = $( doc.datos.id_sistema_aero.boton ),
 			$form = $( form )
 			.formValidation({
 		        icon: {
@@ -156,17 +156,15 @@ sigesop.equipoGenerador = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
 		            nombre_equipo_aero: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.nombre_equipo_aero.valor = val;
-		            		data.element.val( val );
+		            		datos.nombre_equipo_aero.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.nombre_equipo_aero.valor = null;
@@ -179,7 +177,7 @@ sigesop.equipoGenerador = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    stringLength: {		                    	
+		                    stringLength: {
 		                    	max: 50,
 		                    	message: 'Número de caracteres inválido'
 		                    },
@@ -192,9 +190,7 @@ sigesop.equipoGenerador = {
 
 		            id_equipo_aero: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.id_equipo_aero.valor = val;
-		            		data.element.val( val );
+		            		datos.id_equipo_aero.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.id_equipo_aero.valor = null;
@@ -207,7 +203,7 @@ sigesop.equipoGenerador = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    stringLength: {	                    	
+		                    stringLength: {
 		                    	max: 4,
 		                    	message: 'Número de caracteres inválido'
 		                    },
@@ -220,9 +216,7 @@ sigesop.equipoGenerador = {
 
 		            id_sistema_aero: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.id_sistema_aero.valor = val;
-		            		data.element.val( val );
+		            		datos.id_sistema_aero.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.id_sistema_aero.valor = null;
@@ -235,7 +229,7 @@ sigesop.equipoGenerador = {
 		                    notEmpty: {
 		                        message: 'Campo requerido'
 		                    },
-		                    stringLength: {	                    	
+		                    stringLength: {
 		                    	max: 2,
 		                    	message: 'Número de caracteres inválido'
 		                    },
@@ -280,7 +274,7 @@ sigesop.equipoGenerador = {
 				$id_equipo_aero.val( obj.id_equipo_aero );
 				$id_sistema_aero.val( obj.id_sistema_aero );
 
-				/* Guardamos el ID del equipo que se actualizará				
+				/* Guardamos el ID del equipo que se actualizará
 				 */
 				doc.datos.id_equipo_aero_update.valor = obj.id_equipo_aero;
 			}
@@ -299,7 +293,7 @@ sigesop.equipoGenerador = {
 			id_sistema_aero: {
 				valor : null,
 				idHTML: '#id-sistema-' + suf,
-				boton : '#btn-sistema-' + suf			
+				boton : '#btn-sistema-' + suf
 			}
 		},
 
@@ -320,17 +314,17 @@ sigesop.equipoGenerador = {
 			javascript: javascript,
 			datos: datos,
 			IDS: IDS
-		};		
+		};
 
 		return doc;
 	},
 
 	registro: function ( opt ) {
-		var 
+		var
 
 		suf = opt.suf || '',
 
-		html = 
+		html =
 			'<form id="form-registro-equipos-generador-' + suf + '" class="form-horizontal" role="form">'+
 				'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
 					'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
@@ -339,13 +333,13 @@ sigesop.equipoGenerador = {
 					'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 				'</div>' +
 
-				'<div class="form-group">' +					
+				'<div class="form-group">' +
 					'<div class="col-sm-12 col-md-12" id="tabla-registro-equipos-generador-' + suf + '"></div>' +
 				'</div>' +
 			'</form>',
 
 		javascript = function () {
-			table = 
+			table =
 				sigesop.tablaRegistro({
 					head: 'ID EQUIPO, NOMBRE EQUIPO, SISTEMA ASOCIADO',
 					campo: 'id_equipo_aero, nombre_equipo_aero, nombre_sistema_aero'
@@ -360,7 +354,7 @@ sigesop.equipoGenerador = {
 				selector: 'tr',
 				items: {
 		            editar: {
-		            	name: 'Editar', 
+		            	name: 'Editar',
 		            	icon: 'edit',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -370,7 +364,7 @@ sigesop.equipoGenerador = {
 		        		}
 		            },
 		            eliminar: {
-		            	name: 'Eliminar', 
+		            	name: 'Eliminar',
 		            	icon: 'delete',
 		        		callback: function ( key, _opt ) {
 		        			var index = $( this ).attr( 'table-index' );
@@ -406,10 +400,10 @@ sigesop.equipoGenerador = {
 			obj = opt.obj || {},
 			suf = opt.suf || '';
 
-		var 
-		html = 
+		var
+		html =
 			'<form id="form-imprimir-reporte-' + suf + '" class="form-horizontal" role="form">'+
-			
+
 				'<div class="form-group">'+
 					'<label class="control-label col-sm-5 ">Nombre del sistema: </label>'+
 					'<div class="col-sm-2">'+
@@ -420,7 +414,7 @@ sigesop.equipoGenerador = {
 					'<div class="col-sm-5 control-label"></div>'+
 					'<p class="col-sm-7">'+
 						'<button type="submit" id="btn-consulta-reporte-' + suf + '" class="btn btn-success"  data-loading-text="Buscando..."> <span class="glyphicon glyphicon-floppy-disk"></span> Consultar</button> ' +
-						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+					
+						'<button type="button" id="btn-imprimir-reporte-' + suf + '" class="btn btn-success" disabled> <span class="glyphicon glyphicon-floppy-disk"></span> Imprimir</button>'+
 					'</p>'+
 				'</div>'+
 
@@ -429,7 +423,7 @@ sigesop.equipoGenerador = {
 				'</form>',
 
 		javascript = function () {
-			var 
+			var
 			doc = this,
 			form = doc.IDS.form,
 			$sistema = $( doc.datos.sistema.idHTML ),
@@ -444,7 +438,7 @@ sigesop.equipoGenerador = {
 		        },
 
 		        onSuccess: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.success == 'function' ?
 		        		opt.success( doc.datos, doc.IDS ) :
 		        		console.log( 'success is null' );
@@ -453,9 +447,9 @@ sigesop.equipoGenerador = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
@@ -465,16 +459,16 @@ sigesop.equipoGenerador = {
 		                        message: 'Seleccione un nombre'
 		                    	}
 		                	}
-		                },	            
+		                },
 		        }
-			})			
+			})
 			.on( 'success.form.fv', function( e ) { $botonImprimir.prop( 'disabled', false ); })
 	        .on( 'err.field.fv', function( e ) { $botonImprimir.prop( 'disabled', true ); })
 			.on( 'success.field.fv', function( e, data ) { data.fv.disableSubmitButtons( false ); });
-	
+
 			doc.IDS.$form = $form;
 
-			var tabla_reporte = 
+			var tabla_reporte =
 			sigesop.tablaRegistro({
 				suf: '_reporte',
 				head: 'ID EQUIPO, NOMBRE EQUIPO, SISTEMA ASOCIADO',
@@ -486,8 +480,8 @@ sigesop.equipoGenerador = {
 			doc.table.body = tabla_reporte.IDS.body;
 			document.getElementById( doc.IDS.idTabla.flushChar('#') ).innerHTML = '<br>' + tabla_reporte.html
 
-		
-			$botonImprimir.on( 'click', function ( event ) { 
+
+			$botonImprimir.on( 'click', function ( event ) {
 				var url = sigesop.raizServidor + 'ajax.php?class=equiposGenerador' +
 					'&action=imprimir&id_sistema_aero=' + $sistema.val(),
 
@@ -496,14 +490,14 @@ sigesop.equipoGenerador = {
 				win.focus();
 			 });
 		},
-					
+
 		datos = {
 			sistema:{
 				idHTML: '#sistema-impresion-reporte-' + suf,
 				valor: null
 			} ,
 
-			
+
 		},
 
 		IDS = {

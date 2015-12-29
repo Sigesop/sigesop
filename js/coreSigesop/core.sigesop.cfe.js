@@ -1,3 +1,5 @@
+if ( typeof $ === 'undefined' ) throw new Error( 'sigesopCFE JavaScript Error: jQuery is required' );
+
 window.sesion = {
 	// indexActividadRegistrada      : null,
 	// indexOrdenTrabajoPorUsuario   : null,
@@ -29,117 +31,7 @@ window.sesion = {
 
 (function () {
 	sigesop = {
-		/* DEPRECATED */ 
-		alerta: function ( opt ) {
-			// --- PROPIEDADES DEL opt ---
-			// titulo
-			// colorEstado
-			// mensajeAlerta
-			// idInsercion
-			// hiddenBsModal
-			// ----------------------------
-			var alerta = '' +
-				'<div id="alerta" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">'+
-				'	<div class="modal-dialog">'+
-				'		<div class="modal-content">'+
-				'			<div class="modal-header">'+
-				'				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'+
-				'        		<h4 class="modal-title" >'+ opt.titulo + '</h4>'+
-				'	    </div>'+
-				'	    	<div class="modal-body">'+
-				'	    		<div class="alert alert-'+ opt.colorEstado + '">'+
-				'	    			<p > <h5 class="text-center">' + opt.mensajeAlerta + '</h5>'+
-				'	    			</p>'+
-				'	    		</div>'+
-				'			</div>'+
-				'		    <div class="modal-footer">'+
-				'		        <button type="button" class="btn btn-success" data-dismiss="modal">Cerrar</button>'+
-				'		    </div>'+
-				'    	</div>'+
-				'	</div>'+
-				'</div>';
-
-			// $( opt.idInsercion ).html( alerta );
-			$( 'body' ).append( alerta );
-			$( '#alerta' ).on( 'hidden.bs.modal', function ()
-			{
-				$( '#alerta' ).remove();
-				jQuery.isFunction( opt.hiddenBsModal ) ? opt.hiddenBsModal() : null;
-			});
-
-			$( '#alerta' ).modal( { keyboard: true } );
-		},
-
-		/* DEPRECATED */ 
-		alertaRoot: function ( opt ) {
-			// --- PROPIEDADES DEL JSON ---
-			// idDiv
-			// titulo
-			// idForm
-			// colorEstado
-			// mensajeAlerta
-			// idInsercion
-			// clickCerrar
-			// clickAceptar
-			// showBsModal
-			// hiddenBsModal
-			// shownBsModal
-			// hideBsModal
-			// ----------------------------
-
-			var ventana = '' +
-				'<div class="modal fade" id="' + opt.idDiv +'" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">'+
-				'	<div class="modal-dialog">'+
-				'    	<div class="modal-content">'+
-				'	    	<form id="' + opt.idForm + '" role="form" method="post">'+
-				'    			<div class="modal-header">'+
-				'        			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>'+
-				'        			<h4 class="modal-title" >' + opt.titulo + '</h4>'+
-				'	    		</div>'+
-				'	    		<div class="modal-body">'+
-				'		    			<div class="alert alert-' + opt.colorEstado + '">'+
-				'		    				<p > <h5 class="text-center">' + opt.mensajeAlerta + '</h5></p>'+
-				'		    			</div>'+
-				'		    			<div class="col-md-2"></div>'+
-				'		    			<div class="col-md-8">'+
-				'		    				<input type="password" id="password" class="form-control input-sm text-center">'+
-				'		    			</div>'+
-				'		    			<div class="col-md-2"></div>'+
-				'				</div>'+
-				'		    	<div class="modal-footer">'+
-				'		        	<button id="btnCerrarVentana" type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>'+
-				'		        	<button id="btnEnviarCheckRoot" type="submit" class="btn btn-success">Aceptar</button>'+
-				'		    	</div>'+
-				'	    	</form>'+
-				'    	</div>'+
-				'	</div>'+
-				'</div>';
-
-			$( '#' + opt.idInsercion ).html( ventana );
-
-			$( '#' + opt.idDiv ).on( 'show.bs.modal', function(e) {
-				jQuery.isFunction( opt.clickCerrar ) ? $( '#btnCerrarVentana' ).on( 'click', opt.clickCerrar ) : null;
-				$( '#btnEnviarCheckRoot' ).on( 'click', opt.clickAceptar );
-
-				jQuery.isFunction( opt.showBsModal ) ? opt.showBsModal() : null;
-			});
-
-			$( '#' + opt.idDiv ).on( 'hidden.bs.modal', function(e) {
-				$( '#btnCerrarVentana' ).off( 'click' );
-				$( '#btnEnviarCheckRoot' ).off( 'click' );
-				$( '#' + opt.idDiv ).remove();
-
-				jQuery.isFunction( opt.hiddenBsModal ) ? opt.hiddenBsModal() : null;
-			});
-
-			$( '#' + opt.idDiv ).on( 'shown.bs.modal', opt.shownBsModal );
-			$( '#' + opt.idDiv ).on( 'hide.bs.modal', opt.hideBsModal );
-
-			$( '#' + opt.idDiv ).modal({
-				keyboard: true,
-				backdrop: 'static'
-			});
-		},
+		FRAMEWORK: 'bootstrap',
 
 		array_key_exists: function ( key, search ) {
 		  //  discuss at: http://phpjs.org/functions/array_key_exists/
@@ -327,7 +219,7 @@ window.sesion = {
 				}
 
 				/* configuramos al usuario root en el navegador
-				 * preguntando al servidor				
+				 * preguntando al servidor
 				 */
 				sigesop.root = data.root;
 
@@ -349,6 +241,13 @@ window.sesion = {
 							 '<ul class="dropdown-menu">',
 
 					n_usuario = '',
+
+					htmlUserManual =
+						'<li>' +
+							'<a id="btn-user-manual" href="#">' +
+								'Guia de usuario' +
+							'</a>' +
+						'</li>',
 
 					nivelActivo1 = false,
 					nivelActivo2 = false,
@@ -403,6 +302,7 @@ window.sesion = {
 					nivelActivo3 ? 	html +=	n3 : null;
 					nivelActivo4 ? 	html +=	n4 : null;
 					nivelActivo_usuario ? 	html +=	n_usuario : null;
+					html += data.userManual ? htmlUserManual : '';
 
 					html += '</ul>'+
 								'<ul class="nav navbar-nav navbar-right">'+
@@ -413,6 +313,10 @@ window.sesion = {
 					'</nav>';
 
 				$( elem ).html( html );
+				$( '#btn-user-manual' ).on( 'click', function( e ){
+					var win = window.open( data.userManual );
+					win.focus();
+				})
 			};
 
 			// ejecutamos ajax de peticion de datos
@@ -421,14 +325,238 @@ window.sesion = {
 				query: 'insertaBarraHerramientasRolUsuario',
 				success: struct_barra
 			});
+
+			return this;
+		},
+
+		_barraHerramientas: function () {
+			// elem = elem || this;
+			var elem = this;
+			var
+
+			struct_barra = function( data ) {
+				if ( data == null ) {
+					console.log( 'function: barraHerramientas --> [data] es nulo' )
+					return null;
+				}
+
+				/* configuramos al usuario root en el navegador
+				 * preguntando al servidor
+				 */
+				// sigesop.root = data.root;
+
+				var $menu = $('<div></div>')
+					.addClass('collapse navbar-collapse bs-navbar-collapse');
+
+				var $listElements = $('<ul></ul>')
+					.addClass('nav navbar-nav');
+
+				var $listElementsRight = $('<ul></ul>')
+					.addClass('nav navbar-nav navbar-right')
+					.append('<li><a href="javascript: sigesop.cerrarSesion()"> Cerrar Sesión  <span class="glyphicon glyphicon-off"></span> </a></li>')
+
+				$.each( data.data, function ( i, row ) {					
+					if ( row.nivelBarra != 1 ) {
+						var $ul = $( '<ul></ul>' )
+							.addClass( 'dropdown-menu' );
+
+						$.each( row.data, function ( j, _row ) {
+							$ul.append(
+								$( '<li></li>' )
+								.append(
+									$( '<a></a>' ).prop( 'href', _row.paginaAcceso )
+									.html( _row.nombrePagina )
+								)
+							)
+						});
+
+						var $li = $('<li></li>')
+							.addClass('dropdown')
+							.append(
+								$( '<a href="#">Catálogos</a>' )
+								.attr({
+									'data-toggle': 'value2'
+								})
+								.addClass( 'dropdown-toggle' )
+								.html( row.title )
+								.append( '<b class="caret"></b>' )
+							)
+							.append( $ul );
+
+						$listElements.append( $li );
+					}
+
+					else {
+						$.each( row.data, function ( j, _row ) {
+							$listElements.append(
+								$( '<li></li>' ).append(
+									$( '<a></a>' ).prop( 'href', _row.paginaAcceso )
+									.html( _row.nombrePagina )
+								)
+							)
+						});
+					}
+				});
+
+
+
+				var $nav = $('<nav></nav>')
+					.attr({
+						'role': 'navigation',
+					})
+					.addClass('navbar navbar-cfe navbar-static-top navbar-fixed-top')
+					.append(
+						$('<div class="container-fluid"></div>')
+						.append(
+							$('<div class="navbar-header"></div>')
+							.append(
+								$('<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#barraNavegacion"></button>')
+								.append('<span class="glyphicon glyphicon-home"></span>')
+							)
+						)
+						.append(
+							$menu.append( $listElements	)
+							.append( $listElementsRight )
+						)
+					);
+
+				$( elem ).html( $nav );
+				// $( '#btn-user-manual' ).on( 'click', function( e ){
+				// 	var win = window.open( data.userManual );
+				// 	win.focus();
+				// })
+
+				// switch( row.nivelBarra ) {
+				// 	case 1:
+
+				// 		n1 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 		nivelActivo1 = true;
+				// 		break;
+				// 	case 2:
+				// 		n2 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 		nivelActivo2 = true;
+				// 		break;
+				// 	case 3:
+				// 		n3 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 		nivelActivo3 = true;
+				// 		break;
+				// 	case 4:
+				// 		n4 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 		nivelActivo4 = true;
+				// 		break;
+				// 	case 0:
+				// 		n_usuario += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 		nivelActivo_usuario = true;
+				// 		break;
+				// }
+
+				// var
+				// 	html = '',
+
+				// 	n1 = '',
+
+				// 	n2 = '<li class="dropdown">' +
+				// 			 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Catálogos<b class="caret"></b></a>'+
+				// 			 '<ul class="dropdown-menu">',
+
+				// 	n3 = '<li class="dropdown">'+
+				// 			 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Mantenimiento<b class="caret"></b></a>'+
+				// 			 '<ul class="dropdown-menu">',
+
+				// 	n4 = '<li class="dropdown">'+
+				// 			 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">Operación<b class="caret"></b></a>'+
+				// 			 '<ul class="dropdown-menu">',
+
+				// 	n_usuario = '',
+
+				// 	htmlUserManual =
+				// 		'<li>' +
+				// 			'<a id="btn-user-manual" href="#">' +
+				// 				'Guia de usuario' +
+				// 			'</a>' +
+				// 		'</li>',
+
+				// 	nivelActivo1 = false,
+				// 	nivelActivo2 = false,
+				// 	nivelActivo3 = false,
+				// 	nivelActivo4 = false,
+				// 	nivelActivo_usuario = false;
+
+				// for( var i = 0, lon = data.data.length; i < lon; i++ ) {
+
+				// 	var row = data.data[ i ];
+				// 	switch( row.nivelBarra ) {
+				// 		case 1:
+				// 			n1 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 			nivelActivo1 = true;
+				// 			break;
+				// 		case 2:
+				// 			n2 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 			nivelActivo2 = true;
+				// 			break;
+				// 		case 3:
+				// 			n3 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 			nivelActivo3 = true;
+				// 			break;
+				// 		case 4:
+				// 			n4 += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 			nivelActivo4 = true;
+				// 			break;
+				// 		case 0:
+				// 			n_usuario += '<li><a href="' + row.paginaAcceso + '">' + row.nombrePagina + '</a></li>';
+				// 			nivelActivo_usuario = true;
+				// 			break;
+				// 	}
+				// }
+
+				// n2 += '</ul></li>';
+				// n3 += '</ul></li>';
+				// n4 += '</ul></li>';
+
+				// html +=
+				// 	''+
+				// 		''+
+				// 			''+
+				// 				''+
+				// 					''+
+				// 				''+
+				// 			''+
+				// 			''+
+				// 				'';
+
+				// 		nivelActivo1 ? 	html +=	n1 : null;
+				// 		nivelActivo2 ? 	html +=	n2 : null;
+				// 		nivelActivo3 ? 	html +=	n3 : null;
+				// 		nivelActivo4 ? 	html +=	n4 : null;
+				// 		nivelActivo_usuario ? 	html +=	n_usuario : null;
+				// 		html += data.userManual ? htmlUserManual : '';
+
+				// 		html += ''+
+
+				// 				''+
+				// 					''+
+				// 				''+
+				// 			''+
+				// 		''+
+				// 	'';
+			};
+
+			// ejecutamos ajax de peticion de datos
+			sigesop.query({
+				class: 'sistema',
+				query: 'insertaBarraHerramientasRolUsuario',
+				success: struct_barra
+			});
+
+			return this;
 		},
 
 		cargandoDatos: 'CARGANDO DATOS...',
 
 		cerrarSesion: function () {
-			var 
+			var
 
-			action = function ( dialog ){		 		
+			action = function ( dialog ){
 		 		sigesop.msgBlockUI( 'Cerrando sesion...', 'loading', 'blockUI' );
 				sigesop.query({
 					class: 'sistema',
@@ -466,15 +594,16 @@ window.sesion = {
 
 		completeCampos: function () { sigesop.msg( 'Advertencia', 'Complete los campos', 'warning' ); },
 
-		eventoCambioEsNumero: function ( elem ) {
-			$( elem ).change( function ( event )
-			{
-				var valor = $( this ).val();
-				$.isNumeric( valor ) ? null : $( this ).val( '' );
-			});
-		},
+		/* DEPRECATED */
+		// eventoCambioEsNumero: function ( elem ) {
+		// 	$( elem ).change( function ( event )
+		// 	{
+		// 		var valor = $( this ).val();
+		// 		$.isNumeric( valor ) ? null : $( this ).val( '' );
+		// 	});
+		// },
 
-		eventoCambioMayuscula: function ( elem, callback ) {
+		toUpperCase: function ( elem, callback ) {
 			elem = elem || this;
 			$( elem ).change( function(event)
 			{
@@ -482,6 +611,8 @@ window.sesion = {
 				$( this ).val( valor.toUpperCase() );
 				if ( typeof callback === 'function' ) callback();
 			});
+
+			return this;
 		},
 
 		flushData: function ( data ) {
@@ -528,11 +659,11 @@ window.sesion = {
 			}
 		},
 
-		/* verifica que exista al menos un elemento valido	
-		 * dentro de un arreglo de datos		
-		 */ 
+		/* verifica que exista al menos un elemento valido
+		 * dentro de un arreglo de datos
+		 */
 		isNotEmpty: function ( arr, field ) {
-			var 
+			var
 				i = 0,
 				lon = arr.length,
 				row = null;
@@ -541,53 +672,69 @@ window.sesion = {
 				row = this.lecturaDeep( arr[ i ], field );
 				if ( row ) return true;
 			}
-				
+
 			return false;
 		},
 
-		matrizIndexOfObjeto: function ( data, campo, arr ) {
-			/**
-			 * busca los indices de los elementos propuestos y retorna su posicion
-			 * @param {Object} data - objeto de datos donde se buscarán los elementos
-			 * @param {Array} array - arreglo donde se encuentran los elementos por buscar
-			 * @param {String} campo - campo de data con el cual se comparará la busqueda
-			 * @return {Array} ind - arreglo con los indices localizados en [data]
-			 */
-			if( typeof campo !== 'undefined' )
-			{
-				var i = 0,
-					ind = [],
-					indice = null;
+		/* DEPRECATED */
+		// matrizIndexOfObjeto: function ( data, campo, arr ) {
+		// 	*
+		// 	 * busca los indices de los elementos propuestos y retorna su posicion
+		// 	 * @param {Object} data - objeto de datos donde se buscarán los elementos
+		// 	 * @param {Array} array - arreglo donde se encuentran los elementos por buscar
+		// 	 * @param {String} campo - campo de data con el cual se comparará la busqueda
+		// 	 * @return {Array} ind - arreglo con los indices localizados en [data]
+			 
+		// 	if( typeof campo !== 'undefined' )
+		// 	{
+		// 		var i = 0,
+		// 			ind = [],
+		// 			indice = null;
 
-				for( i in arr )
-				{
-					indice = this.indexOfObjeto( data, campo, arr[ i ] );
-					indice != -1 ? ind.push( indice ) : null;
-				}
+		// 		for( i in arr )
+		// 		{
+		// 			indice = this.indexOfObjeto( data, campo, arr[ i ] );
+		// 			indice != -1 ? ind.push( indice ) : null;
+		// 		}
 
-				return ind;
-			}
-			else console.log( 'El parametro [campo] es indefinido' );
-		},
+		// 		return ind;
+		// 	}
+		// 	else console.log( 'El parametro [campo] es indefinido' );
+		// },
 
-		mtzValidacion: function ( arr ) {
-			if ( jQuery.isArray( arr ) && !jQuery.isEmptyObject( arr ) )
-			{
-				var i = 0,
-					lon = arr.length;
+		/* DEPRECATED */
+		// mtzValidacion: function ( arr ) {
+		// 	if ( jQuery.isArray( arr ) && !jQuery.isEmptyObject( arr ) )
+		// 	{
+		// 		var i = 0,
+		// 			lon = arr.length;
 
-				for( i; i < lon; i++ )
-					if( arr[ i ] === false ) return false;
+		// 		for( i; i < lon; i++ )
+		// 			if( arr[ i ] === false ) return false;
 
-				return true;
-			}
+		// 		return true;
+		// 	}
 
-			else
-			{
-				console.log( 'function [mtzValidacion]: matriz invalida' );
-				return false
-			}
-		},		
+		// 	else
+		// 	{
+		// 		console.log( 'function [mtzValidacion]: matriz invalida' );
+		// 		return false
+		// 	}
+		// },
+
+	    /**
+	     * RFC4122 version 4 compliant unique id creator.
+	     *
+	     * Added by https://github.com/tufanbarisyildirim/
+	     *
+	     *  @returns {String}
+	     */
+	    newId: function() {
+	        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+	            var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+	            return v.toString(16);
+	        });
+	    },
 
 		getDataChecks: function ( arr ) {
 			/* Obtiene el valor de los checks seleccionados
@@ -686,7 +833,7 @@ window.sesion = {
 
 				// ---------- insertamos html en elem o retornamos el html
 
-				if ( opt.elem === false ) return combo;			
+				if ( opt.elem === false ) return combo;
 				else {
 					$( opt.elem ).html( combo );
 					return this;
@@ -703,7 +850,7 @@ window.sesion = {
 					return this;
 				}
 			}
-		},		
+		},
 
 		lecturaDeep: function ( obj, campo ) {
 			/*
@@ -995,6 +1142,8 @@ window.sesion = {
 			return msj;
 		},
 
+		path_user_manual: '../../docs/sistema de_gestion_operativa_manual_usuario.pdf',
+
 		query: function ( opt ) {
 			/* type
 			 * data
@@ -1130,13 +1279,15 @@ window.sesion = {
 			campo =			opt.body.campo,
 			campoValor = 	opt.body.campoValor ||
 							campo.splitParametros( ',' )[0],
-			addName =		opt.body.addName || '';
+			addName =		opt.body.addName || '',
+
+			id_tbody = 'tablaBody_seleccion_' + suf;
 
 			var
 			matriz_input = 	[],
 
 			checkAll = 	typeof opt.head.checkAll === 'boolean' ?
-						( opt.head.checkAll || false ) : 
+						( opt.head.checkAll || false ) :
 						( opt.head.checkAll || {} ) ,
 
 			elem_anterior = null,
@@ -1267,15 +1418,16 @@ window.sesion = {
 
 				// else console.log( '[elem_anterior] es nulo' );
 
-				$( this ).parents( 'tr' ).addClass( color_select );
-				elem_anterior = $( this ).parents( 'tr' );
+				$( this ).parents( '#' + id_tbody + ' tr' ).addClass( color_select );
+				elem_anterior = $( this ).parents( '#' + id_tbody + ' tr' );
 			},
 
 			change_checkbox = function ( event ) {
 				var $this = $( this );
 
 				if ( $this.prop( 'checked' ) ) {
-					$this.parents( 'tr' ).addClass( color_select ); // cambia color
+					$this.parents( '#' + id_tbody + ' tr' )
+					.addClass( color_select ); // cambia color
 
 					/* Añade valor a matriz publica
 					 */
@@ -1286,8 +1438,8 @@ window.sesion = {
 				else {
 					/* quita color
 					 */
-					$this.parents( 'tr' ).removeClass();
-					$this.parents( 'tr' ).addClass( color_fila );
+					$this.parents( '#' + id_tbody + ' tr' ).removeClass();
+					$this.parents( '#' + id_tbody + ' tr' ).addClass( color_fila );
 
 					/* Elimina valor a matriz publica
 					 */
@@ -1295,7 +1447,7 @@ window.sesion = {
 					if ( index != -1 ) matriz_input[ index ].valor = null;
 				}
 
-				/* Llamada a funcion por cada evento de seleccion				
+				/* Llamada a funcion por cada evento de seleccion
 				 */
 				if ( typeof opt.body.callback === 'function' )
 					opt.body.callback( $this.prop( 'checked' ), $this.val(), $this, matriz_input );
@@ -1304,20 +1456,21 @@ window.sesion = {
 			selectAll = function () {
 				if ( tipo !== 'checkbox' ) return;
 				if ( $.isEmptyObject( this.matrizInput ) ) return null;
-				
+
 				var
 					i = 0,
 					lon = this.matrizInput.length;
 
-				for ( i ; i < lon ; i++ ) {					
+				for ( i ; i < lon ; i++ ) {
 					var $elem = $( '#' + this.matrizInput[ i ].index );
 					$elem.prop( 'checked', true )
-						.parents( 'tr' )
+						.parents( '#' + id_tbody + ' tr' )
 						.addClass( color_select );
 
 					/* Añade valor a matriz publica
 					 */
-					var index = sigesop.indexOfObjeto( matriz_input, 'index', $elem[0].id );
+					var index = !$.isEmptyObject( $elem[0] ) ?
+						sigesop.indexOfObjeto( matriz_input, 'index', $elem[0].id ) : -1;
 					if ( index != -1 ) matriz_input[ index ].valor = $elem.val();
 				}
 			},
@@ -1326,7 +1479,7 @@ window.sesion = {
 				if ( tipo == 'radio' ) {
 					// var $elem = $( '#' + this.matrizInput[ i ].index );
 					// $elem.val('');
-					// $elem.parents( 'tr' ).removeClass();
+					// $elem.parents( '#' + id_tbody + ' tr' ).removeClass();
 				}
 				else if ( tipo == 'checkbox' ) {
 					if ( jQuery.isEmptyObject( this.matrizInput ) ) return null;
@@ -1337,11 +1490,14 @@ window.sesion = {
 					for ( i ; i < lon ; i++ ) {
 						this.matrizInput[ i ].valor = null;
 						var $elem = $( '#' + this.matrizInput[ i ].index );
-						$elem.prop( 'checked', false ).parents( 'tr' ).removeClass();							
+						$elem.prop( 'checked', false )
+						.parents( '#' + id_tbody + ' tr' )
+						.removeClass();
 
 						/* Elimina valor a matriz publica
 						 */
-						var index = sigesop.indexOfObjeto( matriz_input, 'index', $elem[0].id );
+						var index = !$.isEmptyObject( $elem[0] ) ?
+							sigesop.indexOfObjeto( matriz_input, 'index', $elem[0].id ) : -1;
 						if ( index != -1 ) matriz_input[ index ].valor = null;
 					}
 				}
@@ -1362,19 +1518,19 @@ window.sesion = {
 
 				else console.log( 'Matriz [matrizInput] es nula' );
 
-				/* Agregamos el evento de cambio 
-				 * para seleccionar todos los campos				
+				/* Agregamos el evento de cambio
+				 * para seleccionar todos los campos
 				 */
 				var $checkAll = $( IDS.checkAll );
 				IDS.$checkAll = $checkAll;
 
 				$checkAll.change(function( e ) {
 					var state = $checkAll.prop( 'checked' );
-					if ( state ) 
+					if ( state )
 						selectAll.call( doc );
 					else reset.call( doc );
 
-					/* Llamada a funcion por cada evento de seleccion				
+					/* Llamada a funcion por cada evento de seleccion
 					 */
 					if ( typeof checkAll.callback === 'function' )
 						checkAll.callback( $checkAll.prop( 'checked' ), $checkAll.val(), $checkAll, matriz_input );
@@ -1391,7 +1547,7 @@ window.sesion = {
 				'<div class="table-responsive">' +
 					'<table class="table  table-bordered table-hover">' +
 						'<thead id="tablaHead_seleccion_' + suf + '" >' + head + '</thead>' +
-						'<tbody id="tablaBody_seleccion_' + suf + '" >' + body + '</tbody>' +
+						'<tbody id="' + id_tbody + '" >' + body + '</tbody>' +
 					'</table>' +
 				'</div></div><br>',
 
@@ -1430,7 +1586,7 @@ window.sesion = {
 						filter = ''
 
 					for( i; i < lon; i++ ) {
-						head += 
+						head +=
 							'<th >' + m[ i ] +
 								'<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>' +
 								'<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>' +
@@ -1530,8 +1686,8 @@ window.sesion = {
 
 				/* Se inicializa el plugin de ordenacion y
 				 * filtracion
-				 */ 
-			    $(document).find('.js-dynamitable').each(function(){			    
+				 */
+			    $(document).find('.js-dynamitable').each(function(){
 			        $(this).dynamitable()
 			            .addFilter('.js-filter')
 			            .addSorter('.js-sorter-asc', 'asc')
@@ -1552,10 +1708,10 @@ window.sesion = {
 				'</div></div><br>',
 
 			table = {
-				html: html,				
+				html: html,
 				IDS: {
 					table: '#id-tabla-registro-' + opt.suf,
-					$table: null, 					
+					$table: null,
 					head: '#id-head-table-registro-' + opt.suf,
 					body: '#id-body-table-registro-' + opt.suf
 				}
@@ -1760,6 +1916,194 @@ window.sesion = {
 			return doc;
 		},
 
+		dataTable: function ( opt ) {
+			/*
+			 * head
+			 * body
+			 * campo
+			 * val_campo
+			 * color_fila
+			 */
+
+			opt.color_fila = opt.color_fila || ''
+			opt.addClass = opt.addClass || {};
+
+			var
+
+			that = this,
+
+			struct_head = function ( arr ) {
+				if ( $.isEmptyObject( arr ) ) {
+					return;
+				}
+
+				var IDS    = this.IDS,
+					m      = arr.splitParametros( ',' ),
+					i      = 0,
+					lon    = m.length,
+					head   = '',
+					filter = '';
+
+				var $headerContent = $('<tr></tr>');
+				var $filterContent = $('<tr></tr>');
+
+				for( i; i < lon; i++ ) {
+					$headerContent.append(
+						$( '<th></th>' ).append( m[ i ] )
+						.append( '<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>' )
+						.append( '<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>' )
+					)
+
+					$filterContent.append(
+						$( '<th></th>' )
+						.append( '<input class="js-filter form-control" type="text" value="">' )
+					)
+				}
+
+				if ( IDS.$tableHeader ) {
+					IDS.$tableHeader.append( $headerContent )
+						.append( $filterContent )
+				};
+			},
+
+			struct_body = function ( arr, campo, addClass ) {
+				if ( $.isEmptyObject( arr ) || !campo || !this.IDS.$tableBody ) {
+					return;
+				}
+
+				var color_fila = opt.color_fila || '',
+					flag_      = true;
+
+				var returnClass = function ( mtz_class, mtz_campo, mtz_valor, fila ) {
+						for ( var i = 0, lon = mtz_campo.length; i < lon; i++ )
+						{
+							var
+							index = mtz_valor.indexOf(
+								sigesop.lecturaDeep( fila, mtz_campo[ i ] ) );
+
+							if ( eval != -1 )
+								return mtz_class[ index ];
+						}
+
+						return '';
+					};
+
+				if ( typeof addClass.body == 'object' ) {
+					var
+						mtz_class = addClass.body.class.splitParametros( ',' ),
+						mtz_campo = addClass.body.campo.splitParametros( ',' ),
+						mtz_valor = addClass.body.valor.splitParametros( ',' );
+
+					// console.log( 'mtz_class: ' + mtz_class.length + ' campo: ' + mtz_campo.length + ' valor: ' + mtz_valor.length );
+
+					if ( mtz_class.length == mtz_campo.length && // silogismo hipotético
+					 	 mtz_campo.length == mtz_valor.length ) flag_ = false;
+					else console.log( 'Matrices [mtz_class], [mtz_campo], [mtz_valor] no son de la misma longitud' );
+				}
+
+				/*
+				 * estructurar los tokens de los campos, las cadenas validas para su lectura
+				 * son del formato:
+				 * 'campo_1, campo_2, campo_3' y 'campo_1.sub_1, campo_2.sub_1, campo_3.sub_1'
+				 */
+				var m      = campo.splitParametros( ',' ), // filtramos los campos
+					k      = 0,
+					lon_k  = arr.length,
+					$tableBody = this.IDS.$tableBody;
+
+				$tableBody.empty();
+
+				for ( k; k < lon_k; k++ ) {
+					color_fila = flag_ ? // si es false es por que existe un addClass
+						opt.color_fila :
+						returnClass( mtz_class, mtz_campo, mtz_valor, arr[ k ] );
+
+					// -------------------
+
+					var $row = $( '<tr></tr>' )
+						.addClass( color_fila )
+						.attr( 'table-index', k );
+
+					for ( var i = 0, lon_i = m.length; i < lon_i; i++ ) // recorremos los campos
+						$row.append(
+							$( '<td></td>' ).html( sigesop.lecturaDeep( arr[ k ], m[ i ] ) )
+						);
+
+					$tableBody.append( $row );
+				}
+			},
+
+			update_table = function ( arr ) {
+				this.IDS.$tableBody.empty();
+				struct_body.call( this, arr, opt.campo, opt.addClass )
+				/* Se inicializa el plugin de ordenacion y
+				 * filtracion
+				 */
+			    this.IDS.$content.find('.js-dynamitable').each(function(){
+			        $(this).dynamitable()
+			            .addFilter('.js-filter')
+			            .addSorter('.js-sorter-asc', 'asc')
+			            .addSorter('.js-sorter-desc', 'desc');
+			    });
+			},
+
+			reset_table = function () {
+				this.IDS.$tableBody.empty();
+			},
+
+			struct_document = function () {
+				var IDS = this.IDS;
+
+				IDS.$tableHeader = $( '<thead></thead>' );
+				IDS.$tableBody   = $( '<tbody></tbody>' );
+
+				IDS.$table = $( '<table></table>' )
+					.addClass( 'js-dynamitable table table-bordered table-hover' )
+					.append( IDS.$tableHeader )
+					.append( IDS.$tableBody );
+
+				IDS.$content = $( '<div></div>' )
+					.addClass( 'panel panel-default' )
+
+					.append(
+						$( '<div></div>' )
+						.addClass( 'table-responsive' )
+						.append( IDS.$table )
+					)
+			},
+
+			factory = function () {
+				var IDS = this.IDS;
+
+				struct_document.call( this );
+				struct_head.call( this, opt.head );
+				struct_body.call( this, opt.arr, opt.campo, opt.addClass );
+
+				if ( typeof this !== 'undefined' ) {
+					$( that ).append( IDS.$content );
+					IDS.$tableBody.contextMenu( opt.contextMenu );
+				}
+
+				return this;
+			},
+
+			IDS = {
+				$content    : null,
+				$table      : null,
+				$tableBody  : null,
+				$tableHeader: null
+			},
+
+			table = {
+				IDS: IDS
+			};
+
+			table.factory = factory.bind( table );
+			table.update_table = update_table.bind( table );
+			table.reset_table = reset_table.bind( table );
+			return table;
+		},
+
 		utf8_encode: function ( argString ) {
 			/* discuss at: http://phpjs.org/functions/utf8_encode/
 			 * original by: Webtoolkit.info (http://www.webtoolkit.info/)
@@ -1847,7 +2191,7 @@ window.sesion = {
 			//   example 1: utf8_decode('Kevin van Zonneveld');
 			//   returns 1: 'Kevin van Zonneveld'
 
-			if( str_data === null ) return '';			
+			if( str_data === null ) return '';
 			if ( typeof str_data === 'undefined')
 				str_data = this;
 
@@ -1926,7 +2270,7 @@ window.sesion = {
 			 *	keyboard {Boolean} : 		bandera de configuracion que permite a la ventana
 			 *								emergente cerrar con el boton [esc]
 			 */
-			 
+
 			 // opt.suf = opt.suf || '_suf';
 			 opt.idDiv = opt.idDiv || '__win_idDiv_';
 			 opt.idBtnCerrar = opt.idBtnCerrar || opt.idDiv + '__btnCerrar';
@@ -2023,155 +2367,7 @@ window.sesion = {
 			});
 		},
 
-		// /*** DEPRECATED ***/ 
-		validacion: function ( array, opt ) {
-			if ( !jQuery.isEmptyObject( array ) )
-			{
-				var mtz = [],
-					i = 0,
-					lon = array.length;
-
-				for( i; i < lon; i++ )
-				{
-					var fila = array[ i ];		
-
-					// ---------- validacion cuando se trata de un objeto con propiedades
-
-					if ( jQuery.isPlainObject( fila ) )
-					{			
-						var propObj = Object.getOwnPropertyNames( fila );
-
-						// ---------- verificar que sea un objeto terminal
-
-						if 	( propObj.indexOf( 'valor' ) !== -1 )
-						{
-							if ( fila.valor ) 
-							{
-								if ( typeof fila.regexp !== 'undefined' )
-								{
-									// var regexp = fila.regexp;
-									if ( fila.regexp.test( fila.valor ) ) 
-									{
-										$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
-										sigesop.vaciarPopover( [ fila ] );
-										mtz [ i ] = true;
-									}
-									else
-									{
-										fila.idValidacion ? $( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ) : null;
-										mtz[ i ] = false;
-
-										// ---------- agrega un popover a la validacion
-
-										sigesop.agregarPopover( [ fila ] );
-										console.log( 'Expresion Regular no valida: ' + fila.idHTML );
-									}
-								}
-								else
-								{	
-									$( fila.idValidacion ).removeClass( 'has-' + opt.tipoValidacion );
-									sigesop.vaciarPopover( [ fila ] );
-									mtz [ i ] = true;
-								}
-							}
-							else
-							{
-								typeof opt.tipoValidacion !== 'undefined' ?
-									$( fila.idValidacion ).addClass( 'has-' + opt.tipoValidacion ): null;
-
-								mtz[ i ] = false;
-
-								// ---------- agrega un popover a la validacion
-
-								sigesop.agregarPopover( [ fila ] );
-
-								console.log( 'Elemento no valido: ' + fila.idHTML );
-							} 					
-						}
-
-						// --------- inicia recursividad del objeto
-
-						else if ( fila ) // descartamos un objeto vacio
-						{				
-							// ---------- capturamos los objetos que contiene el objeto superior
-								
-							var m = [],
-								j = 0,
-								lon_j = propObj.length;
-
-							for ( j; j < lon_j; j++ ) m.push( fila[ propObj[ j ] ] ); 
-
-							mtz [ i ] = this.validacion( m , opt );					
-						} else console.log( 'Objeto [' + fila + '] esta vacio');
-					}
-
-					// ---------- validacion cuando se trata de un array
-
-					else if( jQuery.isArray( fila ) )
-					{
-						var estado = jQuery.isEmptyObject( fila );				
-						if ( estado ) 
-						{						
-							mtz[ i ] = false;
-							console.log( 'Matriz [' + fila + '] no valida' );
-						} 
-						else mtz [ i ] = true;
-					}
-
-					// ---------- si no corresponde a un objeto o a una matriz; es un elemento no valido y se descarta
-
-					// else
-					// {
-					// 	console.log( 'Elemento: [' + fila + '] ignorado' );
-					// 	mtz[ i ] = true;
-					// }
-				}
-
-				// ----------- si no verificó ningun elemento es falso
-
-				if ( jQuery.isEmptyObject( mtz ) ) return false;
-
-				// ----------------- verifica si el arreglo tiene algun false
-			
-				for ( var i = 0; i < mtz.length; i++ ) 
-					if ( mtz[ i ] === false ) return false;
-
-				return true;
-			}	
-
-			console.log( 'matriz por validar es nula' );
-			return false;
-		},
-
-		// /*** DEPRECATED ***/ 
-		agregarPopover: function( array ) {
-			for ( var i = 0, lon = array.length; i < lon; i++ )
-			{
-				if ( typeof array[ i ].popover != 'undefined' ) 
-				{
-					$( array[ i ].idHTML ).popover({
-						title: array [ i ].popover.title,
-						content: array [ i ].popover.content,
-						placement: array [ i ].popover.placement,
-						html: true,
-						// template: '<div bgcolor="#FF0000" class="popover" role="tooltip"><div class="arrow"></div><h3 class="popover-title">test</h3><div class="popover-content" ></div></div>'
-					});
-
-					$( array[ i ].idHTML ).popover( 'show' );
-				}
-			}
-		},
-
-		// /*** DEPRECATED ***/ 
-		vaciarPopover: function( array ) {
-			for( var i in array )
-			{
-				if ( typeof array [ i ].popover != 'undefined' ) 
-				{
-					$( array [ i ].idHTML ).popover( 'destroy' );
-				}
-			}
-		}
+		view: {}
 	}
 })();
 
@@ -2346,13 +2542,12 @@ $.extend( String.prototype,
 );
 
 (function ( sigesop ) {
-	$.extend( jQuery.fn,
-		{
-			barraHerramientas: 		sigesop.barraHerramientas,
-			combo: 					sigesop.combo,
-			eventoCambioMayuscula:	sigesop.eventoCambioMayuscula,
-			seleccioneOpcion: 		sigesop.seleccioneOpcion,
-			sinRegistros: 			sigesop.sinRegistros
-		}
-	);
+	$.extend( jQuery.fn, {
+		barraHerramientas: 	sigesop.barraHerramientas,
+		combo            : 	sigesop.combo,
+		dataTable        : 	sigesop.dataTable,
+		toUpperCase      :	sigesop.toUpperCase,
+		seleccioneOpcion :  sigesop.seleccioneOpcion,
+		sinRegistros     : 	sigesop.sinRegistros
+	});
 })( sigesop );

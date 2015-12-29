@@ -9,7 +9,7 @@ sigesop.materiales = {
 				'<div class="form-group">' +
 					'<label class="control-label col-sm-3" for="">Código Material: </label>' +
 					'<div class="col-sm-7">' +
-						'<input name="codigo_material" id="codigo-material-' + suf + 
+						'<input name="codigo_material" id="codigo-material-' + suf +
 						'" placeholder="Numérico (Entero)" class="form-control input-md" type="text">' +
 					'</div>' +
 				'</div>' +
@@ -17,7 +17,7 @@ sigesop.materiales = {
 				'<div class="form-group">' +
 					'<label class="control-label col-sm-3" for="">Descripción: </label>' +
 					'<div class="col-sm-7">' +
-						'<input name="descripcion_material" id="descripcion-material-' + suf + 
+						'<input name="descripcion_material" id="descripcion-material-' + suf +
 						'" placeholder="De 1 – 100 caracteres" class="form-control" type="text"/>' +
 					'</div>' +
 				'</div>' +
@@ -46,7 +46,7 @@ sigesop.materiales = {
 			form = this.IDS.form,
 			$botonLimpiar = $( doc.IDS.botonLimpiar ),
 			$codigo_material = $( datos.codigo_material.idHTML ),
-			$descripcion_material = $( datos.descripcion_material.idHTML ),
+			$descripcion_material = $( datos.descripcion_material.idHTML ).toUpperCase(),
 			$tipo_material = $( datos.tipo_material.idHTML ),
 			$form = $( form )
 			.formValidation({
@@ -64,17 +64,15 @@ sigesop.materiales = {
 		        },
 
 		        onError: function ( e ) {
-		        	e.preventDefault();			        	
+		        	e.preventDefault();
 		        	typeof opt.error == 'function' ?
-		        		opt.error() : console.log( 'error is null' );			        	
+		        		opt.error() : console.log( 'error is null' );
 		        },
 
 		        fields: {
 		            codigo_material: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.codigo_material.valor = val;
-		            		data.element.val( val );
+		            		datos.codigo_material.valor = data.element.val()
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.codigo_material.valor = null;
@@ -95,9 +93,7 @@ sigesop.materiales = {
 
 		            descripcion_material: {
 		            	onSuccess: function ( e, data ) {
-		            		var val = data.element.val().toUpperCase();
-		            		datos.descripcion_material.valor = val;
-		            		data.element.val( val );
+		            		datos.descripcion_material.valor = data.element.val().toUpperCase();
 		            	},
 		            	onError: function ( e, data ) {
 		            		datos.descripcion_material.valor = null;
@@ -145,7 +141,7 @@ sigesop.materiales = {
 			});
 
 			/* Enlazar publicamente instancias jQuery de los campos
-			 */		
+			 */
 			doc.IDS.$form = $form;
 			doc.IDS.$botonLimpiar = $botonLimpiar;
 			doc.IDS.$codigo_material = $codigo_material;
@@ -172,18 +168,18 @@ sigesop.materiales = {
 						.val( obj.tipo_material );
 					}
 				});
-			
-				$codigo_material.val( obj.codigo_material );
-				$descripcion_material.val( obj.descripcion_material );				
 
-				/* Guardamos el ID que se actualizará				
+				$codigo_material.val( obj.codigo_material );
+				$descripcion_material.val( obj.descripcion_material );
+
+				/* Guardamos el ID que se actualizará
 				 */
 				datos.codigo_material_update.valor = obj.codigo_material;
 			}
 		},
 
 		vaciarDatos = function () {
-			var 
+			var
 			datos = this.datos,
 			IDS = this.IDS;
 
@@ -195,7 +191,7 @@ sigesop.materiales = {
 		},
 
 		limpiarCampos = function () {
-			var 
+			var
 			doc = this,
 			IDS = this.IDS;
 
@@ -247,11 +243,11 @@ sigesop.materiales = {
 	},
 
 	registro: function ( opt ) {
-		var 
+		var
 
 		suf = opt.suf || '',
 
-		html = 
+		html =
 			'<form id="form-registro-materiales-' + suf + '" class="form-horizontal" role="form">'+
 				'<div class="alert alert-danger alert-dismissible fade in" role="alert">' +
 					'<button class="close" aria-label="Close" data-dismiss="alert" type="button">' +
@@ -260,7 +256,7 @@ sigesop.materiales = {
 					'<strong>Los elementos unicamente serán eliminados si aún no existen datos asociados.</strong>' +
 				'</div>' +
 
-				'<div class="form-group">' +					
+				'<div class="form-group">' +
 					'<div class="col-sm-12 col-md-12" id="tabla-registro-materiales-' + suf + '"></div>' +
 				'</div>' +
 			'</form>',
@@ -268,11 +264,11 @@ sigesop.materiales = {
 		javascript = function () {
 			var
 			doc = this,
-			table = 
+			table =
 				sigesop.tablaRegistro({
 					head: 'CÓDIGO MATERIAL, DESCRIPCIÓN, TIPO',
 					campo: 'codigo_material, descripcion_material, tipo_material'
-				});			
+				});
 
 			doc.table.update_table = table.update_table; // enlazamos a vista publica
 			doc.table.body = table.IDS.body;
@@ -282,7 +278,7 @@ sigesop.materiales = {
 			var
 			items = {
 	            editar: {
-	            	name: 'Editar', 
+	            	name: 'Editar',
 	            	icon: 'edit',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
@@ -292,7 +288,7 @@ sigesop.materiales = {
 	        		}
 	            },
 	            eliminar: {
-	            	name: 'Eliminar', 
+	            	name: 'Eliminar',
 	            	icon: 'delete',
 	        		callback: function ( key, _opt ) {
 	        			var index = $( this ).attr( 'table-index' );
