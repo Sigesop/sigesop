@@ -1,0 +1,60 @@
+<!-- <div class="panel panel-default"> -->
+	<div ng-if="ordenesTrabajo" class="table-responsive">
+		<table class="js-dynamitable table table-bordered table-hover">
+			<thead>
+				<th> NÚMERO DE ORDEN
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+
+				<th> TRABAJO SOLICITADO
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+
+				<th> MANTENIMIENTO
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+
+				<th> SUPERVISOR
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+
+				<th> RESPONSABLE
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+
+				<th> AUXILIAR
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+
+				<th> FECHA PROGRAMADA
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+
+				<th> FECHA REPROGRAMADA
+					<span class="js-sorter-desc glyphicon glyphicon-chevron-down pull-right"></span>
+					<span class="js-sorter-asc  glyphicon glyphicon-chevron-up pull-right"></span>
+				</th>
+			</thead>
+			
+			<tbody ng-if="ordenesTrabajo">
+				<tr ng-repeat="orden in ordenesTrabajo">
+					<td>{{orden.numero_orden}}</td>
+					<td>{{orden.trabajo_solicitado}}</td>
+					<td>{{orden.nombre_mantenimiento}}</td>
+					<td>{{orden.orden_trabajo_personal.supervisor}}</td>
+					<td>{{orden.orden_trabajo_personal.responsable}}</td>
+					<td>{{orden.orden_trabajo_personal.auxiliar}}</td>
+					<td>{{orden.fecha_programada}}</td>
+					<td>{{orden.fecha_reprogramada}}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+<!-- </div> -->

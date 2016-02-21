@@ -676,51 +676,28 @@ window.sesion = {
 			return false;
 		},
 
-		/* DEPRECATED */
-		// matrizIndexOfObjeto: function ( data, campo, arr ) {
-		// 	*
-		// 	 * busca los indices de los elementos propuestos y retorna su posicion
-		// 	 * @param {Object} data - objeto de datos donde se buscarán los elementos
-		// 	 * @param {Array} array - arreglo donde se encuentran los elementos por buscar
-		// 	 * @param {String} campo - campo de data con el cual se comparará la busqueda
-		// 	 * @return {Array} ind - arreglo con los indices localizados en [data]
-			 
-		// 	if( typeof campo !== 'undefined' )
-		// 	{
-		// 		var i = 0,
-		// 			ind = [],
-		// 			indice = null;
+        DEBUG_MODE: true, // habilitado muestra mensajes de error en consola
 
-		// 		for( i in arr )
-		// 		{
-		// 			indice = this.indexOfObjeto( data, campo, arr[ i ] );
-		// 			indice != -1 ? ind.push( indice ) : null;
-		// 		}
+        logError: function ( functionName, objError, error ) {
+            if ( this.DEBUG_MODE === true ) {
+                if ( $.isPlainObject( objError ) ) {
+                    console.log( "##### ERROR [" + functionName + "] ##############################################" );
+                    console.log( 'Property err: ' + this.getOwnPropertyNames( objError ) );
+                    console.log( 'err code: ' + objError.code );
+                    console.log( 'err message: ' + objError.message );
+                    console.log( 'err stack: ' + objError.stack );
+                    console.log( "######################################################################" );
+                }
+            }
 
-		// 		return ind;
-		// 	}
-		// 	else console.log( 'El parametro [campo] es indefinido' );
-		// },
+            if ( $.isFunction( error ) ) {
+                error( objError );
+            };
+        },
 
-		/* DEPRECATED */
-		// mtzValidacion: function ( arr ) {
-		// 	if ( jQuery.isArray( arr ) && !jQuery.isEmptyObject( arr ) )
-		// 	{
-		// 		var i = 0,
-		// 			lon = arr.length;
-
-		// 		for( i; i < lon; i++ )
-		// 			if( arr[ i ] === false ) return false;
-
-		// 		return true;
-		// 	}
-
-		// 	else
-		// 	{
-		// 		console.log( 'function [mtzValidacion]: matriz invalida' );
-		// 		return false
-		// 	}
-		// },
+        getOwnPropertyNames: function ( obj ) {
+            return Object.getOwnPropertyNames( obj ).sort();
+        },
 
 	    /**
 	     * RFC4122 version 4 compliant unique id creator.
@@ -2081,7 +2058,10 @@ window.sesion = {
 
 				if ( typeof this !== 'undefined' ) {
 					$( that ).append( IDS.$content );
-					IDS.$tableBody.contextMenu( opt.contextMenu );
+
+					if ( !$.isEmptyObject( opt.contextMenu ) ) {
+						IDS.$tableBody.contextMenu( opt.contextMenu );
+					}					
 				}
 
 				return this;

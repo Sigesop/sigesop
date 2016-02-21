@@ -24,6 +24,9 @@ class sigesop {
     public $path_pdf         = '';
     public $path_file_pdf    = '../tcpdf/tcpdf.php';
     public $path_user_manual = '../../docs/sistema de_gestion_operativa_manual_usuario.pdf';
+    
+    public $dir_image_file = "img/";
+    public $path_image_file  = "E:/Documents/GitHub/sigesop/img/"; # ruta donde se guardaran las fotografias de las ordenes de trabajo
 
     # configuraciones del servidor
     public $serverRoot  = 'http://laventa.cfe.local/';
@@ -244,14 +247,14 @@ class sigesop {
 
         foreach ( $data as $id_area_acceso ) {
             foreach ( $this->matrizAreaAcceso as $row ) {
-                if ( $row[ 'id_area_acceso' ] == $id_area_acceso 
+                if ( $row[ 'id_area_acceso' ] == $id_area_acceso
                      && $row[ 'paginaAcceso' ] == $paginaAcceso ) {
                     return true;
                 }
-            }            
+            }
         }
 
-        return false;        
+        return false;
     }
 
     # retorna un unico dato de la primera fila
@@ -764,5 +767,118 @@ class sigesop {
             // return  "No se han completado la captura de datos ".
             //         "de la lista de verificación. Existen: $actividades_sin_datos ".
             //         "actividades sin capturar";
+    }
+
+    # verifica si la actividad ya tiene dato capturado
+    # si [id_actividad] es nulo, entonces se buscara por orden de trabajo completo
+    # y no por actividad
+    public function has_data_captured ( $id_orden_trabajo, $id_actividad = null ) {
+        $sql = "SELECT ".
+            "id_actividad_verificar ".
+        "FROM orden_trabajo_actividad ".
+        "WHERE id_orden_trabajo = $id_orden_trabajo ";
+
+        if ( $id_actividad != null ) {
+            $sql .= "AND id_actividad_verificar = $id_actividad";
+        }
+
+        $query = $this->array_query( $sql, 'id_actividad_verificar', null );
+
+        if ( $query == null ) return false;
+        else return true;
+    }
+
+    # verifica si la actividad ya tiene dato capturado
+    # si [id_actividad] es nulo, entonces se buscara por orden de trabajo completo
+    # y no por actividad
+    public function has_full_data_captured ( $id_orden_trabajo ) {
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $id_orden_trabajo );
+
+        # investigamos todas las actividades de la orden de trabajo
+        $sql = "SELECT ".
+            "av.id_actividad_verificar ".
+        "FROM actividad_verificar av ".
+        "INNER JOIN lista_verificacion lv ".
+            "ON av.id_lista_verificacion = lv.id_lista_verificacion ".
+        "INNER JOIN orden_trabajo ot ".
+            "ON lv.id_mantenimiento = ot.id_mantenimiento ".
+        "INNER JOIN programacion_mtto pm ".
+            "ON pm.id_prog_mtto = ot.id_prog_mtto ".
+        "WHERE pm.id_orden_trabajo = $id_orden_trabajo";
+
+        $actividades = $this->array_query( $sql, 'id_actividad_verificar', null );
+        # si no tiene actividades la asumimos como completada
+        if ( empty( $actividades ) ) {
+            return true;
+        }
+
+        # verificar datos de lectura actual y posterior de las actividades
+        foreach ( $actividades as $id_actividad_verificar ) {
+            ###################################################################
+            ## VERIFICAMOS TODAS LAS LECTURAS ACTUALES
+            ###################################################################
+            
+            # buscamos el total de lecturas actuales de la actividad
+            $sql = "SELECT ".
+                "COUNT(id) AS num_lecturas ".
+            "FROM lectura_actual ".
+            "WHERE id_actividad = $id_actividad_verificar";
+
+            $num_lecturas = $this->query( $sql, 'num_lecturas', null );
+
+            # buscamos el total de lecturas actuales de la actividad que ya han
+            # sido capturadas
+            $sql = "SELECT ".
+                "COUNT(id_lectura) AS num_dato_lectura ".
+            "FROM datos_lectura_actual dla ".
+            "INNER JOIN datos_actividad da ".
+                "ON da.id_datos_actividad = dla.id_actividad ".
+            "INNER JOIN orden_trabajo_actividad ota ".
+                "ON ota.id_datos_actividad = da.id_datos_actividad ".
+            "WHERE ota.id_actividad_verificar = $id_actividad_verificar ".
+            "AND ota.id_orden_trabajo = $id_orden_trabajo";
+
+            $num_dato_lectura = $this->query( $sql, 'num_dato_lectura', null );
+
+            # verificamos si el total de lecturas actuales de la actividad es igual al total
+            # de lecturas actuales capturadas
+            if ( $num_lecturas != $num_dato_lectura ) {
+                return false;
+            }
+
+            ###################################################################
+            ## VERIFICAMOS TODAS LAS LECTURAS POSTERIORES
+            ###################################################################
+            
+            # buscamos el total de lecturas actuales de la actividad
+            $sql = "SELECT ".
+                "COUNT(id) AS num_lecturas ".
+            "FROM lectura_posterior ".
+            "WHERE id_actividad = $id_actividad_verificar";
+
+            $num_lecturas = $this->query( $sql, 'num_lecturas', null );
+
+            # buscamos el total de lecturas actuales de la actividad que ya han
+            # sido capturadas
+            $sql = "SELECT ".
+                "COUNT(id_lectura) AS num_dato_lectura ".
+            "FROM datos_lectura_posterior dla ".
+            "INNER JOIN datos_actividad da ".
+                "ON da.id_datos_actividad = dla.id_actividad ".
+            "INNER JOIN orden_trabajo_actividad ota ".
+                "ON ota.id_datos_actividad = da.id_datos_actividad ".
+            "WHERE ota.id_actividad_verificar = $id_actividad_verificar ".
+            "AND ota.id_orden_trabajo = $id_orden_trabajo";
+
+            $num_dato_lectura = $this->query( $sql, 'num_dato_lectura', null );
+
+            # verificamos si el total de lecturas actuales de la actividad es igual al total
+            # de lecturas actuales capturadas
+            if ( $num_lecturas != $num_dato_lectura ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

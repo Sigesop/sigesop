@@ -3,17 +3,38 @@ $( document ).on( 'ready', main );
 function main ( event ) {
 	/* Documento principal
 	 */ 
-	doc = sigesop.capturaOrdenTrabajo.document({
-		table: {
-			actions: {
-				insertData: insertarDatos,
-				readData: readData
+	doc = $('#main').dataTable({
+		head: 	'NÚMERO DE ORDEN, TRABAJO SOLICITADO, MANTENIMIENTO, ' +
+				'SUPERVISOR, RESPONSABLE, AUXILIAR, FECHA PROGRAMADA, ' +
+				'FECHA REPROGRAMADA',
+		campo: 	'numero_orden, trabajo_solicitado, nombre_mantenimiento, ' +
+				'orden_trabajo_personal.supervisor, orden_trabajo_personal.responsable, '+
+				'orden_trabajo_personal.auxiliar, fecha_programada, fecha_reprogramada',
+		color_fila : 'success',
+		contextMenu: {
+			selector: 'tr',
+			items: {
+	            insertData: {
+	            	name: 'Insertar datos', 
+	            	icon: 'user',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).attr( 'table-index' );
+	        			getChecklist( index, false );
+	        		}
+	            },
+	            readData: {
+	            	name: 'Leer datos capturados',
+	            	icon: 'copy',
+	        		callback: function ( key, _opt ) {
+	        			var index = $( this ).attr( 'table-index' );
+	        			getChecklist( index, true );
+	        		}
+	            }
 			}
 		}
-	});
-	document.getElementById( 'main' ).innerHTML = '<br>' + doc.html;
-	doc.javascript();
-	
+	})
+	.factory();
+
 	/* Descarga de datos
 	 */ 
 	$( 'header' ).barraHerramientas();
@@ -31,7 +52,7 @@ function getData() {
 			window.sesion.matrizOrdenTrabajo = data;
 			document.getElementById( 'badge_OT' ).innerHTML = data != null ? data.length : 0 ;
 			
-			doc.table.update_table( data );
+			doc.update_table( data );
 		}
 	});	
 }
@@ -49,138 +70,26 @@ function struct_data( index, con_datos ) {
 	var
 	 
 	activate_equipos = function ( id, value ) {
-		var data = {
-			id_mantenimiento: elemento.id_mantenimiento, 
-			id_sistema_aero: value,
-			id_orden_trabajo: elemento.id_orden_trabajo			
-		};
 
-		/* verificamos si requerimos las actividades con datos
-		 * en caso de que el documento sea para la revision de
-		 * actividades
-		 */
-		con_datos === true ? data.con_datos = true : null;
-
-		sigesop.query({
-			data: data,
-			class: 'mantenimiento',
-			query: 'equipo_into_systems_mantto',
-			success: function ( data ) {	
-				if ( data != null )	{
-					// ---------- creamos la estructura para la edicion de el usuario en la ventana
-
-					docEM = sigesop.capturaOrdenTrabajo.documentInsertData({
-						arr: data,
-						suf: '_' + value,		
-						name: 'equipos',
-						campo: 'nombre_equipo_aero',
-						dataValue: 'id_equipo_aero',
-						activate: activate_actividades
-					});						
-
-					document.getElementById( id ).innerHTML = docEM.html;
-					docEM.javascript();
-				}
-
-				else document.getElementById( id ).innerHTML = '<h3 class=" text-center ">SIN ACTIVIDADES POR CAPTURAR...</h3>';
-			}
-		});
 	},
 
 	activate_actividades = function ( id, value ) {
-		var 
-			elem = document.getElementById( id ),
-			data = { 
-				id_mantenimiento: elemento.id_mantenimiento, 
-				id_equipo_aero: value,
-				id_orden_trabajo: elemento.id_orden_trabajo
-			};
 
-		/* verificamos si requerimos las actividades con datos
-		 * en caso de que el documento sea para la revision de
-		 * actividades
-		 */
-		con_datos === true ? data.con_datos = true : null;
-
-		sigesop.query({
-			data: data,
-			class: 'mantenimiento',
-			query: 'actividades_into_equipo',
-			success: function ( data )
-			{	
-				if ( !$.isEmptyObject( data ) )	{
-					/* creamos la estructura para la edicion de el usuario en la ventana
-					 */
-					var 
-					actividades = {
-						id_orden_trabajo: elemento.id_orden_trabajo,
-						actividades: data
-					},
-
-					config = {
-						obj: actividades,							
-						suf: '_' + value,
-						success: nuevoElemento,
-						error: error
-					};
-
-					/* verificamos si requerimos las actividades con datos
-					 * en caso de que el documento sea para la revision de
-					 * actividades
-					 */
-					con_datos === true ? config.con_datos = true : null;
-
-					var
-					docAC = 
-						sigesop.capturaOrdenTrabajo.documentActivity( config );
-					elem.innerHTML = docAC.html;
-					docAC.javascript();
-				}
-
-				else 
-					elem
-					.innerHTML = '<h3 class=" text-center ">SIN ACTIVIDADES POR CAPTURAR...</h3>';
-			}
-		});
 	},
 
-	onshown = function ( dialog ) {
-		var data = {
-			id_mantenimiento: elemento.id_mantenimiento,
-			id_orden_trabajo: elemento.id_orden_trabajo		
-		};
+	onshown = function ( dialog ) {		
+		_doc = $.fn.newCheckList({
+			obj: {
+				id_mantenimiento: elemento.id_mantenimiento,
+				id_orden_trabajo: elemento.id_orden_trabajo		
+			},
+			withData: false,
+			success: nuevoElemento,
+			error: error
+		})
+		.factory();
 
-		/* verificamos si requerimos las actividades con datos
-		 * en caso de que el documento sea para la revision de
-		 * actividades
-		 */
-		con_datos === true ? data.con_datos = true : null;
-
-		sigesop.query({
-			data: data,
-			class: 'mantenimiento',
-			query: 'systems_into_mantto',
-			success: function ( data ) {						
-				if ( !$.isEmptyObject( data ) ) {
-					var 
-					docSM = sigesop.capturaOrdenTrabajo.documentInsertData({
-						arr: data, 
-						name: 'sistemas',
-						campo: 'nombre_sistema_aero',
-						dataValue: 'id_sistema_aero',
-						activate: activate_equipos
-					});
-
-					// document.getElementById( win.idBody.flushChar('#') )
-					// 	.innerHTML = docSM.html;
-					
-					dialog.setMessage( docSM.html );
-					docSM.javascript();
-				}
-
-				else dialog.setMessage( '<h3 class=" text-center ">SIN LISTAS DE VERIFICACION POR CAPTURAR...</h3>' );
-			}
-		});
+		dialog.$modalBody.html( _doc.IDS.$container );
 	},
 
     win = BootstrapDialog.show({
@@ -200,9 +109,45 @@ function struct_data( index, con_datos ) {
     });
 }
 
-function insertarDatos ( index ) { struct_data( index, false ); }
+function getChecklist ( index, withData ) {
+	if ( index < 0 )
+		throw new Error( 'function getChecklist: index fuera de rango' );
 
-function readData ( index ) { struct_data( index, true ); }
+	var elem = window.sesion.matrizOrdenTrabajo[ index ];
+	if( !elem ) {
+		sigesop.msg( 'Advertencia', 'Seleccione un elemento para continuar', 'warning' );
+		throw new Error('function editarElemento: elemento es indefinido');
+	}	
+
+	var _doc = $.fn.newCheckList({
+		obj: {
+			id_mantenimiento: elem.id_mantenimiento,
+			id_orden_trabajo: elem.id_orden_trabajo		
+		},
+		withData: withData,
+		success: nuevoElemento,
+		error: error
+	})
+	.factory();
+
+    var win = BootstrapDialog.show({
+        title: 'Datos lista de verificación',
+        type: BootstrapDialog.TYPE_DEFAULT,
+        onshown: function ( dialog ) {
+        	dialog.$modalBody.html( _doc.IDS.$sistemasView )
+        },
+        size: BootstrapDialog.SIZE_WIDE,
+        closable: false,        
+        draggable: true,
+        buttons: [{
+            label: 'Cancelar',
+            cssClass: 'btn-danger',
+            action: function( dialog ) {
+                dialog.close();
+            }
+        }]
+    });
+}
 
 function leerDatos ( datos ) {
 	var 
@@ -262,10 +207,8 @@ function nuevoElemento ( datos, IDS ) {
 		type: 'POST',
 		OK: function ( msj, eventos ) {
 			$.unblockUI();
-			document.getElementById( IDS.form.flushChar('#') )
-				.innerHTML = '<h3 class=" text-center ">SIN ACTIVIDADES POR CAPTURAR...</h3>';
-			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );		
-			$( doc.IDS.botonLimpiar ).prop( 'disabled', true ); // impedir enviar de nuevo
+			IDS.$actividadesView.html('<h3 class=" text-center ">SIN ACTIVIDADES POR CAPTURAR...</h3>')
+			sigesop.msg( msj, sigesop.parseMsj( eventos ), 'success' );
 		},
 		NA: function ( msj, eventos ) {
 			$.unblockUI();

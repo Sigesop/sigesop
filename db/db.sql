@@ -455,6 +455,57 @@ CREATE TABLE `datos_lista_verificacion`(
 	observaciones					text
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+CREATE TABLE datos_imagen_actividad_verificar(
+    id_imagen_actividad        int unsigned PRIMARY KEY, 
+    id_actividad_verificar     int unsigned NOT NULL,
+    id_orden_trabajo           int unsigned NOT NULL,
+    id_sistema_aero            varchar(2) NOT NULL, 
+    id_equipo_aero             varchar(4) NOT NULL,
+    media_url                  VARCHAR(255) NOT NULL UNIQUE, 
+
+    altitud                    real DEFAULT NULL,
+    longitud                   real DEFAULT NULL,
+
+    FOREIGN KEY ( id_actividad_verificar ) REFERENCES actividad_verificar( id_actividad_verificar )
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+
+    FOREIGN KEY ( id_orden_trabajo ) REFERENCES programacion_mtto( id_orden_trabajo )
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+
+    FOREIGN KEY ( id_sistema_aero ) REFERENCES sistema_aero( id_sistema_aero )
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+
+    FOREIGN KEY ( id_equipo_aero ) REFERENCES equipo_aero( id_equipo_aero )
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE datos_rastreo_actividad(
+	id_rastreo_actividad       int unsigned PRIMARY KEY, 
+	
+	id_orden_trabajo           int unsigned NOT NULL, 
+	id_sistema_aero            varchar(2) NOT NULL, 
+	id_equipo_aero             varchar(4) NOT NULL,
+	
+	altitud                    real NOT NULL, 
+	longitud                   real NOT NULL, 
+	timestamp                  timestamp NOT NULL,
+
+    FOREIGN KEY ( id_orden_trabajo ) REFERENCES programacion_mtto( id_orden_trabajo )
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+
+    FOREIGN KEY ( id_sistema_aero ) REFERENCES sistema_aero( id_sistema_aero )
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+
+    FOREIGN KEY ( id_equipo_aero ) REFERENCES equipo_aero( id_equipo_aero )
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- libro_licencia ---------------------------------
 

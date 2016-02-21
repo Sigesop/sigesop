@@ -63,7 +63,7 @@ class mantenimiento extends sigesop
                 break;
 
             case 'obtenerOrdenTrabajoLista':
-                $obtenerOrdenTrabajoLista = $this->obtenerOrdenTrabajoLista( $get );
+                $obtenerOrdenTrabajoLista = $this->obtenerOrdenTrabajoLista( $post );
                 echo json_encode( $obtenerOrdenTrabajoLista );
                 break;
 
@@ -89,6 +89,12 @@ class mantenimiento extends sigesop
 
             case 'verifica_orden_trabajo':
                 $query = $this->verifica_orden_trabajo( $get );
+                echo json_encode( $query );
+                break;
+
+            case 'uploadImages':
+                $query = $this->uploadImages( $post );
+                // echo $query;
                 echo json_encode( $query );
                 break;
 
@@ -538,8 +544,9 @@ class mantenimiento extends sigesop
 
             case 'usuario': # devuelve todas las ordenes de trabajo por usuario
                 $usuario = $get[ 'usuario' ];
-                $sql =
-                "SELECT ".
+                $option  = $get[ 'option' ];
+
+                $sql = "SELECT ".
                     "ot.id_prog_mtto, ".
                     "numero_orden, id_aero, ".
                     "id_mantenimiento, ".
@@ -560,8 +567,23 @@ class mantenimiento extends sigesop
                         "AND usuario = '$usuario' ".
                         "AND tipo_usuario = 'RESPONSABLE' ".
                     " )".
-                " )".
-                "ORDER BY ot.numero_orden ASC";
+                " ) ";                
+
+                switch ( $option ) {
+                    # retorna las ordenes de trabajo que no estan en el
+                    # arreglo pasado como parametro [ id_prog_mtto, id_prog_mtto, id_prog_mtto ]
+                    case 'black_list':
+                        $black_list = $get[ 'black_list' ];
+                        $sql .= !empty( $black_list ) ? "AND ot.id_prog_mtto NOT IN ( $black_list ) " : '';
+                        $sql .= "ORDER BY ot.numero_orden ASC";
+                        break;
+
+                    default:
+                        $sql .= "ORDER BY ot.numero_orden ASC";
+                        break;
+                }
+
+                // return $sql;
                 break;
 
             # retorna todas las ordenes de trabajo que fueron programadas
@@ -748,44 +770,68 @@ class mantenimiento extends sigesop
 
         $this->__reprogramacion_fecha(); # lanzamos reprogramacion de ordenes de trabajo
         $query = $this->array_query( $sql );
-        $arr = array();
+        $arr   = array();
 
-        # completamos los datos que se requieren
+
         foreach ( $query as $orden ) {
-            $id_orden_trabajo = empty( $orden[ 'id_orden_reprog' ] ) ?
-                $orden[ 'id_orden_trabajo' ] : $orden[ 'id_orden_reprog' ];
-
-            // $id_orden_trabajo = $orden[ 'id_orden_trabajo' ];
-            $id_prog_mtto     = $orden[ 'id_prog_mtto' ];
-
-            # reasignando nomenclatura de las fechas por
-            # reprogramacion de orden de trabajo
-            $sql =
-                "SELECT DATE_FORMAT(fecha_inicial, '%d-%m-%Y' ) as fecha_programada ".
-                "FROM programacion_mtto ".
-                "WHERE id_orden_trabajo = $id_orden_trabajo";
-
-            $query = $this->query( $sql, 'fecha_programada' );
-
-            # verificamos que la fecha programada y reprogramada sean diferentes
-            # sino llenamos el campo con N/A
-            $orden[ 'fecha_reprogramada' ] = $orden[ 'fecha_programada' ] == $query ?
-                'N/A' : $orden[ 'fecha_programada' ];
-            $orden[ 'fecha_programada' ]   = $query;
-
-            # buscando nombre de [id_mantenimiento]
-            $id_mantenimiento                = $orden[ 'id_mantenimiento' ];
-            $sql                             = "SELECT nombre_mantenimiento FROM tipo_mantenimiento WHERE id_mantenimiento = '$id_mantenimiento'";
-            $_query                          = $this->query( $sql, 'nombre_mantenimiento', null );
-            $orden[ 'nombre_mantenimiento' ] = $_query;
-
-            # buscando a los usuarios asociados a la orden de trabajo
-            $orden[ 'orden_trabajo_personal' ] = $this->__orden_trabajo_personal( $id_prog_mtto );
-
-            $arr[] = $orden;
+            $q = $this->__complete_data_orden_trabajo( $orden, $get[ 'option_orden_trabajo' ] );
+            if ( $q != null ) {
+                $arr[] = $q;
+            }
         }
 
         return $arr;
+    }
+
+    # completamos los datos que se requieren de la orden
+    private function __complete_data_orden_trabajo ( $orden, $options = null ) {
+        if ( !empty($options[ 'solo_orden_no_completada' ]) ){
+            $key   = 'solo_orden_no_completada';
+            $value = $options[ 'solo_orden_no_completada' ];
+        }
+
+        switch ( $key ) {
+            # solo retorna la orden de trabajo si esta no ha sido completada
+            # con los datos de captura
+            case 'solo_orden_no_completada':
+                $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $orden[ 'id_orden_trabajo' ] );
+                if ( $value == true ) {
+                    if ( $this->has_full_data_captured( $id_orden_trabajo ) ) return null;
+                }
+                break;
+        }
+
+        $id_orden_trabajo = empty( $orden[ 'id_orden_reprog' ] ) ?
+            $orden[ 'id_orden_trabajo' ] : $orden[ 'id_orden_reprog' ];
+
+        // $id_orden_trabajo = $orden[ 'id_orden_trabajo' ];
+        $id_prog_mtto     = $orden[ 'id_prog_mtto' ];
+
+        # reasignando nomenclatura de las fechas por
+        # reprogramacion de orden de trabajo
+        $sql = "SELECT ".
+            "DATE_FORMAT(fecha_inicial, '%d-%m-%Y' ) as fecha_programada ".
+        "FROM programacion_mtto ".
+        "WHERE id_orden_trabajo = $id_orden_trabajo";
+
+        $query = $this->query( $sql, 'fecha_programada' );
+
+        # verificamos que la fecha programada y reprogramada sean diferentes
+        # sino llenamos el campo con N/A
+        $orden[ 'fecha_reprogramada' ] = $orden[ 'fecha_programada' ] == $query ?
+            'N/A' : $orden[ 'fecha_programada' ];
+        $orden[ 'fecha_programada' ]   = $query;
+
+        # buscando nombre de [id_mantenimiento]
+        $id_mantenimiento                = $orden[ 'id_mantenimiento' ];
+        $sql                             = "SELECT nombre_mantenimiento FROM tipo_mantenimiento WHERE id_mantenimiento = '$id_mantenimiento'";
+        $_query                          = $this->query( $sql, 'nombre_mantenimiento', null );
+        $orden[ 'nombre_mantenimiento' ] = $_query;
+
+        # buscando a los usuarios asociados a la orden de trabajo
+        $orden[ 'orden_trabajo_personal' ] = $this->__orden_trabajo_personal( $id_prog_mtto );
+
+        return $orden;
     }
 
     # retorna la fecha programada y reprogramada de la orden de trabajo
@@ -1038,9 +1084,9 @@ class mantenimiento extends sigesop
         // if ( $validar !== 'OK' ) return null;
 
         $id_mantenimiento = $get[ 'id_mantenimiento' ];
-        $id_sistema_aero = $get[ 'id_sistema_aero' ];
+        $id_sistema_aero  = $get[ 'id_sistema_aero' ];
         $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $get[ 'id_orden_trabajo' ] );
-        $con_datos = $get[ 'con_datos' ];
+        $con_datos        = $get[ 'con_datos' ];
 
         # buscar el [id_lista_verificacion] con el id_mantenimiento
         $sql =
@@ -1066,8 +1112,8 @@ class mantenimiento extends sigesop
                 $sql =
                     "SELECT DISTINCT id_equipo_aero FROM actividad_verificar ".
                     "WHERE id_lista_verificacion = $id_lista_verificacion ".
-                    "AND id_sistema_aero = '$id_sistema_aero' AND ".
-                    "id_actividad_verificar NOT IN ( ".
+                    "AND id_sistema_aero = '$id_sistema_aero' ".
+                    "AND id_actividad_verificar NOT IN ( ".
                         "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
                         "WHERE id_orden_trabajo = $id_orden_trabajo ".
                     ")";
@@ -1082,7 +1128,7 @@ class mantenimiento extends sigesop
 
         foreach ( $query as $equ )
         {
-            $sql = "select * from equipo_aero where id_equipo_aero = '$equ'";
+            $sql = "SELECT * FROM equipo_aero WHERE id_equipo_aero = '$equ'";
             $query = $this->array_query( $sql );
             $arr [ ] = $query[ 0 ];
         }
@@ -1101,7 +1147,8 @@ class mantenimiento extends sigesop
     public function actividades_into_equipo ( $get ) {
         $validar =
             $this->verificaDatosNulos( $get, array(
-                'id_mantenimiento', 'id_equipo_aero', 'id_orden_trabajo'
+                'id_mantenimiento', 'id_equipo_aero',
+                'id_orden_trabajo', 'con_datos'
             ));
 
         // if ( $validar === 'OK' ) return null;
@@ -1109,31 +1156,41 @@ class mantenimiento extends sigesop
         $id_mantenimiento = $get[ 'id_mantenimiento' ];
         $id_equipo_aero   = $get[ 'id_equipo_aero' ];
         $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $get[ 'id_orden_trabajo' ] );
+        $con_datos        = $get[ 'con_datos' ];
 
-        return $this->__actividad_verificar_equipo( $get );
+        return $con_datos == 'true' ?
+            array(
+                'datos_rastreo_actividad' => $this->__datos_rastreo_actividad( $id_orden_trabajo, $id_equipo_aero ),
+                'actividades'             => $this->__actividad_verificar_equipo( $get )
+            ):
+            array(
+                'actividades'             => $this->__actividad_verificar_equipo( $get )
+            );
     }
 
     private function __actividad_verificar_equipo ( $data ) {
         $id_mantenimiento = $data[ 'id_mantenimiento' ];
-        $id_equipo_aero = $data[ 'id_equipo_aero' ];
+        $id_equipo_aero   = $data[ 'id_equipo_aero' ];
         $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $data[ 'id_orden_trabajo' ] );
-        $con_datos = $data[ 'con_datos' ];
+        $con_datos        = $data[ 'con_datos' ];
 
         # buscar el [id_lista_verificacion] con el id_mantenimiento
-        $sql =
-        "SELECT id_lista_verificacion FROM lista_verificacion ".
+        $sql = "SELECT ".
+            "id_lista_verificacion ".
+        "FROM lista_verificacion ".
         "WHERE id_mantenimiento = '$id_mantenimiento'";
 
         $id_lista_verificacion = $this->query( $sql, 'id_lista_verificacion', NULL );
         if ( $id_lista_verificacion == NULL ) return NULL;
 
         # Preparamos el tipo de consulta
-        $sql =
-        "SELECT id_actividad_verificar, ".
-        "id_lista_verificacion, ".
-        "id_sistema_aero, ".
-        "id_equipo_aero, ".
-        "actividad_verificar ".
+        $sql = "SELECT ".
+            "id_actividad_verificar, ".
+            "id_lista_verificacion, ".
+            "id_sistema_aero, ".
+            "id_equipo_aero, ".
+            "actividad_verificar, ".
+            "tipo_actividad ".
         "FROM actividad_verificar ".
         "WHERE id_lista_verificacion = $id_lista_verificacion ".
         "AND id_equipo_aero = '$id_equipo_aero' ";
@@ -1176,9 +1233,97 @@ class mantenimiento extends sigesop
         if ( empty( $mtz ) ) return null;
 
         # complementamos datos de nuevos campos
-
         $arr = array();
         foreach ( $mtz as $actividad ) {
+            $id_actividad_verificar = $actividad[ 'id_actividad_verificar' ];
+
+            $actividad[ 'parametro_actividad' ] = $con_datos == 'true' ?
+                $this->__parametroActividad( $id_actividad_verificar ):
+                $this->__parametroActividad( $id_actividad_verificar );
+
+            $actividad[ 'lectura_actual' ] = $con_datos == 'true' ?
+                $this->__lecturaActual( $id_actividad_verificar, 'con_captura', $id_orden_trabajo ):
+                $this->__lecturaActual( $id_actividad_verificar );
+
+            $actividad[ 'lectura_posterior' ] = $con_datos == 'true' ?
+                $this->__lecturaPosterior( $id_actividad_verificar, 'con_captura', $id_orden_trabajo ):
+                $this->__lecturaPosterior( $id_actividad_verificar );
+
+            $actividad[ 'lectura_posterior' ] = $con_datos == 'true' ?
+                $this->__lecturaPosterior( $id_actividad_verificar, 'con_captura', $id_orden_trabajo ):
+                $this->__lecturaPosterior( $id_actividad_verificar );
+
+            $actividad[ 'datos_imagen_actividad_verificar' ] = $this->__datos_imagen_actividad_verificar ( $id_orden_trabajo, $id_actividad_verificar );
+
+            # si se solicitan actividades con datos, retornamos el
+            # campo de observaciones
+            if ( $con_datos == 'true' )
+                $actividad[ 'observaciones' ] = $this->__observaciones( $id_actividad_verificar, $id_orden_trabajo );
+
+            $arr [] = $actividad;
+        }
+
+        return $arr;
+    }
+
+    # retornar las actividades de una orden de trabajo
+    # que no tienen datos capturados
+    private function __actividad_verificar ( $data ) {
+        $id_mantenimiento = $data[ 'id_mantenimiento' ];
+        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $data[ 'id_orden_trabajo' ] );
+        $con_datos        = $data[ 'con_datos' ];
+
+        # buscar el [id_lista_verificacion] con el id_mantenimiento
+        $sql = "SELECT ".
+            "id_lista_verificacion ".
+        "FROM lista_verificacion ".
+        "WHERE id_mantenimiento = '$id_mantenimiento'";
+
+        # descartamos el mantenimiento que no tiene asignada una lista de
+        # verificacion
+        $id_lista_verificacion = $this->query( $sql, 'id_lista_verificacion', NULL );
+        if ( $id_lista_verificacion == NULL ) return NULL;
+
+        # Preparamos el tipo de consulta
+        $sql = "SELECT ".
+            "id_actividad_verificar, ".
+            "id_lista_verificacion, ".
+            "av.id_sistema_aero, ".
+            "sa.nombre_sistema_aero, ".
+            "av.id_equipo_aero,  ".
+            "ea.nombre_equipo_aero, ".
+            "actividad_verificar, ".
+            "tipo_actividad  ".
+        "FROM actividad_verificar av ".
+        "INNER JOIN sistema_aero sa ".
+            "ON sa.id_sistema_aero = av.id_sistema_aero ".
+        "INNER JOIN equipo_aero ea ".
+            "ON ea.id_equipo_aero = av.id_equipo_aero ".
+        "WHERE id_lista_verificacion = $id_lista_verificacion ";
+
+        switch ( $con_datos ) {
+            case 'true':
+                $sql .=
+                "AND id_actividad_verificar IN( ".
+                    "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
+                    "WHERE id_orden_trabajo = $id_orden_trabajo ".
+                ")";
+                break;
+
+            default:
+                $sql .=
+                "AND id_actividad_verificar NOT IN( ".
+                    "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
+                    "WHERE id_orden_trabajo = $id_orden_trabajo ".
+                ")";
+                break;
+        }
+
+        // return $sql;
+
+        # complementamos datos de nuevos campos
+        $arr = array();
+        foreach ( $this->array_query( $sql ) as $actividad ) {
             $id_actividad_verificar = $actividad[ 'id_actividad_verificar' ];
 
             $actividad[ 'parametro_actividad' ] = $con_datos == 'true' ?
@@ -1374,6 +1519,43 @@ class mantenimiento extends sigesop
         return $query;
     }
 
+    private function __datos_rastreo_actividad ( $id_orden_trabajo, $id_equipo_aero ) {
+        $sql = "SELECT ".
+            "altitud, ".
+            "longitud ".
+        "FROM datos_rastreo_actividad ".
+        "WHERE id_orden_trabajo = $id_orden_trabajo ".
+        "AND id_equipo_aero = '$id_equipo_aero'";
+
+        $datos_rastreo_actividad = array();
+        foreach ( $this->array_query( $sql ) as $row ) {
+            $datos_rastreo_actividad[] = array( $row['altitud'], $row['longitud'] );
+        }
+
+        return $datos_rastreo_actividad;
+    }
+
+    private function __datos_imagen_actividad_verificar ( $id_orden_trabajo, $id_actividad_verificar ) {
+        $sql = "SELECT ".
+            "media_url, ".
+            "altitud, ".
+            "longitud ".
+        "FROM datos_imagen_actividad_verificar ".
+        "WHERE id_orden_trabajo = $id_orden_trabajo ".
+        "AND id_actividad_verificar = '$id_actividad_verificar'";
+
+        $arr = array();
+        foreach ( $this->array_query( $sql ) as $img ) {
+            $arr[] = array(
+                'media_url' => $this->dir_image_file.$img['media_url'],
+                'altitud'   => $img['altitud'],
+                'longitud'  => $img['longitud']
+            );
+        }
+
+        return $arr;
+    }
+
     # insertarDatosListaVerificacion -----------------------
 
     public function insertarDatosListaVerificacion ( $data ) {
@@ -1391,144 +1573,356 @@ class mantenimiento extends sigesop
         }
 
         # insertamos la tabla [datos_lista_verificacion]
-        $id_orden_trabajo = $this->__retorna_id_orden_trabajo_original( $data[ 'id_orden_trabajo' ] );
-        $fecha = date( 'Y/m/d' );
-        $hora = date( 'h:i:s' );
-        $observaciones = '';
-        $datos_actividad = $data[ 'datos_actividad' ];
+        $id_orden_trabajo        = $this->__retorna_id_orden_trabajo_original( $data[ 'id_orden_trabajo' ] );
+        $fecha                   = date( 'Y/m/d' );
+        $hora                    = date( 'h:i:s' );
+        $observaciones           = '';
+        $datos_actividad         = $data[ 'datos_actividad' ];
+        $datos_rastreo_actividad = $data[ 'datos_rastreo_actividad' ];
+
+        $sql = "SELECT ".
+            "id_mantenimiento ".
+        "FROM orden_trabajo ".
+        "WHERE id_prog_mtto = (".
+            "SELECT id_prog_mtto FROM programacion_mtto WHERE id_orden_trabajo = $id_orden_trabajo".
+        ")";
+        $id_mantenimiento = $this->query( $sql, 'id_mantenimiento' );
 
         # registramos observaciones, fecha y hora de la insercion
         # de datos
-        $sql =
-        "INSERT INTO datos_lista_verificacion ".
-        "VALUES( $id_orden_trabajo, '$fecha', '$hora', '$observaciones' )";
-        $query = $this->insert_query( $sql );
+        $sql = "INSERT INTO datos_lista_verificacion VALUES( ".
+            "$id_orden_trabajo, ".
+            "'$fecha', ".
+            "'$hora', ".
+            "'$observaciones' ".
+        ")";
 
+        $q = $this->__insertar_rastreo_actividad( $id_orden_trabajo, $datos_rastreo_actividad );
+        if ( $q != 'OK' ) {
+            $this->conexion->rollback();
+            $rsp [ 'status' ]    = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar tabla: [datos_rastreo_actividad]' );
+            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => $q );
+            return $rsp;
+        }
+
+        $query = $this->insert_query( $sql );
         if ( $query !== 'OK' ) {
             $this->conexion->rollback();
-
-            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar tabla: [datos_lista_verificacion]' );
+            $rsp [ 'status' ]    = array( 'transaccion' => 'ERROR', 'msj' => 'Error al insertar tabla: [datos_lista_verificacion]' );
             $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => $query );
             return $rsp;
         }
 
         # insertamos actividades
         $datos_actividad = $this->__insertar_datos_actividad( $id_orden_trabajo, $datos_actividad );
-        if ( $datos_actividad === 'OK' ) {
-            $this->conexion->commit();
-            $rsp[ 'status' ] = array( 'transaccion' => 'OK', 'msj' => 'Datos guardados satisfactoriamente' );
-            $rsp [ 'eventos' ][] = array( 'estado' => 'OK', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => 'Correcto' );
-            return $rsp;
+        switch ( $datos_actividad[ 'status' ] ) {
+            case 'OK':
+                $this->conexion->commit();
+                $rsp [ 'status' ] = array(
+                    'transaccion' => 'OK',
+                    'msj' => 'Datos guardados satisfactoriamente'
+                );
+                break;
+
+            case 'NA':
+                $this->conexion->commit();
+                $rsp [ 'captured' ] = $datos_actividad[ 'captured' ];
+                $rsp [ 'updated' ]  = $this->__actividad_verificar(array(
+                    'id_mantenimiento' => $id_mantenimiento,
+                    'id_orden_trabajo' => $id_orden_trabajo,
+                    'con_datos' => false
+                ));
+                $rsp [ 'status' ]   = array(
+                    'transaccion' => 'NA',
+                    'msj' => 'Algunos datos tienen inconsistencias'
+                );
+                break;
+
+            default:
+                $this->conexion->rollback();
+                $rsp [ 'status' ] = array(
+                    'transaccion' => 'ERROR',
+                    'msj' => 'Error al guardar datos'
+                );
+                break;
         }
 
-        else {
-            $this->conexion->rollback();
-            $rsp[ 'status' ] = array( 'transaccion' => 'ERROR', 'msj' => 'Error al guardar los datos' );
-            $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'elem' => "Orden de trabajo ".$id_orden_trabajo, 'msj' => $datos_actividad );
-            return $rsp;
-        }
+        $rsp [ 'eventos' ] = $datos_actividad[ 'eventos' ];
+
+        return $rsp;
+
+        // return array(
+        //     'status' => array(
+        //         'transaccion' => 'OK',
+        //         'msj' => 'Datos guardados satisfactoriamente'
+        //     ),
+        //     'eventos' => array()
+        // );
     }
 
     private function __insertar_datos_actividad ( $id_orden_trabajo, $arr ) {
-        $mtzError = array();
+        $obj = array(
+            'status'   => 'OK',
+            'eventos'  => array(),
+            'captured' => array(),  # arreglo de actividades [id_actividad_verificar]
+                                    # que ya han sido capturadas y no son necesarias
+                                    # tenerlas gurdadas
 
-        foreach ( $arr as $actividad )
-        {
+            'updated'  => array()   # arreglo de actividades (FULL)
+                                    # que no se eliminaran pues tienen
+                                    # una nueva estructura
+        );
+
+        $count_data_captured = 0;
+        foreach ( $arr as $actividad ) {
             # datos de tabla [orden_trabajo_actividad]
             $id_actividad = $actividad[ 'id_actividad' ];
 
             # buscar si la actividad fue guardada previamente
-            $flag = $this->verifica_actividad_insertada ( $id_orden_trabajo, $id_actividad );
-
-            if ( $flag )
-            {
+            if ( !$this->has_data_captured( $id_orden_trabajo, $id_actividad ) ) {
                 # datos de tabla [datos_actividad]
-                $id_datos_actividad = $this->autoincrement( "select id_datos_actividad from datos_actividad order by id_datos_actividad asc", "id_datos_actividad", $conexion );
-                $observaciones = $actividad[ 'observaciones' ][ 'valor' ];
+                $id_datos_actividad = $this->auto_increment( 'datos_actividad', 'id_datos_actividad' );
+                $observaciones      = $actividad[ 'observaciones' ][ 'valor' ];
 
                 # datos de tablas [ datos_lectura_actual, datos_lectura_posterior ]
-                $datos_lectura_actual = $actividad[ 'datos_lectura_actual' ];
+                $datos_lectura_actual    = $actividad[ 'datos_lectura_actual' ];
                 $datos_lectura_posterior = $actividad[ 'datos_lectura_posterior' ];
 
-                /* verificamos el campo observaciones para condicionar
-                 * la estructura de la consulta (activar la badera de prioridad)
-                 */
-                empty( $observaciones ) ?
-                    $sql = "insert into datos_actividad( id_datos_actividad, id_actividad ) values( $id_datos_actividad, $id_actividad )":
-                    $sql = "insert into datos_actividad( id_datos_actividad, id_actividad, prioridad, observaciones ) values( $id_datos_actividad, $id_actividad, 'U', '$observaciones' )";
+                # verificamos que la estructura de datos de [parametro, lectura_actual, lectura_posterior]
+                # sean iguales a los que fueron descargados al cliente y de esa manera
+                # verificar la integridad de la estructura de datos de las actividades
+                $is_equal_to_lectura_actual_server    = $this->is_equal_to_lectura_server( $id_actividad, $datos_lectura_actual, 'lectura_actual' );
+                $is_equal_to_lectura_posterior_server = $this->is_equal_to_lectura_server( $id_actividad, $datos_lectura_posterior, 'lectura_posterior' );
+                if ( $is_equal_to_lectura_actual_server && $is_equal_to_lectura_posterior_server ) {
+                    /* verificamos el campo observaciones para condicionar
+                     * la estructura de la consulta (activar la badera de prioridad)
+                     */
+                    $sql = empty( $observaciones ) ?
+                        "INSERT INTO datos_actividad( id_datos_actividad, id_actividad ) VALUES( $id_datos_actividad, $id_actividad )":
+                        "INSERT INTO datos_actividad( id_datos_actividad, id_actividad, prioridad, observaciones ) VALUES( $id_datos_actividad, $id_actividad, 'U', '$observaciones' )";
 
-                # insertamos la tabla [datos_actividad]
-                $query = $this->insert_query( $sql );
-                if ( $query !== 'OK' ) return $query.". Error al insertar la tabla [datos_actividad]";
+                    # insertamos la tabla [datos_actividad]
+                    $query = $this->insert_query( $sql );
+                    if ( $query !== 'OK' ) {
+                        $obj[ 'status' ]    = 'ERROR';
+                        $obj[ 'eventos' ][] = array(
+                            'estado' => 'ERROR',
+                            'elem'   => "Orden de trabajo ".$id_orden_trabajo,
+                            'msj'    => $query.". Error al insertar la tabla [datos_actividad]"
+                        );
+                        return $obj;
+                    }
 
-                # insertamos la tabla [datos_lectura_actual]
-                $lectura_actual = $this->__datos_lectura( $datos_lectura_actual, $id_datos_actividad, 'actual' );
-                if ( $lectura_actual !== 'OK' ) return $lectura_actual.". Error al insertar la tabla [datos_lectura_actual]";
+                    # insertamos la tabla [datos_lectura_actual]
+                    $query = $this->__datos_lectura( $datos_lectura_actual, $id_datos_actividad, 'actual' );
+                    if ( $query !== 'OK' ) {
+                        $obj[ 'status' ]    = 'ERROR';
+                        $obj[ 'eventos' ][] = array(
+                            'estado' => 'ERROR',
+                            'elem'   => "Orden de trabajo ".$id_orden_trabajo,
+                            'msj'    => $query.". Error al insertar la tabla [datos_lectura_actual]"
+                        );
+                        return $obj;
+                    }
 
-                # insertamos la tabla [datos_lectura_posterior]
-                $lectura_posterior = $this->__datos_lectura( $datos_lectura_posterior, $id_datos_actividad, 'posterior' );
-                if ( $lectura_posterior !== 'OK' ) return $lectura_posterior.". Error al insertar la tabla [datos_lectura_posterior]";
+                    # insertamos la tabla [datos_lectura_posterior]
+                    $query = $this->__datos_lectura( $datos_lectura_posterior, $id_datos_actividad, 'posterior' );
+                    if ( $query !== 'OK' ) {
+                        $obj[ 'status' ]    = 'ERROR';
+                        $obj[ 'eventos' ][] = array(
+                            'estado' => 'ERROR',
+                            'elem'   => "Orden de trabajo ".$id_orden_trabajo,
+                            'msj'    => $query.". Error al insertar la tabla [datos_lectura_posterior]"
+                        );
+                        return $obj;
+                    }
 
-                # insertamos nuevo registro en tabla orden_trabajo_actividad
-                $sql =  "INSERT INTO orden_trabajo_actividad(id_datos_actividad, ".
-                        "id_actividad_verificar, id_orden_trabajo) ".
-                        "VALUES ( $id_datos_actividad, $id_actividad, $id_orden_trabajo )";
+                    # insertamos nuevo registro en tabla orden_trabajo_actividad
+                    $sql = "INSERT INTO orden_trabajo_actividad( ".
+                        "id_datos_actividad, ".
+                        "id_actividad_verificar, ".
+                        "id_orden_trabajo ".
+                    ") VALUES ( ".
+                        "$id_datos_actividad, ".
+                        "$id_actividad, ".
+                        "$id_orden_trabajo ".
+                    ")";
 
-                $query = $this->insert_query( $sql );
-                if ( $query !== 'OK' ) return $query.". Error al insertar en tabla [orden_trabajo_actividad]";
+                    $query = $this->insert_query( $sql );
+                    if ( $query !== 'OK' ) {
+                        $obj[ 'status' ]    = 'ERROR';
+                        $obj[ 'eventos' ][] = array(
+                            'estado' => 'ERROR',
+                            'elem'   => "Orden de trabajo ".$id_orden_trabajo,
+                            'msj'    => $query.". Error al insertar en tabla [orden_trabajo_actividad]"
+                        );
+                        return $obj;
+                    }
+                }
+
+                else {
+                    $obj[ 'id_actividad_verificar' ][] = $id_actividad;
+                    $obj[ 'status' ]    = 'NA';
+                    $obj[ 'eventos' ][] = array(
+                        'estado' => 'ERROR',
+                        'elem'   => "Actividad: $id_actividad",
+                        'msj'    => "Fue actualizada en sus parametros, los datos serán recapturados."
+                        // 'msj'    => "Fue actualizada en sus parametros, los datos serán recapturados."
+                    );
+                }
             }
 
-            else
-            {
-                $mtzError[] = $id_actividad;
+            else {
+                $obj[ 'status' ]     = 'NA';
+                $obj[ 'captured' ][] = $id_actividad;
+                $obj[ 'eventos' ][]  = array(
+                    'estado' => 'ERROR',
+                    'elem'   => "Actividad: $id_actividad",
+                    'msj'    => "Capturada previamente."
+                );
             }
         }
 
-        if( empty( $mtzError ) )
-            return 'OK';
-        else return sizeof( $mtzError )." de las ".sizeof( $arr )." actividades han sido capturadas previamente";
+        return $obj;
     }
 
-    private function verifica_actividad_insertada ( $id_orden_trabajo, $id_actividad ) {
-        $sql = "select id_actividad_verificar from orden_trabajo_actividad where id_orden_trabajo = $id_orden_trabajo and id_actividad_verificar = $id_actividad";
-        $query = $this->array_query( $sql, 'id_actividad_verificar', null );
+    # verifica que la estructura de datos de [lectura_actual, lectura_posterior]
+    # del servidor sea la misma que la de los datos provinientes del cliente
+    private function is_equal_to_lectura_server ( $id_actividad_verificar, $lectura_client, $table ) {
+        ######################################
+        ### DATOS PROVINIENTES DEL CLIENTE ###
+        ######################################
+        # datos_lectura_actual: [{
+        #     id_lectura: 1,
+        #     tipo_validacion: 'COMPARACION',
+        #     dato_validacion: 23,
+        #     dato: { valor: 28 }
+        # }],
+        # datos_lectura_posterior: [{
+        #     id_lectura: 1,
+        #     tipo_validacion: 'COMPARACION',
+        #     dato_validacion: 23,
+        #     dato: { valor: 30 }
+        # }]
 
-        if ( $query == null ) return true;
-        else return false;
+        # buscamos el tipo de dato para realizar
+        # consultas por filas de datos o por lotes completos
+        $sql = "SELECT tipo_dato ".
+        "FROM parametro_actividad ".
+        "WHERE id_actividad = $id_actividad_verificar";
+        $tipo_dato = $this->query( $sql, 'tipo_dato', NULL );
+
+        # Estructurar los datos del servidor
+        # de la misma forma que los provinientes del cliente
+        $sql = "SELECT ".
+            "tl.id AS id_lectura, ".
+            "pa.tipo_dato AS tipo_validacion, ".
+            "pa.dato AS dato_validacion ".
+        "FROM $table tl ".
+        "INNER JOIN parametro_actividad pa ".
+            "ON tl.id_actividad = pa.id_actividad ".
+        "WHERE tl.id_actividad = $id_actividad_verificar ";
+
+        # si es un tipo de dato diferente a texto se verifica
+        # la secuencia de datos para enlazar las filas de
+        # datos correctmente
+        if ( $tipo_dato != 'TEXTO' ) {
+            $sql .= "AND tl.secuencia_datos = pa.secuencia_datos ";
+        }
+        $sql .= "ORDER BY tl.id ASC";
+
+        $lectura_server = $this->array_query( $sql );
+
+        #si nuestra matriz esta vacia no es valida
+        if ( empty( $lectura_server ) ) {
+            return false;
+        }
+
+        # primer paso comparar tamaños de los arreglos
+        $lon_client = sizeof( $lectura_client );
+        $lon_server = sizeof( $lectura_server );
+        if ( $lon_client != $lon_server ) {
+            return false;
+        }
+
+        # iterar y comprobar dato por dato, entre la
+        # matriz del cliente y el servidor (teniendo ya en
+        # cuenta que las dos matrices son del mismo tamaño
+        # y se encuentran ordenadas ascendentemente por su
+        # id)
+        for ( $i = 0; $i < $lon_server; $i++ ) {
+            $row_client = $lectura_client[ $i ];
+            $row_server = $lectura_server[ $i ];
+
+            if ( $row_client[ 'id_lectura' ]      != $row_server[ 'id_lectura' ] ) return false;
+            if ( $row_client[ 'tipo_validacion' ] != $row_server[ 'tipo_validacion' ] ) return false;
+            if ( $row_client[ 'dato_validacion' ] != $row_server[ 'dato_validacion' ] ) return false;
+        }
+
+        return true;
     }
 
     private function __datos_lectura( $arr, $id_actividad, $tipo_lectura ) {
-        foreach ( $arr as $lectura )
-        {
-            $tipo_dato = $lectura[ 'tipo_dato' ];
-            $id_lectura = $lectura[ 'id_lectura' ];
-
+        foreach ( $arr as $lectura ) {
+            $id_lectura      = $lectura[ 'id_lectura' ];
             $tipo_validacion = $lectura[ 'tipo_validacion' ];
             $dato_validacion = $lectura[ 'dato_validacion' ];
-            $dato = $lectura[ 'dato' ][ 'valor' ];
+            $dato            = $lectura[ 'dato' ][ 'valor' ];
+            $prioridad       = $this->__evaluacion_parametro( $tipo_validacion, $dato_validacion, $dato );
 
-            $prioridad =
-                $this->__evaluacion_parametro( $tipo_validacion, $dato_validacion, $dato );
-
-
-            // ---------- seleccionamos tipo de lectura
-
-            switch ( $tipo_lectura )
-            {
+            # seleccionamos tipo de lectura
+            switch ( $tipo_lectura ) {
                 /* verificamos el campo observaciones para condicionar
                  * la estructura de la consulta (activar la badera de prioridad)
                  */
-
                 case 'actual':
-                    $prioridad === true ?
-                        $sql = "insert into datos_lectura_actual( id_actividad, dato, id_lectura ) values( $id_actividad, '$dato', $id_lectura )" :
-                        $sql = "insert into datos_lectura_actual( id_actividad, dato, prioridad, id_lectura ) values( $id_actividad, '$dato', 'U', $id_lectura )";
+                    $sql = $prioridad === true ?
+                        "INSERT INTO datos_lectura_actual( ".
+                            "id_actividad, ".
+                            "dato, ".
+                            "id_lectura ".
+                        ") VALUES( ".
+                            "$id_actividad, ".
+                            "'$dato', ".
+                            "$id_lectura ".
+                        ")" :
+
+                        "INSERT INTO datos_lectura_actual( ".
+                            "id_actividad, ".
+                            "dato, ".
+                            "prioridad, ".
+                            "id_lectura ".
+                        ") VALUES( ".
+                            "$id_actividad, ".
+                            "'$dato', ".
+                            "'U', ".
+                            "$id_lectura ".
+                        ")";
                     break;
 
                 case 'posterior':
-                    $prioridad === true ?
-                        $sql = "insert into datos_lectura_posterior( id_actividad, dato, id_lectura ) values( $id_actividad, '$dato', $id_lectura )" :
-                        $sql = "insert into datos_lectura_posterior( id_actividad, dato, prioridad, id_lectura ) values( $id_actividad, '$dato', 'U', $id_lectura )";
+                    $sql = $prioridad === true ?
+                        "INSERT INTO datos_lectura_posterior( ".
+                            "id_actividad, ".
+                            "dato, ".
+                            "id_lectura ".
+                        ") VALUES( ".
+                            "$id_actividad, ".
+                            "'$dato', ".
+                            "$id_lectura ".
+                        ")" :
+
+                        "INSERT INTO datos_lectura_posterior( ".
+                            "id_actividad, ".
+                            "dato, ".
+                            "prioridad, ".
+                            "id_lectura ".
+                        ") VALUES( ".
+                            "$id_actividad, ".
+                            "'$dato', ".
+                            "'U', ".
+                            "$id_lectura ".
+                        ")";
                     break;
 
                 default:
@@ -1536,8 +1930,7 @@ class mantenimiento extends sigesop
                     break;
             }
 
-            // ---------- insertamos la tabla [datos_lectura_actual]
-
+            # insertamos la tabla [datos_lectura_actual]
             $datos_lectura = $this->insert_query( $sql );
             if ( $datos_lectura !== 'OK' ) return $datos_lectura;
         }
@@ -1546,8 +1939,7 @@ class mantenimiento extends sigesop
     }
 
     private function __evaluacion_parametro ( $tipo_validacion, $dato_validacion, $dato ) {
-        switch ( $tipo_validacion )
-        {
+        switch ( $tipo_validacion ) {
             case 'BINARIO': return true; break;
             case 'TEXTO': return true; break;
 
@@ -1580,77 +1972,286 @@ class mantenimiento extends sigesop
         }
     }
 
+    private function __insertar_rastreo_actividad ( $id_orden_trabajo, $datos_rastreo_actividad ) {
+        if( empty( $datos_rastreo_actividad ) ) return 'OK';
+
+        foreach ( $datos_rastreo_actividad as $rowTrack ) {
+            $id_rastreo_actividad = $this->auto_increment( 'datos_rastreo_actividad', 'id_rastreo_actividad' );
+            $id_orden_trabajo     = $this->__retorna_id_orden_trabajo_original( $id_orden_trabajo );
+            $id_sistema_aero      = $rowTrack[ 'id_sistema_aero' ];
+            $id_equipo_aero       = $rowTrack[ 'id_equipo_aero' ];
+            $altitud              = $rowTrack[ 'altitud' ];
+            $longitud             = $rowTrack[ 'longitud' ];
+            $timestamp            = Carbon::createFromTimestamp( $rowTrack[ 'timestamp' ]/1000, "America/Mexico_City" )->toDateTimeString();
+            // $timestamp            = Carbon::createFromTimestamp( $rowTrack[ 'timestamp' ] )->toDateTimeString();
+            // $time                 = Carbon::createFromFormat('d-m-Y h:i', $rowTrack[ 'timestamp' ]);
+
+            $sql = "INSERT INTO datos_rastreo_actividad ( ".
+                "id_rastreo_actividad, ".
+                "id_orden_trabajo, ".
+                "id_sistema_aero, ".
+                "id_equipo_aero, ".
+                "altitud, ".
+                "longitud, ".
+                "timestamp ".
+            ") VALUES ( ".
+                "$id_rastreo_actividad, ".
+                "$id_orden_trabajo, ".
+                "'$id_sistema_aero', ".
+                "'$id_equipo_aero', ".
+                "$altitud, ".
+                "$longitud, ".
+                "'$timestamp' ".
+            ")";
+
+            // return $sql;
+
+            $q = $this->insert_query( $sql );
+            if ( $q != 'OK' ) return $q;
+        }
+
+        return 'OK';
+    }
+
+    ##############################################################
+    ##############################################################
+    ##############################################################
+
     public function reprogramacion_fecha_mtto () {
         return  $this->__reprogramacion_fecha();
     }
 
     # funcion publica para hacer pruebas
     public function test ( $get ) {
-        return $this->dataUser;
+        // return $this->has_full_data_captured( 89 );
+        return $this->obtenerOrdenTrabajo(array(
+            'usuario'              => 'admin',
+            'option_orden_trabajo' => array( 'solo_orden_no_completada' => true )
+        ));
     }
 
     #############################################################
     #############################################################
-    ## SECCION DE FUNCIONES ADAPTADAS A DISPOSITIVO MOVIL
+    ## SECCION DE FUNCIONES ADAPTADAS PARA DISPOSITIVO MOVIL
     #############################################################
     #############################################################
+    
+    public function obtenerOrdenTrabajoLista ( $post ) {
+        $usuario        = $post[ 'usuario' ];
+        $ordenes        = $post[ 'ordenes' ];
 
-    public function obtenerOrdenTrabajoLista  ( $get ) {
-        $get[ 'usuario' ] = $this->usuario;
-        $data = $this->obtenerOrdenTrabajo( $get );
-        $arr = array();
+        if ( empty( $usuario ) ) {
+            return array();
+        }
 
-        # recorriendo ordenes de trabajo de los usuarios
-        foreach ( $data as $ordenTrabajo ) {
-            # obtener los sistemas
-            $sistemas = $this->systems_into_mantto(array(
-                    'id_orden_trabajo' => $ordenTrabajo[ 'id_orden_trabajo' ],
-                    'id_mantenimiento' => $ordenTrabajo[ 'id_mantenimiento' ]
+        # si viene vacio es porque quiere descargar datos la primera vez o no tiene
+        # asignadas lista de verificacion para la cual retoramos las actividades
+        # que existan de todas las ordenes del usuario
+        if ( empty( $ordenes ) ) {
+            $ordenes_trabajo = $this->obtenerOrdenTrabajo(array(
+                'usuario'              => $usuario,
+                'option_orden_trabajo' => array( 'solo_orden_no_completada' => true )
+            ));
+
+            $new_ordenes = array();
+            foreach ( $ordenes_trabajo as $orden_trabajo ) {
+                $orden_trabajo[ 'actividades' ] = $this->__actividad_verificar(array(
+                    'id_mantenimiento'           => $orden_trabajo[ 'id_mantenimiento' ],
+                    'id_orden_trabajo'           => $orden_trabajo[ 'id_orden_trabajo' ],
+                    'con_datos'                  => false
                 ));
 
-            # recorrer sistemas para obtener equipos
-            $i = 0;
-            foreach ( $sistemas as $sis ) {
-                # obtener equipos
-                $equipos = $this->equipo_into_systems_mantto(array(
-                        'id_orden_trabajo' => $ordenTrabajo[ 'id_orden_trabajo' ],
-                        'id_mantenimiento' => $ordenTrabajo[ 'id_mantenimiento' ],
-                        'id_sistema_aero'  => $sis[ 'id_sistema_aero' ]
-                    ));
-
-                #recorrer equipos para obtener actividades
-                $j = 0;
-                foreach ( $equipos as $equi ) {
-                    $actividades = $this->actividades_into_equipo(array(
-                            'id_mantenimiento' => $ordenTrabajo[ 'id_mantenimiento' ],
-                            'id_equipo_aero' => $equi[ 'id_equipo_aero' ],
-                            'id_orden_trabajo' => $ordenTrabajo[ 'id_orden_trabajo' ]
-                        ));
-
-                    $equipos[ $j ][ 'data' ] = $actividades;
-                    $j++;
-                }
-
-                $sistemas[ $i ][ 'data' ] = $equipos;
-                $i++;
+                $new_ordenes[] = $orden_trabajo;
             }
 
-            $arr[] = array(
-                'id_orden_trabajo'       => $ordenTrabajo[ 'id_orden_trabajo' ],
-                'id_prog_mtto'           => $ordenTrabajo[ 'id_prog_mtto' ],
-                'id_mantenimiento'       => $ordenTrabajo[ 'id_mantenimiento' ],
-                'nombre_mantenimiento'   => $ordenTrabajo[ 'nombre_mantenimiento' ],
-                'trabajo_solicitado'     => $ordenTrabajo[ 'trabajo_solicitado' ],
-                'orden_trabajo_personal' => $ordenTrabajo[ 'orden_trabajo_personal' ],
-                'fecha_inicial'          => $ordenTrabajo[ 'fecha_inicial' ],
-                'fecha_final'            => $ordenTrabajo[ 'fecha_final' ],
-                'id_orden_reprog'        => $ordenTrabajo[ 'id_orden_reprog' ],
-                'fecha_realizada'        => $ordenTrabajo[ 'fecha_realizada' ],
-                'estado_asignado'        => $ordenTrabajo[ 'estado_asignado' ],                
-                'data'                   => $sistemas
+            return array(
+                'nueva_orden_trabajo' => $new_ordenes,
+                'nuevas_actividades'  => array()
             );
         }
 
-        return $arr;
+        # verificar si existen nuevas ordenes de trabajo para el usuario
+        $ordenes_actuales = array();
+        foreach ( $ordenes as $orden ) {
+            $ordenes_actuales[] = $orden[ 'id_prog_mtto' ];
+        }
+
+        $ordenes_actuales = implode( ',', $ordenes_actuales );
+        $ordenes_trabajo = $this->obtenerOrdenTrabajo(array(
+            'usuario'              => $usuario,
+            'option'               => 'black_list',
+            'black_list'           => $ordenes_actuales,
+            'option_orden_trabajo' => array( 'solo_orden_no_completada' => true )
+        ));
+
+        $new_ordenes = array();
+        foreach ( $ordenes_trabajo as $orden_trabajo ) {
+            $orden_trabajo[ 'actividades' ] = $this->__actividad_verificar(array(
+                'id_mantenimiento'           => $orden_trabajo[ 'id_mantenimiento' ],
+                'id_orden_trabajo'           => $orden_trabajo[ 'id_orden_trabajo' ],
+                'con_datos'                  => false
+            ));
+
+            $new_ordenes[] = $orden_trabajo;
+        }
+
+        ####################################################################
+        # de las ordenes existentes, verificar si existen nuevas actividades
+        ####################################################################
+        ####################################################################
+        $new_activities = array();
+        foreach ( $ordenes as $orden ) {
+            $id_orden_trabajo     = $this->__retorna_id_orden_trabajo_original( $orden[ 'id_orden_trabajo' ] );
+            $id_prog_mtto         = $orden[ 'id_prog_mtto' ];
+            $actividades_actuales = implode( ',', $orden[ 'id_actividad_verificar' ] );
+
+            $sql =  "SELECT ".
+                    "av.id_actividad_verificar, ".
+                    "av.id_lista_verificacion, ".
+                    "av.id_sistema_aero, ".
+                    "sa.nombre_sistema_aero,".
+                    "av.id_equipo_aero, ".
+                    "ea.nombre_equipo_aero,".
+                    "av.actividad_verificar, ".
+                    "av.tipo_actividad ".
+            "FROM actividad_verificar av ".
+            "INNER JOIN sistema_aero sa ".
+                "ON av.id_sistema_aero = sa.id_sistema_aero ".
+            "INNER JOIN equipo_aero ea ".
+                "ON av.id_equipo_aero = ea.id_equipo_aero ".
+            "INNER JOIN lista_verificacion lv ".
+                "ON av.id_lista_verificacion = lv.id_lista_verificacion ".
+            "INNER JOIN orden_trabajo ot ".
+                "ON ot.id_mantenimiento = lv.id_mantenimiento ".
+            "WHERE ot.id_prog_mtto = $id_prog_mtto ".            
+            "AND av.id_actividad_verificar NOT IN ( $actividades_actuales )".
+            
+            # descartamos actividades que tengan datos
+            "AND av.id_actividad_verificar NOT IN( ".
+                "SELECT id_actividad_verificar FROM orden_trabajo_actividad ".
+                "WHERE id_orden_trabajo = $id_orden_trabajo ".
+            ")";
+
+            // return $sql;
+
+            $arr = array();
+            foreach ( $this->array_query( $sql ) as $actividad ) {
+                $id_actividad_verificar = $actividad[ 'id_actividad_verificar' ];
+
+                $actividad[ 'parametro_actividad' ] = $this->__parametroActividad( $id_actividad_verificar );
+                $actividad[ 'lectura_actual' ]      = $this->__lecturaActual( $id_actividad_verificar );
+                $actividad[ 'lectura_posterior' ]   = $this->__lecturaPosterior( $id_actividad_verificar );
+
+                $arr [] = $actividad;
+            }
+
+            # agregar unicamente si tiene actividades nuevas
+            if ( !empty( $arr ) ) {
+                $new_activities[] = array(
+                    'id_prog_mtto' => $id_prog_mtto,
+                    'actividades'  => $arr
+                );
+            }
+        }
+
+        return array(
+            'nueva_orden_trabajo' => $new_ordenes,
+            'nuevas_actividades'  => $new_activities
+        );
+    }
+
+    public function uploadImages ( $post ) {
+        header('Access-Control-Allow-Origin: *');
+
+        $upload_file      = $post['fileName'];
+        $upload_file_name = $_FILES['file']['tmp_name'];
+        $location         = $this->path_image_file.$upload_file;
+
+        // return $location;
+
+        $id_imagen_actividad    = $this->auto_increment( 'datos_imagen_actividad_verificar', 'id_imagen_actividad' );
+        $id_actividad_verificar = $post[ 'id_actividad_verificar' ];
+        $id_orden_trabajo       = $this->__retorna_id_orden_trabajo_original( $post[ 'id_orden_trabajo' ] );
+        $id_sistema_aero        = $post[ 'id_sistema_aero' ];
+        $id_equipo_aero         = $post[ 'id_equipo_aero' ];
+        $media_url              = $upload_file;
+        $altitud                = $post[ 'altitud' ];
+        $longitud               = $post[ 'longitud' ];
+
+        $sql = "INSERT INTO datos_imagen_actividad_verificar (".
+            "id_imagen_actividad, ".
+            "id_actividad_verificar, ".
+            "id_orden_trabajo, ".
+            "id_sistema_aero, ".
+            "id_equipo_aero, ".
+            "media_url, ".
+            "altitud, ".
+            "longitud ".
+        ") VALUES ( ".
+            "$id_imagen_actividad, ".
+            "$id_actividad_verificar, ".
+            "$id_orden_trabajo, ".
+            "'$id_sistema_aero', ".
+            "'$id_equipo_aero', ".
+            "'$media_url', ".
+            "$altitud, ".
+            "$longitud ".
+        ")";
+
+        // return $sql;
+
+        $query = $this->insert_query( $sql );
+        if ( $query == 'OK' ) {
+            # movemos la imagen a carpeta definida por el sistema
+            if( move_uploaded_file( $upload_file_name, $location ) ) {
+                $this->conexion->commit();
+                return 1;
+            }
+
+            else {
+                $this->conexion->rollback();
+                return 'Imposible copiar imagen a directorio designado.';
+            }
+        }
+
+        else {
+            return $query;
+        }
+    }
+
+    public function downloadImages () {
+        $files = array(
+            '1-00-01-172-1453840507812.jpg',
+            '1-00-01-172-1453840528149.jpg',
+            '1-00-01-172-1453920597098.jpg',
+            '1-00-01-175-1453920624595.jpg'
+        );
+
+        $zipname     = 'img.zip';
+        $folder_name = 'imagenes/';
+
+        $file_path = $this->path_image_file;
+        // $file_path   = realpath( '../../img/' );
+        // if (substr($file_path, -1) != '/') {
+        //     $file_path.= '/';
+        // }
+
+        $zip         = new ZipArchive;
+        $zip->open($zipname, ZipArchive::OVERWRITE);
+        // $zip->open($zipname, ZipArchive::CREATE);
+        $zip->addEmptyDir( $folder_name );
+
+        foreach ($files as $file) {
+            $zip->addFile($file_path . $file, $folder_name . $file);
+        }
+
+        $zip->close();
+
+        # enviar archivo al navegador
+        header('Content-Type: application/zip');
+        header('Content-disposition: attachment; filename='.$zipname);
+        header('Content-Length: ' . filesize($zipname));
+        readfile($zipname);
+        unlink($zipname);
     }
 }

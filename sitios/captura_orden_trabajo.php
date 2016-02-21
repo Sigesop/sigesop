@@ -41,11 +41,11 @@ if ( !$obj->accesoPagina( 'captura_orden_trabajo.php' ) ) {
 		</ul>
 
 		<div class="tab-content">				
-			<div class="tab-pane fade in active" id="main"></div>
+			<div class="tab-pane fade in active" id="main"><br></div>
 		</div>
 	</div>
 
-	<script type="text/javascript" src="../js/jquery.js"></script>
+	<script type="text/javascript" src="../js/jquery.min.js"></script>
 	<script type="text/javascript" src="../js/bootstrap.min.js"></script>
 	<script type="text/javascript" src="../js/bootstrap-dialog/bootstrap-dialog.min.js"></script>
 	<script type="text/javascript" src="../js/ui/jquery-ui.custom.min.js"></script>
@@ -57,6 +57,9 @@ if ( !$obj->accesoPagina( 'captura_orden_trabajo.php' ) ) {
 	<script type="text/javascript" src="../js/contextMenu/jquery.contextMenu.js"></script>
 	<script type="text/javascript" src="../js/dynamitable/dynamitable.jquery.min.js"></script>
 	<script type="text/javascript" src="../js/jquery.blockUI.js"></script>
+
+	<script src="http://maps.google.com/maps/api/js" async></script>
+	<script src="../js/gmaps/gmaps.min.js"></script>
 
 	<script type="text/javascript" src="../js/coreSigesop/core.sigesop.cfe.js"></script>
 	<script type="text/javascript" src="../js/coreSigesop/core.capturaOrdenTrabajo.js"></script>	

@@ -968,7 +968,7 @@ class listaVerificacion extends sigesop
             $tipo_dato     = $row[ 'tipo_dato' ];
             $dato          = $row[ 'dato' ];
             $parametro     = $row[ 'parametro' ];
-            $unidad_medida = $row[ 'unidad_medida' ];            
+            $unidad_medida = $row[ 'unidad_medida' ];
 
             switch ( $tipo_dato ) {
                 case 'BINARIO':
@@ -1095,13 +1095,38 @@ class listaVerificacion extends sigesop
         }
 
         $id_actividad_verificar_update = $post[ 'id_actividad_verificar_update' ];
-        $parametro_actividad = $post[ 'parametro_actividad' ];
-        $lectura_actual = $post[ 'lectura_actual' ];
-        $lectura_posterior = $post[ 'lectura_posterior' ];
+        $parametro_actividad           = $post[ 'parametro_actividad' ];
+        $lectura_actual                = $post[ 'lectura_actual' ];
+        $lectura_posterior             = $post[ 'lectura_posterior' ];
+
+        ##########################################################################
+        # verificamos si la actividad no contiene datos previamente capturados
+        # en caso que existan datos, no se permitirá actualizar la estructura ya
+        # que dejaria datos corruptos e incongruentes
+        ##########################################################################
+
+        # buscamos todas las ordenes de trabajo [ACTIVOS, FINALIZADOS, REPROGRAMADOS]
+        $sql = "SELECT ".
+            "id_orden_trabajo ".
+        "FROM programacion_mtto ".
+        "WHERE estado_asignado IS NOT NULL";
+
+        foreach ( $this->array_query( $sql, 'id_orden_trabajo' ) as $id_orden_trabajo ) {
+            $check = $this->has_data_captured( $id_orden_trabajo, $id_actividad_verificar_update );
+            if ( $check ) {
+                $rsp[ 'status' ]     = array( 'transaccion' => 'ERROR', 'msj' => 'Imposible actualizar' );
+                $rsp [ 'eventos' ][] = array( 'estado' => 'ERROR', 'msj' => 'La actividad contiene datos capturados' );
+                return $rsp;
+            }
+        }
+
+        ########################################################################
+        # Iniciamos proceso de actualizacion del parametros y lecturas
+        # de la actividad
+        ########################################################################
 
         # Eliminamos todos los registros de [parametro_aceptacion]
-        $sql =
-        "DELETE FROM parametro_actividad WHERE id_actividad = $id_actividad_verificar_update";
+        $sql = "DELETE FROM parametro_actividad WHERE id_actividad = $id_actividad_verificar_update";
         $query = $this->insert_query( $sql );
 
         if ( $query !== 'OK' ) {
